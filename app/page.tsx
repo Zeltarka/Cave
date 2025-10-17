@@ -30,10 +30,10 @@ export default function Home() {
             >
                 <div
                     style={{
-                        
+
                         position: "absolute",
-                        width: 100, // largeur du trait
-                        height: "100%", // hauteur du trait
+                        width: 100,
+                        height: "100%",
                         background: "linear-gradient(to bottom, rgba(255,255,255,0.8), rgba(255,255,255,0))",
                         top: 0,
                         left: "50%", // départ au milieu de la page
