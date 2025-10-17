@@ -30,6 +30,7 @@ export default function Home() {
             >
                 <div
                     style={{
+                        
                         position: "absolute",
                         width: 100, // largeur du trait
                         height: "100%", // hauteur du trait
