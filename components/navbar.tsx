@@ -3,6 +3,7 @@ import Link from "next/link";
 import {family} from "detect-libc";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import React, {useState} from "react";
 
 
 import { Montserrat } from "next/font/google"; // 🔹 IMPORT
@@ -13,15 +14,26 @@ const montserrat = Montserrat({
     weight: ["400", "600"],
 });
 
+
 import logo from "boutique.png"
+
 export function Navbar() {
+    const [underline, setUnderline] = useState(false);
     const pathname = usePathname();
     const showNavbar = pathname !== "/";
     if (!showNavbar) return null;
     return (
         <div
             className={montserrat.className}
+            onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateZ(50px) ";
+                e.currentTarget.style.boxShadow = "0 20px 20px rgba(36, 88, 111, 0.3)"  }}
+            onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0) translateZ(0)";
+                e.currentTarget.style.boxShadow = "none";}}
             style={{
+
+                transition: "box-shadow 0.3s ease",
                 backgroundColor: "#8ba9b7",
                 color: "#24586f",
                 padding: "30px",
@@ -32,18 +44,32 @@ export function Navbar() {
                 display: "flex",
                 flexDirection: "row",
                 alignItems: "center",
-                justifyContent: "left",
+                justifyContent: "center",
                 textAnchor: "middle",
+                zIndex:'0'
             }}>
-            <Link href="/">← Accueil</Link>
 
-            <Image
-                src="/Boutique.png"
-                alt="Logo"
-                width={250}
-                height={250}
-                style={{marginLeft:'auto', marginRight: "300px"}}
-            />
+
+            <div style={{display: "flex", position:'absolute', alignItems:"center", left:'50px'}}>
+                <Link href="/"
+                      style={{ textDecoration: underline ? "underline" : "none",cursor: "pointer",  }}
+                      onMouseEnter={() => setUnderline(true)}
+                      onMouseLeave={() => setUnderline(false)}>
+                    ← Accueil
+                </Link>
+            </div>
+
+            <div style={{ display: "flex",  height: "10%",  }}>
+                  <Image
+                    src="/Boutique.png"
+                    alt="Logo"
+                    width={250}
+                    height={250}
+
+                />
+            </div>
+
+
 
 
             <div style={{
@@ -56,12 +82,54 @@ export function Navbar() {
             }}
             >
 
+            <div
+                style={{
+                    display: "flex",
+                    flexDirection: "row",
+
+                    left: '750px',
+
+                }}>
+                <Link href="https://www.instagram.com/la_cave_la_garenne/">
+                      <button
+                      style={{
+                          backgroundImage: "url('/insta.png')",
+                          width: "20px",
+                          height: "20px",
+                          position: "fixed",
+                          zIndex:'10',
+                          backgroundColor:'transparent',
+                          top:'40px',
+                          backgroundSize:'cover',
+                          left:'1425px',
+                          cursor:'pointer',
+
+                      }}/>
+                </Link>
+                <Link href="https://fr.linkedin.com/company/lacavelagarenne">
+                    <button
+                        style={{
+                            backgroundImage: "url('/linkedin.png')",
+                            width: "25px",
+                            height: "25px",
+                            position: "fixed",
+                            zIndex:'10',
+                            backgroundColor:'transparent',
+                            top:'70px',
+                            backgroundSize:'cover',
+                            left:'1423px',
+                            cursor:'pointer',
+
+                        }}/>
+                </Link>
+            </div>
+
                 <Link href="/account">
                     <button style={{
                         position: "fixed",
 
 
-                        zIndex:10,
+                        zIndex:20,
                         backgroundImage: "url('/profil.png')",
                         height: "45px",
                         width: "45px",
@@ -73,6 +141,7 @@ export function Navbar() {
                         color: "black",
                         top: '20px',
                         right: '20px',
+
 
 
                     }}>

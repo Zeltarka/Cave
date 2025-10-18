@@ -84,7 +84,7 @@ export default function Boutique() {
                             e.currentTarget.style.boxShadow =
                                 "0 10px 20px rgba(36, 88, 111, 0.3)";
                             const text = e.currentTarget.querySelector(".overlay-text");
-                            if (text) text.style.opacity = "0.8";
+                            if (text) text.style.opacity = "0.9";
 
                         }}
                         onMouseLeave={(e) => {
@@ -102,7 +102,7 @@ export default function Boutique() {
                                     bottom: "0",
                                     left: "0",
                                     right: "0",
-                                    background: "linear-gradient(180deg, rgba(169, 183, 198, 0.5), rgba(122, 140, 153, 0.5), rgba(92, 109, 125, 0.5))",
+                                    backgroundColor: "#fff",
                                     backgroundSize: "230px 360px",
                                     animation: "gradientShift 5s ease-in-out infinite",
                                     display:'flex',
@@ -151,7 +151,7 @@ export default function Boutique() {
                             e.currentTarget.style.boxShadow =
                                 "0 10px 20px rgba(36, 88, 111, 0.3)";
                             const text = e.currentTarget.querySelector(".overlay-text");
-                            if (text) text.style.opacity = "0.8";
+                            if (text) text.style.opacity = "0.9";
 
                         }}
                         onMouseLeave={(e) => {
@@ -169,7 +169,7 @@ export default function Boutique() {
                                     bottom: "0",
                                     left: "0",
                                     right: "0",
-                                    background: "linear-gradient(180deg, rgba(169, 183, 198, 0.5), rgba(122, 140, 153, 0.5), rgba(92, 109, 125, 0.5))",
+                                    backgroundColor: "#fff",
                                     backgroundSize: "230px 360px",
                                     animation: "gradientShift 5s ease-in-out infinite",
                                     display:'flex',
