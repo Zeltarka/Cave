@@ -28,23 +28,6 @@ export default function Home() {
                 }}
                 onMouseLeave={() => setMousePos({ x: -200, y: -200 })}
             >
-                <div
-                    style={{
-                        position: "absolute",
-                        width: 100, // largeur du trait
-                        height: "100%", // hauteur du trait
-                        background: "linear-gradient(to bottom, rgba(255,255,255,0.8), rgba(255,255,255,0))",
-                        top: 0,
-                        left: "50%", // départ au milieu de la page
-                        transform: `translateX(-50%) translateY(0px) rotate(${Math.atan2(
-                            mousePos.y - 150,
-                            mousePos.x - window.innerWidth / 2
-                        )}rad)`,
-                        transformOrigin: "top center",
-                        pointerEvents: "none",
-                    }}
-                />
-
             <div style={{ position: "relative", top: 20, display: "flex", justifyContent: "flex-end", gap: 15 }}>
                 <Link href="/account">
                     <button
