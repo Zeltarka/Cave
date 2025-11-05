@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import {family} from "detect-libc";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import React, {useState} from "react";
@@ -19,55 +18,92 @@ import logo from "boutique.png"
 
 export function Navbar() {
     const [underline, setUnderline] = useState(false);
+    const [underline1, setUnderline1] = useState(false);
+    const [underline2, setUnderline2] = useState(false);
+    const [underline3, setUnderline3] = useState(false);
+    const [underline4, setUnderline4] = useState(false);
     const pathname = usePathname();
-    const showNavbar = pathname !== "/";
-    if (!showNavbar) return null;
+
     return (
+
         <div
-            className={montserrat.className}
-            onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateZ(50px) ";
-                e.currentTarget.style.boxShadow = "0 20px 20px rgba(36, 88, 111, 0.3)"  }}
-            onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0) translateZ(0)";
-                e.currentTarget.style.boxShadow = "none";}}
+
             style={{
 
-                transition: "box-shadow 0.3s ease",
-                backgroundColor: "#8ba9b7",
+
+                position:'relative',
+                backgroundColor: "rgba(250,245,241,0.4)",
                 color: "#24586f",
                 padding: "30px",
                 paddingTop: "0px",
                 paddingBottom: "0px",
                 paddingLeft: "10px",
-                fontSize: 22,
+                fontSize: 19,
                 display: "flex",
                 flexDirection: "row",
                 alignItems: "center",
-                justifyContent: "center",
-                textAnchor: "middle",
+
+
                 zIndex:'0'
+
             }}>
+            <div style={{flex:1, display: "flex", height: "10%", justifyContent: "center", alignItems: "center" }}>
+                <Link href='/'>
+                    <Image
+                        src="/Boutique.png"
+                        alt="Logo"
+                        width={250}
+                        height={250}
 
-
-            <div style={{display: "flex", position:'absolute', alignItems:"center", left:'50px'}}>
-                <Link href="/"
-                      style={{ textDecoration: underline ? "underline" : "none",cursor: "pointer",  }}
-                      onMouseEnter={() => setUnderline(true)}
-                      onMouseLeave={() => setUnderline(false)}>
-                    ← Accueil
+                    />
                 </Link>
             </div>
 
-            <div style={{ display: "flex",  height: "10%",  }}>
-                  <Image
-                    src="/Boutique.png"
-                    alt="Logo"
-                    width={250}
-                    height={250}
 
-                />
+
+            <div style={{position:'absolute',display: "flex", gap: "50px", alignItems: "center", justifyContent: "left",left:'8vh'}}>
+                <div style={{display: "flex", }}>
+                    <Link href="/notre-histoire"
+                          style={{ textDecoration: underline ? "underline" : "none",cursor: "pointer",  }}
+                          onMouseEnter={() => setUnderline(true)}
+                          onMouseLeave={() => setUnderline(false)}>
+                        Histoire
+                    </Link>
+                </div>
+
+                <div >
+
+                    <Link href="/la-cave"
+                          style={{ textDecoration: underline1 ? "underline" : "none", cursor: "pointer" }}
+                          onMouseEnter={() => setUnderline1(true)}
+                          onMouseLeave={() => setUnderline1(false)}>
+                        La Cave - Boutique
+                    </Link>
+                </div>
+                <div >
+
+                    <Link href="/rencontres-vignerons"
+                          style={{ textDecoration: underline2 ? "underline" : "none", cursor: "pointer" }}
+                          onMouseEnter={() => setUnderline2(true)}
+                          onMouseLeave={() => setUnderline2(false)}>
+                        Rencontres Vignerons
+                    </Link>
+                </div>
+
+
+
             </div>
+
+            <div style={{position:'absolute',display: "flex", gap: "60px", alignItems: "center", justifyContent: "right",right:'30vh'}}>
+                <Link href="/photos"
+                style={{ textDecoration: underline3 ? "underline" : "none", cursor : 'pointer'}}
+                onMouseEnter={() => setUnderline3(true)} onMouseLeave={() => setUnderline3(false)}>
+                Galerie Photo</Link>
+                <Link href="/contact"
+                      style={{textDecoration: underline4 ? "underline" : "none", cursor: 'pointer'}} onMouseEnter={()=>setUnderline4(true)} onMouseLeave={() => setUnderline4(false)}>
+                    Contact</Link>
+            </div>
+
 
 
 
@@ -82,47 +118,7 @@ export function Navbar() {
             }}
             >
 
-            <div
-                style={{
-                    display: "flex",
-                    flexDirection: "row",
 
-                    left: '750px',
-
-                }}>
-                <Link href="https://www.instagram.com/la_cave_la_garenne/">
-                      <button
-                      style={{
-                          backgroundImage: "url('/insta.png')",
-                          width: "20px",
-                          height: "20px",
-                          position: "fixed",
-                          zIndex:'10',
-                          backgroundColor:'transparent',
-                          top:'40px',
-                          backgroundSize:'cover',
-                          left:'1425px',
-                          cursor:'pointer',
-
-                      }}/>
-                </Link>
-                <Link href="https://fr.linkedin.com/company/lacavelagarenne">
-                    <button
-                        style={{
-                            backgroundImage: "url('/linkedin.png')",
-                            width: "25px",
-                            height: "25px",
-                            position: "fixed",
-                            zIndex:'10',
-                            backgroundColor:'transparent',
-                            top:'70px',
-                            backgroundSize:'cover',
-                            left:'1423px',
-                            cursor:'pointer',
-
-                        }}/>
-                </Link>
-            </div>
 
                 <Link href="/account">
                     <button style={{
@@ -134,7 +130,7 @@ export function Navbar() {
                         height: "45px",
                         width: "45px",
                         borderRadius: "100px",
-                        backgroundColor: '#8ba9b7',
+
                         cursor: "pointer",
                         fontSize: "20px",
                         backgroundSize: "cover",
@@ -158,23 +154,27 @@ export function Navbar() {
                         backgroundImage: "url('/market-icon.png')",
                         height: "45px",
                         width: "45px",
-                        borderRadius: "100px",
-                        backgroundColor: '#8ba9b7',
+
+
                         cursor: "pointer",
                         fontSize: "20px",
-                        backgroundSize: '35px',
-                        backgroundPositionX: '5px',
+                        backgroundSize: '60px',
+                        backgroundPositionX: '0px',
                         color: "black",
                         top: '20px',
                         right: '75px',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'center',
 
 
                     }}>
 
+
                     </button>
                 </Link>
             </div>
-
         </div>
+
+
     );
 }
