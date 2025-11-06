@@ -15,13 +15,14 @@ export default function Boutique() {
                 textAlign: "center",
                 color: "#24586f",
                 fontSize: "40px",
-                marginTop: "80px",
+
             }}
         >
             <h1
                 style={{
+                    marginTop: "40px",
                     fontSize: "40px",
-                    marginBottom: "60px",
+                    marginBottom: "30px",
                 }}
             >
                 Nos Produits
@@ -38,7 +39,7 @@ export default function Boutique() {
                     opacity: "0.75",
                 }}
             >
-                <Image
+                {/*        <Image
                     src="/bouteille.jpg"
                     height={3000}
                     width={3000}
@@ -48,7 +49,7 @@ export default function Boutique() {
                         width: "100%",
                         height: "100%",
                     }}
-                />
+                />     */}
             </div>
 
 
@@ -58,9 +59,9 @@ export default function Boutique() {
                     justifyContent: "center",
                     alignItems: "center",
                     gap: "300px",
-                    marginTop: "40px",
+
                     position: "absolute",
-                    top:'300px'
+                    top:'32vh'
                 }}
             >
 
@@ -72,15 +73,15 @@ export default function Boutique() {
                             backgroundSize: "cover",
                             backgroundPosition: "center",
                             border: "1px solid #24586f",
-                            width: "230px",
-                            height: "360px",
+                            width: "40vh",
+                            height: "60vh",
                             borderRadius: "20px",
                             cursor: "pointer",
                             transition: "transform 0.4s ease, box-shadow 0.4s ease",
                             overflow: "hidden",
                         }}
                         onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = "translateZ(-30px) translateY(-30px) ";
+                        //    e.currentTarget.style.transform = "translateZ(-30px) translateY(-30px) ";
                             e.currentTarget.style.boxShadow =
                                 "0 10px 20px rgba(36, 88, 111, 0.3)";
                             const text = e.currentTarget.querySelector(".overlay-text");
@@ -88,7 +89,7 @@ export default function Boutique() {
 
                         }}
                         onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = "translateY(0) translateZ(0)";
+                        //    e.currentTarget.style.transform = "translateY(0) translateZ(0)";
                             e.currentTarget.style.boxShadow = "none";
                             const text = e.currentTarget.querySelector(".overlay-text");
                             if (text) text.style.opacity = "0";
@@ -139,15 +140,15 @@ export default function Boutique() {
                             backgroundSize: "cover",
                             backgroundPosition: "center",
                             border: "1px solid #24586f",
-                            width: "230px",
-                            height: "360px",
+                            width: "40vh",
+                            height: "60vh",
                             borderRadius: "20px",
                             cursor: "pointer",
                             transition: "transform 0.4s ease, box-shadow 0.4s ease",
                             overflow: "hidden",
                         }}
                         onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = "translateZ(-30px) translateY(-30px) ";
+                       //     e.currentTarget.style.transform = "translateZ(-30px) translateY(-30px) ";
                             e.currentTarget.style.boxShadow =
                                 "0 10px 20px rgba(36, 88, 111, 0.3)";
                             const text = e.currentTarget.querySelector(".overlay-text");
@@ -155,7 +156,7 @@ export default function Boutique() {
 
                         }}
                         onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = "translateY(0) translateZ(0)";
+                         //   e.currentTarget.style.transform = "translateY(0) translateZ(0)";
                             e.currentTarget.style.boxShadow = "none";
                             const text = e.currentTarget.querySelector(".overlay-text");
                             if (text) text.style.opacity = "0";
