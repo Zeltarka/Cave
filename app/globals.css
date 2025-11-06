@@ -36,6 +36,11 @@
     }
 }
 
+:root {
+    --font-montserrat: 'Montserrat', sans-serif;
+}
+
+
 body {
     font-family: Montserrat, sans-serif;
 }
