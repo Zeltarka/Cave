@@ -9,7 +9,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
         success: true,
-        message: `Carte cadeau enregistrée pour ${name} (${montant}€)`,
+        message: `Carte cadeau enregistrée de ${montant}€`,
         data,
     });
 }
