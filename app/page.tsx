@@ -22,6 +22,7 @@ export default function Home() {
             <Image
                 src="/main.jpeg"
                 fill
+                alt={"boutique"}
                 style={{
                     objectFit: "cover",
                 }}
