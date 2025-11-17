@@ -50,7 +50,7 @@ export function Navbar() {
             <div style={{flex:1, display: "flex", height: "10%", justifyContent: "center", alignItems: "center" }}>
                 <Link href='/'>
                     <Image
-                        src="/Boutique.png"
+                        src="/boutique.png"
                         alt="Logo"
                         width={250}
                         height={250}
@@ -61,9 +61,9 @@ export function Navbar() {
 
 
 
-            <div style={{position:'absolute',display: "flex", gap: "50px", alignItems: "center", justifyContent: "left",left:'8vh'}}>
+            <div style={{position:'absolute',display: "flex", gap: "50px", alignItems: "center", justifyContent: "left", left: '6vh'}}>
                 <div style={{display: "flex", }}>
-                    <Link href="/notre-histoire"
+                    <Link href="/histoire"
                           style={{ textDecoration: underline ? "underline" : "none",cursor: "pointer",  }}
                           onMouseEnter={() => setUnderline(true)}
                           onMouseLeave={() => setUnderline(false)}>
@@ -114,30 +114,33 @@ export function Navbar() {
                 justifyContent: "right",
                 height: "10px",
                 position: "relative",
-                top: '20px',
+                alignItems:'center',
+                gap:"4vh",
             }}
             >
 
 
 
-                <Link href="/account">
+                <Link href="/panier">
                     <button style={{
-                        position: "fixed",
+                        position: "relative",
 
 
-                        zIndex:20,
-                        backgroundImage: "url('/profil.png')",
-                        height: "45px",
-                        width: "45px",
-                        borderRadius: "100px",
+                        zIndex:10,
+                        backgroundImage: "url('/market-icon.png')",
+                        height: "5vh",
+                        width: "5vh",
+
 
                         cursor: "pointer",
                         fontSize: "20px",
-                        backgroundSize: "cover",
+                        backgroundSize: 'cover',
+                        backgroundPositionX: '0px',
                         color: "black",
-                        top: '20px',
-                        right: '20px',
-
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'center',
+                        alignItems: 'center',
+                        justifyContent: 'center',
 
 
                     }}>
@@ -145,26 +148,23 @@ export function Navbar() {
 
                     </button>
                 </Link>
-                <Link href="/market">
+                <Link href="/compte">
                     <button style={{
-                        position: "fixed",
+                        position: "relative",
 
 
-                        zIndex:10,
-                        backgroundImage: "url('/market-icon.png')",
-                        height: "45px",
-                        width: "45px",
-
+                        zIndex:20,
+                        backgroundImage: "url('/profil.png')",
+                        height: "6vh",
+                        width: "6vh",
+                        borderRadius: "100px",
 
                         cursor: "pointer",
                         fontSize: "20px",
-                        backgroundSize: '60px',
-                        backgroundPositionX: '0px',
+                        backgroundSize: "cover",
                         color: "black",
-                        top: '20px',
-                        right: '75px',
-                        backgroundRepeat: 'no-repeat',
-                        backgroundPosition: 'center',
+                        right: '20px',
+
 
 
                     }}>

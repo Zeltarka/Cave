@@ -65,7 +65,7 @@ export default function Boutique() {
                 }}
             >
 
-                <Link href="/champagne">
+                <Link href="/boutique/champagne">
                     <button
                         style={{
                             position: "relative",
@@ -132,7 +132,7 @@ export default function Boutique() {
                 </Link>
 
 
-                <Link href="/rose">
+                <Link href="/boutique/rose">
                     <button
                         style={{
                             position: "relative",
