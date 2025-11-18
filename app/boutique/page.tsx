@@ -84,17 +84,15 @@ export default function Boutique() {
                             overflow: "hidden",
                         }}
                         onMouseEnter={(e) => {
-                        //    e.currentTarget.style.transform = "translateZ(-30px) translateY(-30px) ";
                             e.currentTarget.style.boxShadow =
                                 "0 10px 20px rgba(36, 88, 111, 0.3)";
-                            const text = e.currentTarget.querySelector(".overlay-text");
+                            const text = e.currentTarget.querySelector<HTMLElement>(".overlay-text");
                             if (text) text.style.opacity = "0.9";
 
                         }}
                         onMouseLeave={(e) => {
-                        //    e.currentTarget.style.transform = "translateY(0) translateZ(0)";
                             e.currentTarget.style.boxShadow = "none";
-                            const text = e.currentTarget.querySelector(".overlay-text");
+                            const text = e.currentTarget.querySelector<HTMLElement>(".overlay-text");
                             if (text) text.style.opacity = "0";
                         }}
                     >
@@ -123,11 +121,6 @@ export default function Boutique() {
                                     fontWeight: "bold",
                                     fontSize: "20px",
                                     color:"black",
-
-
-
-
-
                                 }}
                             >Champagne <br/> 29.90€
                             </span>
@@ -155,17 +148,15 @@ export default function Boutique() {
                             overflow: "hidden",
                         }}
                         onMouseEnter={(e) => {
-                       //     e.currentTarget.style.transform = "translateZ(-30px) translateY(-30px) ";
                             e.currentTarget.style.boxShadow =
                                 "0 10px 20px rgba(36, 88, 111, 0.3)";
-                            const text = e.currentTarget.querySelector(".overlay-text");
+                            const text = e.currentTarget.querySelector<HTMLElement>(".overlay-text");
                             if (text) text.style.opacity = "0.9";
 
                         }}
                         onMouseLeave={(e) => {
-                         //   e.currentTarget.style.transform = "translateY(0) translateZ(0)";
                             e.currentTarget.style.boxShadow = "none";
-                            const text = e.currentTarget.querySelector(".overlay-text");
+                            const text = e.currentTarget.querySelector<HTMLElement>(".overlay-text");
                             if (text) text.style.opacity = "0";
                         }}
                     >
@@ -177,7 +168,6 @@ export default function Boutique() {
                                     bottom: "0",
                                     left: "0",
                                     right: "0",
-                                //    backgroundColor: "#fff",
                                     backgroundColor: "#8f8d8d",
                                     backgroundSize: "230px 360px",
                                     animation: "gradientShift 5s ease-in-out infinite",
@@ -195,11 +185,6 @@ export default function Boutique() {
                                     fontWeight: "bold",
                                     fontSize: "20px",
                                     color:"black",
-
-
-
-
-
                                 }}
                             >Disponible en avril 2026 <br/><br/><br/><br/>  Rosé <br/> 9.90€
                             </span>
