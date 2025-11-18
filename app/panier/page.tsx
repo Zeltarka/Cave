@@ -11,6 +11,7 @@ type Produit = {
 export default function PanierPage() {
     const [panier, setPanier] = useState<Produit[]>([]);
 
+    // Charger le panier depuis l'API
     const fetchPanier = async () => {
         try {
             const res = await fetch("/api/commandes");
@@ -25,8 +26,15 @@ export default function PanierPage() {
         fetchPanier();
     }, []);
 
+    // Sauvegarder le panier dans localStorage à chaque changement
+    useEffect(() => {
+        if (panier.length > 0) {
+            localStorage.setItem("panier", JSON.stringify(panier));
+        }
+    }, [panier]);
+
     const maxQuantite = (produit: Produit) => {
-        if (produit.produit === "Carte cadeau") return 20;
+        if (produit.produit === "Carte cadeau") return 10;
         if (produit.produit === "Champagne" || produit.produit === "Rosé") return 180;
         return 999;
     };
@@ -35,10 +43,9 @@ export default function PanierPage() {
         const produit = panier.find((p) => p.id === id);
         if (!produit) return;
 
-        const maxQ = maxQuantite(produit);
-        const q = Math.max(0, Math.min(nouvelleQuantite, maxQ));
-
-        setPanier((prev) => prev.map((p) => (p.id === id ? { ...p, quantite: q } : p)));
+        const q = Math.max(0, Math.min(nouvelleQuantite, maxQuantite(produit)));
+        const updatedPanier = panier.map((p) => (p.id === id ? { ...p, quantite: q } : p));
+        setPanier(updatedPanier);
 
         try {
             await fetch("/api/commandes", {
@@ -52,7 +59,9 @@ export default function PanierPage() {
     };
 
     const supprimerProduit = async (id: string) => {
-        setPanier((prev) => prev.filter((p) => p.id !== id));
+        const updatedPanier = panier.filter((p) => p.id !== id);
+        setPanier(updatedPanier);
+
         try {
             await fetch("/api/commandes", {
                 method: "DELETE",

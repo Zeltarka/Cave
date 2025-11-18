@@ -28,6 +28,9 @@ export default function Boutique() {
                 Nos Produits
             </h1>
 
+            <p style={{fontSize:'18px', color:'black',}}>Tout se passe au 3 rue Voltaire à La Garenne ! Nous avons cependant 2 produits de notre propre marque que nous vendons en ligne.
+            </p>
+
 
             <div
                 style={{
@@ -61,7 +64,8 @@ export default function Boutique() {
                     gap: "300px",
 
                     position: "absolute",
-                    top:'32vh'
+                    top:'32vh',
+                    marginTop:'6vh',
                 }}
             >
 
@@ -126,7 +130,7 @@ export default function Boutique() {
 
 
                                 }}
-                            >Champagne <br/> x€
+                            >Champagne <br/> 29.90€
                             </span>
                     </button>
                 </Link>
@@ -134,6 +138,10 @@ export default function Boutique() {
 
                 <Link href="/boutique/rose">
                     <button
+                        onClick={(e) => {
+                            e.preventDefault();     // empêche la navigation
+                            e.stopPropagation();    // empêche la propagation
+                        }}
                         style={{
                             position: "relative",
                             backgroundImage: 'url("/rose.jpg")',
@@ -143,7 +151,7 @@ export default function Boutique() {
                             width: "40vh",
                             height: "60vh",
                             borderRadius: "20px",
-                            cursor: "pointer",
+                            cursor: "not-allowed",
                             transition: "transform 0.4s ease, box-shadow 0.4s ease",
                             overflow: "hidden",
                         }}
@@ -170,7 +178,8 @@ export default function Boutique() {
                                     bottom: "0",
                                     left: "0",
                                     right: "0",
-                                    backgroundColor: "#fff",
+                                //    backgroundColor: "#fff",
+                                    backgroundColor: "#8f8d8d",
                                     backgroundSize: "230px 360px",
                                     animation: "gradientShift 5s ease-in-out infinite",
                                     display:'flex',
@@ -193,7 +202,7 @@ export default function Boutique() {
 
 
                                 }}
-                            >Rosé <br/> x€
+                            >Disponible en avril 2026 <br/><br/><br/><br/>  Rosé <br/> 9.90€
                             </span>
                     </button>
                 </Link>

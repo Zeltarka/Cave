@@ -77,7 +77,7 @@ export function Navbar() {
                           style={{ textDecoration: underline1 ? "underline" : "none", cursor: "pointer" }}
                           onMouseEnter={() => setUnderline1(true)}
                           onMouseLeave={() => setUnderline1(false)}>
-                        La Cave - Boutique
+                        La Cave
                     </Link>
                 </div>
                 <div >
@@ -94,16 +94,15 @@ export function Navbar() {
 
             </div>
 
-            <div style={{position:'absolute',display: "flex", gap: "60px", alignItems: "center", justifyContent: "right",right:'30vh'}}>
-                <Link href="/photos"
+              <div style={{position:'absolute',display: "flex", gap: "60px", alignItems: "center", justifyContent: "right",right:'30vh'}}>
+                  {/*    <Link href="/photos"
                 style={{ textDecoration: underline3 ? "underline" : "none", cursor : 'pointer'}}
                 onMouseEnter={() => setUnderline3(true)} onMouseLeave={() => setUnderline3(false)}>
-                Galerie Photo</Link>
+                Galerie Photo</Link>  */}
                 <Link href="/contact"
                       style={{textDecoration: underline4 ? "underline" : "none", cursor: 'pointer'}} onMouseEnter={()=>setUnderline4(true)} onMouseLeave={() => setUnderline4(false)}>
                     Contact</Link>
             </div>
-
 
 
 
@@ -115,7 +114,7 @@ export function Navbar() {
                 height: "10px",
                 position: "relative",
                 alignItems:'center',
-                gap:"4vh",
+                right:'8vh'
             }}
             >
 
@@ -148,30 +147,7 @@ export function Navbar() {
 
                     </button>
                 </Link>
-                <Link href="/compte">
-                    <button style={{
-                        position: "relative",
 
-
-                        zIndex:20,
-                        backgroundImage: "url('/profil.png')",
-                        height: "6vh",
-                        width: "6vh",
-                        borderRadius: "100px",
-
-                        cursor: "pointer",
-                        fontSize: "20px",
-                        backgroundSize: "cover",
-                        color: "black",
-                        right: '20px',
-
-
-
-                    }}>
-
-
-                    </button>
-                </Link>
             </div>
         </div>
 

@@ -55,7 +55,16 @@ export default function CarteCadeauPage() {
                 }
             }
 
-            setMessage("Cartes cadeaux ajoutées au panier !");
+            // Calculer le nombre total de cartes ajoutées
+            const totalCartes = selections.reduce((sum, item) => sum + item.quantite, 0);
+
+// Après avoir ajouté au panier avec succès
+            setMessage(
+                totalCartes === 1
+                    ? "1 carte cadeau ajoutée au panier !"
+                    : `${totalCartes} cartes cadeaux ajoutées au panier !`
+            );
+
             setQuantites({ 25: 0, 50: 0, 75: 0, 100: 0 });
         } catch (err) {
             console.error(err);
