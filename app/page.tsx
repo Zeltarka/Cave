@@ -1,32 +1,24 @@
-"use client";
-
 import Image from "next/image";
-import Link from "next/link";
-import React, { useState } from "react";
-
 
 export default function Home() {
-    const [mousePos, setMousePos] = useState({ x: -200, y: -200 });
-
     return (
         <div
             style={{
                 position: "relative",
                 width: "100%",
-                height: "70vh",
+                height: "70dvh",
                 marginTop: "5vh",
-                marginBottom: "auto",
-
             }}
         >
             <Image
                 src="/main.jpeg"
                 fill
-                alt={"boutique"}
+                priority
+                alt={"page d'accueil"}
                 style={{
                     objectFit: "cover",
+                    objectPosition: "center top",
                 }}
-
             />
         </div>
     );
