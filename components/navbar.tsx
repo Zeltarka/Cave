@@ -5,16 +5,6 @@ import { usePathname } from "next/navigation";
 import React, {useState} from "react";
 
 
-import { Montserrat } from "next/font/google"; // 🔹 IMPORT
-
-// Création de la police
-const montserrat = Montserrat({
-    subsets: ["latin"],
-    weight: ["400", "600"],
-});
-
-
-import logo from "boutique.png"
 
 export function Navbar() {
     const [underline, setUnderline] = useState(false);
@@ -50,7 +40,7 @@ export function Navbar() {
             <div style={{flex:1, display: "flex", height: "10%", justifyContent: "center", alignItems: "center" }}>
                 <Link href='/'>
                     <Image
-                        src="/Boutique.png"
+                        src="/boutique.png"
                         alt="Logo"
                         width={250}
                         height={250}
@@ -61,9 +51,9 @@ export function Navbar() {
 
 
 
-            <div style={{position:'absolute',display: "flex", gap: "50px", alignItems: "center", justifyContent: "left",left:'8vh'}}>
+            <div style={{position:'absolute',display: "flex", gap: "50px", alignItems: "center", justifyContent: "left", left: '6vh'}}>
                 <div style={{display: "flex", }}>
-                    <Link href="/notre-histoire"
+                    <Link href="/histoire"
                           style={{ textDecoration: underline ? "underline" : "none",cursor: "pointer",  }}
                           onMouseEnter={() => setUnderline(true)}
                           onMouseLeave={() => setUnderline(false)}>
@@ -77,7 +67,7 @@ export function Navbar() {
                           style={{ textDecoration: underline1 ? "underline" : "none", cursor: "pointer" }}
                           onMouseEnter={() => setUnderline1(true)}
                           onMouseLeave={() => setUnderline1(false)}>
-                        La Cave - Boutique
+                        La Cave
                     </Link>
                 </div>
                 <div >
@@ -94,16 +84,15 @@ export function Navbar() {
 
             </div>
 
-            <div style={{position:'absolute',display: "flex", gap: "60px", alignItems: "center", justifyContent: "right",right:'30vh'}}>
-                <Link href="/photos"
+              <div style={{position:'absolute',display: "flex", gap: "60px", alignItems: "center", justifyContent: "right",right:'30vh'}}>
+                  {/*    <Link href="/photos"
                 style={{ textDecoration: underline3 ? "underline" : "none", cursor : 'pointer'}}
                 onMouseEnter={() => setUnderline3(true)} onMouseLeave={() => setUnderline3(false)}>
-                Galerie Photo</Link>
+                Galerie Photo</Link>  */}
                 <Link href="/contact"
                       style={{textDecoration: underline4 ? "underline" : "none", cursor: 'pointer'}} onMouseEnter={()=>setUnderline4(true)} onMouseLeave={() => setUnderline4(false)}>
                     Contact</Link>
             </div>
-
 
 
 
@@ -114,57 +103,33 @@ export function Navbar() {
                 justifyContent: "right",
                 height: "10px",
                 position: "relative",
-                top: '20px',
+                alignItems:'center',
+                right:'8vh'
             }}
             >
 
 
 
-                <Link href="/account">
+                <Link href="/panier">
                     <button style={{
-                        position: "fixed",
-
-
-                        zIndex:20,
-                        backgroundImage: "url('/profil.png')",
-                        height: "45px",
-                        width: "45px",
-                        borderRadius: "100px",
-
-                        cursor: "pointer",
-                        fontSize: "20px",
-                        backgroundSize: "cover",
-                        color: "black",
-                        top: '20px',
-                        right: '20px',
-
-
-
-                    }}>
-
-
-                    </button>
-                </Link>
-                <Link href="/market">
-                    <button style={{
-                        position: "fixed",
+                        position: "relative",
 
 
                         zIndex:10,
                         backgroundImage: "url('/market-icon.png')",
-                        height: "45px",
-                        width: "45px",
+                        height: "5vh",
+                        width: "5vh",
 
 
                         cursor: "pointer",
                         fontSize: "20px",
-                        backgroundSize: '60px',
+                        backgroundSize: 'cover',
                         backgroundPositionX: '0px',
                         color: "black",
-                        top: '20px',
-                        right: '75px',
                         backgroundRepeat: 'no-repeat',
                         backgroundPosition: 'center',
+                        alignItems: 'center',
+                        justifyContent: 'center',
 
 
                     }}>
@@ -172,6 +137,7 @@ export function Navbar() {
 
                     </button>
                 </Link>
+
             </div>
         </div>
 
