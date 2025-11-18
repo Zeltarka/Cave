@@ -28,7 +28,7 @@ export default function Page() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    id: "rosé",
+                    id: "rose",
                     produit: "Rosé La Cave",
                     quantite: quantitec,
                     prix: 30,
@@ -45,14 +45,14 @@ export default function Page() {
 
             setTimeout(() => setDisabled(false), 3000);
         } catch (err) {
-            setMessage("Erreur : impossible d'ajouter le produit.");
+            setMessage("Erreur : impossible d’ajouter le produit.");
             setTimeout(() => setDisabled(false), 3000);
         }
     };
 
     return (
         <div style={{ display: "flex", textAlign: "left" }}>
-            {/* Lien boutique */}
+            {/* Retour boutique */}
             <Link href="/boutique">
                 <p
                     style={{
@@ -76,7 +76,7 @@ export default function Page() {
                 style={{
                     backgroundSize: "cover",
                     backgroundPosition: "center center",
-                    backgroundImage: 'url("rose.jpg")',
+                    backgroundImage: 'url("/rose.jpg")',
                     border: "1px solid #24586f",
                     width: "400px",
                     height: "600px",
@@ -110,7 +110,7 @@ export default function Page() {
                     Description produit
                 </p>
 
-                {/* Bouton Ajouter au panier */}
+                {/* Bouton */}
                 <button
                     onClick={ajouterAuPanier}
                     disabled={disabled}
@@ -134,16 +134,14 @@ export default function Page() {
                     Ajouter au panier
                 </button>
 
-                {/* Message sous le bouton */}
+                {/* Message */}
                 <div
                     style={{
                         position: "absolute",
                         top: "480px",
                         left: "100px",
-                        overflow: "visible",
                         maxWidth: "600px",
-                        whiteSpace :'nowrap',
-
+                        whiteSpace: "nowrap",
                     }}
                 >
                     {message && (

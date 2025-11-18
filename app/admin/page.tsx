@@ -54,7 +54,7 @@ function AdminContent() {
         <div className="p-6">
             <h1 className="text-3xl font-bold mb-4">Admin Panel</h1>
             <p className="text-base">
-                Bienvenue sur la zone d'administration sécurisée, {session.user?.name}.
+                Bienvenue sur la zone d administration sécurisée, {session.user?.name}.
             </p>
         </div>
     );

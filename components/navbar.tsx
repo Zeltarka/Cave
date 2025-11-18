@@ -5,16 +5,6 @@ import { usePathname } from "next/navigation";
 import React, {useState} from "react";
 
 
-import { Montserrat } from "next/font/google"; // 🔹 IMPORT
-
-// Création de la police
-const montserrat = Montserrat({
-    subsets: ["latin"],
-    weight: ["400", "600"],
-});
-
-
-import logo from "boutique.png"
 
 export function Navbar() {
     const [underline, setUnderline] = useState(false);

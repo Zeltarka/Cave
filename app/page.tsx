@@ -1,8 +1,6 @@
 import Image from "next/image";
 
-
 export default function Home() {
-
     return (
         <div
             style={{
@@ -10,7 +8,6 @@ export default function Home() {
                 width: "100%",
                 height: "70dvh",
                 marginTop: "5vh",
-
             }}
         >
             <Image
@@ -20,9 +17,8 @@ export default function Home() {
                 alt={"page d'accueil"}
                 style={{
                     objectFit: "cover",
-                    objectPosition: "center top"
+                    objectPosition: "center top",
                 }}
-
             />
         </div>
     );

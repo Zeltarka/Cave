@@ -24,7 +24,7 @@ export default function Page() {
         setDisabled(true);
 
         try {
-            const res = await fetch("/api/commandes", {
+            const res = await fetch(("/api/commandes"), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -39,8 +39,8 @@ export default function Page() {
 
             setMessage(
                 quantitec === 1
-                    ? `${quantitec} bouteille ajoutée au panier !`
-                    : `${quantitec} bouteilles ajoutées au panier !`
+                    ? (`${quantitec} bouteille ajoutée au panier !`)
+                    : (`${quantitec} bouteilles ajoutées au panier !`)
             );
 
             setTimeout(() => setDisabled(false), 3000);
@@ -76,7 +76,7 @@ export default function Page() {
                 style={{
                     backgroundSize: "cover",
                     backgroundPosition: "center center",
-                    backgroundImage: 'url("champagne.jpg")',
+                    backgroundImage: 'url(champagne.jpg)',
                     border: "1px solid #24586f",
                     width: "400px",
                     height: "600px",
