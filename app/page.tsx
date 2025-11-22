@@ -11,7 +11,7 @@ export default function Home() {
             }}
         >
             <Image
-                src="/main.jpeg"
+                src="/main.jpg"
                 fill
                 priority
                 alt={"page d'accueil"}
