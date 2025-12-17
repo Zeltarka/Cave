@@ -27,14 +27,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
                                        children,
-                                   }: Readonly<{
-    children: React.ReactNode;
-}>) {
+                                   }: Readonly<{ children: React.ReactNode }>) {
     return (
         <html lang="fr">
-        <body className={`${montserrat.variable} antialiased`}>
+        <body className={`${montserrat.variable} antialiased`} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', margin: 0 }}>
         <Navbar />
-        <main style={{ minHeight: "100vh" }}>{children}</main>
+        <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            {children}
+        </main>
         </body>
         </html>
     );
