@@ -14,7 +14,7 @@ type Commande = {
     email: string;
     adresse: string;
     ville: string;
-    codeposta: string;
+    codepostal: string;
 };
 
 export default function PanierPage() {

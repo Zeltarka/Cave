@@ -21,8 +21,14 @@ export async function POST(req: Request) {
         console.log("SMTP OK");
 
         // Préparer le contenu du panier en HTML
-        const lignesPanier = panier.map((p: any) =>
-            `<li>${p.produit} x ${p.quantite} — ${p.prix * p.quantite} €</li>`
+        type Produit = {
+            id: string;
+            produit: string;
+            quantite: number;
+            prix: number;
+        };
+        const lignesPanier = panier.map((p: Produit) =>
+            `<li>${p.produit || "Produit inconnu"} x ${p.quantite || 0} — ${p.prix && p.quantite ? p.prix * p.quantite : 0} €</li>`
         ).join("");
 
         // --- Mail au client ---
