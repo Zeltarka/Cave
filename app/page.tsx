@@ -6,7 +6,7 @@ export default function Home() {
             style={{
                 position: "relative",
                 width: "100%",
-                height: "70dvh",
+                height: "60dvh",
                 marginTop: "5vh",
             }}
         >
@@ -20,21 +20,6 @@ export default function Home() {
                     objectPosition: "center top",
                 }}
             />
-            <div
-                style={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
-                    color: "#fff",
-                    textAlign: "center",
-                    width: "90%",
-                    fontSize: "clamp(1.5rem, 4vw, 3rem)",
-                    fontWeight: "bold",
-                }}
-            >
-
-            </div>
         </div>
     );
 }

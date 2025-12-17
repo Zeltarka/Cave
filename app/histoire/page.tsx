@@ -8,6 +8,7 @@ export default function page(){
                 paddingLeft: '20vh',
                 paddingTop:'10vh',
                 paddingRight: '30vh',
+                color:"black",
 
 
             }}>
