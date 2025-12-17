@@ -31,7 +31,7 @@ export default function Page() {
                     id: "rose",
                     produit: "Rosé La Cave",
                     quantite: quantitec,
-                    prix: 30,
+                    prix: 9.90,
                 }),
             });
 
@@ -51,175 +51,118 @@ export default function Page() {
     };
 
     return (
-        <div style={{ display: "flex", textAlign: "left" }}>
-            {/* Retour boutique */}
-            <Link href="/boutique">
-                <p
-                    style={{
-                        color: "black",
-                        fontSize: "17px",
-                        position: "absolute",
-                        top: "155px",
-                        left: "30px",
-                        textDecoration: underline ? "underline" : "none",
-                        cursor: "pointer",
-                    }}
-                    onMouseEnter={() => setUnderline(true)}
-                    onMouseLeave={() => setUnderline(false)}
-                >
-                    ← Nos Produits
-                </p>
-            </Link>
+        <>
+            <div style={{display: "inline-block"}}>
+                <Link href="/boutique">
+                    <span
+                        style={{
+                            position: "relative",
+                            left: "30px",
+                            top: "0px",
+                            color: "black",
+                            fontSize: "17px",
+                            textDecoration: underline ? "underline" : "none",
+                            cursor: "pointer",
+                            zIndex: 10,
+                        }}
+                        onMouseEnter={() => setUnderline(true)}
+                        onMouseLeave={() => setUnderline(false)}
+                    >
+                        ← Nos Produits
+                    </span>
+                </Link> </div>
 
-            {/* Image produit */}
             <div
                 style={{
-                    backgroundSize: "cover",
-                    backgroundPosition: "center center",
-                    backgroundImage: 'url("/rose.jpg")',
-                    border: "1px solid #24586f",
-                    width: "400px",
-                    height: "600px",
-                    borderRadius: "20px",
-                    position: "absolute",
-                    left: "200px",
-                    top: "200px",
-                }}
-            />
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "flex-start",
+                    gap: "50px",
+                    paddingTop: "40px",
 
-            {/* Bloc texte */}
-            <div
-                style={{
-                    position: "absolute",
-                    left: "750px",
-                    top: "250px",
-                    color: "#24586f",
                 }}
             >
-                <h1 style={{ fontSize: "30px" }}>Rosé La Cave</h1>
-
-                <p
-                    style={{
-                        fontSize: "18px",
-                        position: "absolute",
-                        left: "25px",
-                        top: "100px",
-                        color: "black",
-                    }}
-                >
-                    Description produit
-                </p>
-
-                {/* Bouton */}
-                <button
-                    onClick={ajouterAuPanier}
-                    disabled={disabled}
-                    style={{
-                        width: "170px",
-                        height: "70px",
-                        left: "100px",
-                        top: "400px",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        cursor: disabled ? "not-allowed" : "pointer",
-                        display: "flex",
-                        backgroundColor: "#8ba9b7",
-                        border: "1px solid #24586f",
-                        borderRadius: "20px",
-                        position: "absolute",
-                        color: "white",
-                        opacity: disabled ? 0.6 : 1,
-                    }}
-                >
-                    Ajouter au panier
-                </button>
-
-                {/* Message */}
                 <div
                     style={{
-                        position: "absolute",
-                        top: "480px",
-                        left: "100px",
-                        maxWidth: "600px",
-                        whiteSpace: "nowrap",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        backgroundImage: 'url("/rose.jpg")',
+                        border: "1px solid #24586f",
+                        width: "400px",
+                        height: "540px",
+                        borderRadius: "20px",
+                        flexShrink: 0,
                     }}
-                >
-                    {message && (
-                        <p
+                />
+
+                <div style={{ display: "flex", gap: "40px", maxWidth: "1000px" }}>
+                    <div
+                        style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "18px",
+                            maxWidth: "600px",
+                        }}
+                    >
+                        <h1 style={{ fontSize: "30px", color: "#24586f" }}>
+                            Rosé La Cave
+                        </h1>
+
+                        <p style={{ fontSize: "18px", color: "black" }}>
+
+                            <br /><br />9.90€
+                        </p>
+                    </div>
+
+                    <div
+                        style={{
+                            border: "1px solid #24586f",
+                            borderRadius: "20px",
+                            padding: "25px",
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            alignContent: "center",
+                            justifyItems: "center",
+                            gap: "25px",
+                            height: "fit-content",
+                        }}
+                    >
+                        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                            <button onClick={diminuer} style={{ width: 50, height: 50, fontSize: 24, borderRadius: 10 }}>−</button>
+                            <input
+                                type="number"
+                                value={quantitec}
+                                onChange={handleChange}
+                                min={1}
+                                max={MAX_QUANTITE}
+                                style={{ width: 70, height: 50, textAlign: "center", fontSize: 18, borderRadius: 10 }}
+                            />
+                            <button onClick={augmenter} style={{ width: 50, height: 50, fontSize: 24, borderRadius: 10 }}>+</button>
+                        </div>
+
+                        <button
+                            onClick={ajouterAuPanier}
+                            disabled={disabled}
                             style={{
-                                color: "#24586f",
-                                fontSize: "16px",
-                                margin: 0,
+                                width: 170,
+                                height: 70,
+                                backgroundColor: "#8ba9b7",
+                                border: "1px solid #24586f",
+                                borderRadius: 20,
+                                color: "white",
+                                cursor: disabled ? "not-allowed" : "pointer",
+                                opacity: disabled ? 0.6 : 1,
                             }}
                         >
-                            {message}
-                        </p>
-                    )}
-                </div>
+                            Ajouter au panier
+                        </button>
 
-                {/* Quantité */}
-                <div
-                    style={{
-                        top: "300px",
-                        width: "300px",
-                        height: "70px",
-                        display: "flex",
-                        backgroundColor: "white",
-                        border: "1px solid #24586f",
-                        borderRadius: "20px",
-                        position: "absolute",
-                        left: "10px",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "10px",
-                    }}
-                >
-                    <button
-                        onClick={diminuer}
-                        style={{
-                            width: 50,
-                            height: 50,
-                            fontSize: 24,
-                            fontWeight: "bold",
-                            borderRadius: 10,
-                            cursor: "pointer",
-                        }}
-                    >
-                        −
-                    </button>
-
-                    <input
-                        id="quantitec"
-                        type="number"
-                        value={quantitec}
-                        onChange={handleChange}
-                        min={1}
-                        max={MAX_QUANTITE}
-                        style={{
-                            width: "70px",
-                            height: "50px",
-                            fontSize: "18px",
-                            textAlign: "center",
-                            borderRadius: "10px",
-                            border: "1px solid #8ba9b7",
-                        }}
-                    />
-
-                    <button
-                        onClick={augmenter}
-                        style={{
-                            width: 50,
-                            height: 50,
-                            fontSize: 24,
-                            fontWeight: "bold",
-                            borderRadius: 10,
-                            cursor: "pointer",
-                        }}
-                    >
-                        +
-                    </button>
+                        {message && <p style={{ color: "#24586f", fontSize: 16 }}>{message}</p>}
+                    </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 }
