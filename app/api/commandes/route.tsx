@@ -15,8 +15,9 @@ export async function POST(request: Request) {
         // Vérifier si le produit existe déjà
         const index = panier.findIndex((p) => p.id === id);
         if (index !== -1) {
+            // Si produit existant, on additionne la quantité
             panier[index].quantite += quantite;
-            panier[index].prix = prix;
+            panier[index].prix = prix; // mise à jour prix si nécessaire (pour cartes cadeaux)
         } else {
             panier.push({ id, produit, quantite, prix });
         }

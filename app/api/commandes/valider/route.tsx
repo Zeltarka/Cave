@@ -3,8 +3,9 @@ import nodemailer from "nodemailer";
 
 export async function POST(req: Request) {
     try {
-        let { client, panier, total } = await req.json();
+        const { client, panier, total } = await req.json();
 
+        // Création transporteur SMTP
         const transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
             port: Number(process.env.SMTP_PORT),
@@ -15,27 +16,34 @@ export async function POST(req: Request) {
             },
         });
 
+        // Vérification SMTP
         await transporter.verify();
+        console.log("SMTP OK");
 
-        const lignesPanier = panier
-            .map(
-                (p: { produit: string; quantite: number; prix: number }) =>
-                    `<li>${p.produit || "Produit inconnu"} x ${p.quantite || 0} — ${p.prix && p.quantite ? p.prix * p.quantite : 0} €</li>`
-            )
-            .join("");
+        // Préparer le contenu du panier en HTML
+        type Produit = {
+            id: string;
+            produit: string;
+            quantite: number;
+            prix: number;
+        };
+        const lignesPanier = panier.map((p: Produit) =>
+            `<li>${p.produit || "Produit inconnu"} x ${p.quantite || 0} — ${p.prix && p.quantite ? p.prix * p.quantite : 0} €</li>`
+        ).join("");
 
+        // --- Mail au client ---
         await transporter.sendMail({
             from: `"Boutique" <${process.env.SMTP_USER}>`,
             to: client.email,
             subject: "Confirmation de votre commande",
             html: `<h2>Merci pour votre commande ${client.prenom} ${client.nom}</h2>
                    <ul>${lignesPanier}</ul>
-                   <p>Total : ${total} €<br/></p>
-                   <p>RIB: ""<br/></p>
-                   <p>Nous vous informons que la commande sera traitée qu'une fois le virement reçu.</p><br/>
-                   <h3>La Cave La Garenne</h3>`
+                   <p>Total : ${total} €</p>
+                   <p>RIb:""</p>`
+
         });
 
+        // --- Mail au vendeur ---
         await transporter.sendMail({
             from: `"Boutique" <${process.env.SMTP_USER}>`,
             to: process.env.VENDEUR_EMAIL,
@@ -45,9 +53,8 @@ export async function POST(req: Request) {
                    <p>Mail : ${client.email}</p>
                    <p>Adresse : ${client.adresse} ${client.codepostal} ${client.ville}</p>
                    <ul>${lignesPanier}</ul>
-                   <p>Total : ${total} €</p>`,
+                   <p>Total : ${total} €</p>`
         });
-        panier = [];
 
         return NextResponse.json({ success: true });
     } catch (err) {
