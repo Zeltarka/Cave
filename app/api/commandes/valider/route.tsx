@@ -17,7 +17,7 @@ export async function POST(req: Request) {
             },
         });
 
-        await transporter.verify();
+       // await transporter.verify();
 
         const lignesPanier = panier
             .map(
