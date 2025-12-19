@@ -63,7 +63,7 @@ export default function PanierPage() {
 
     const maxQuantite = (produit: Produit) => {
         if (produit.produit === "Carte cadeau") return 10;
-        if (produit.produit === "Champagne" || produit.produit === "Rosé") return 180;
+        if (produit.id === "champagne" || produit.id === "rose") return 180;
         return 999;
     };
 
@@ -126,7 +126,7 @@ export default function PanierPage() {
         }
 
         setDisabled(true);
-        setCountdown(10);
+        setCountdown(15);
 
         try {
             const res = await fetch("/api/commandes/valider", {
