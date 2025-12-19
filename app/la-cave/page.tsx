@@ -65,7 +65,7 @@ export default function Page() {
                     onMouseEnter={() => setUnderline(true)}
                     onMouseLeave={() => setUnderline(false)}
                 >
-                    Carte Cadeau
+                    Carte Cadeau <br/><br/>
                 </Link>
 
                 <Link
@@ -77,7 +77,7 @@ export default function Page() {
                     onMouseEnter={() => setUnderline1(true)}
                     onMouseLeave={() => setUnderline1(false)}
                 >
-                    Boutique en ligne
+                    Boutique en ligne <br/><br/>
                 </Link>
             </div>
         </div>

@@ -1,36 +1,30 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# La Cave - La Garenne
 
-## Getting Started
+## Présentation  
+Ce site web a été créé pour La Cave, caviste indépendant situé à la Garenne-Colombes (92250).
+Ainsi, les fonctionalités et designs de ce site ont étés vu suites aux demandes du client. 
 
-First, run the development server:
+## Fonctionalités
+La première fonction de ce site est une présentation (un site vitrine) de la boutique La Cave La Garenne. Dans un deuxième temps, le site web
+permet à l'utilisateur de pouvoir commander du champagne ou du rosé (disponible à partir d'avril 2026)
+, ainsi que des cartes cadeaux.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Les bouteilles proposés sont deux vins de la marque.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Le payement s'effectue par virement, afin de faciliter la gestion par le client.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Description du site
+Le site web présente plusieurs page :
++ Une présentation de l'histoire de la boutique (pas de fonctionalité)
++ Les dates des prochaines dégustations (datées de novembre, la prochaine arrivant après les fêtes de fin d'année)
++ Une page contact permettant d'acceder aux différents réseaux sociaux de la boutique.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Learn More
++ La page "La Cave" permet d'avoir une description de la boutique, et également d'accéder à la partie marchande du site web.
+Deux onglets y sont accessibles : l'achat des cartes cadeaux et les 2 bouteilles de vin.
++ Enfin la page panier est directement liée aux ajouts de panier des pages de la partie marchante du site.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Sécurité
+Le site web ne comporte pas de base de donées : aucun compte n'est créé, et les commandes sont reçues par mail, avec une confirmation de commande
+pour le client.
+Concernant le payement, il s'effectue par virement (avec possibilité de passer en boutique suite à une demande par mail) garantissant une sécurtié pour l'acheteur.
