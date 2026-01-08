@@ -1,13 +1,13 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import Image from "next/image";
 
 export default function Page() {
     const MAX_QUANTITE = 180;
     const [quantitec, setQuantitec] = useState(1);
     const [message, setMessage] = useState("");
     const [disabled, setDisabled] = useState(false);
-    const [underline, setUnderline] = useState(false);
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         let newValue = parseInt(event.target.value);
@@ -51,127 +51,115 @@ export default function Page() {
     };
 
     return (
-        <>
-
-            <div style={{ display:'inline-block'}}>
-                <Link href="/boutique">
-                    <span
-                        style={{
-                            display:'inline-block',
-                            position: "relative",
-                            left: "30px",
-                            top: "0px",
-                            color: "black",
-                            fontSize: "17px",
-                            textDecoration: underline ? "underline" : "none",
-                            cursor: "pointer",
-                            zIndex: 10,
-                        }}
-                        onMouseEnter={() => setUnderline(true)}
-                        onMouseLeave={() => setUnderline(false)}
-                    >
-                        ← Nos Produits
-                    </span>
-                </Link>
-            </div>
-
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "flex-start",
-                    gap: "50px",
-                    paddingTop: "40px",
-
-                }}
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
+            {/* Lien retour */}
+            <Link
+                href="/boutique"
+                className="inline-flex items-center gap-2 text-black text-base sm:text-lg hover:underline mb-6 sm:mb-8"
             >
-                <div
-                    style={{
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                        backgroundImage: 'url("/champagne.jpg")',
-                        border: "1px solid #24586f",
-                        width: "400px",
-                        height: "540px",
-                        borderRadius: "20px",
-                        flexShrink: 0,
-                    }}
-                />
+                ← Nos Produits
+            </Link>
 
-                <div style={{ display: "flex", gap: "40px", maxWidth: "1000px" }}>
-                    <div
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "18px",
-                            maxWidth: "600px",
-                        }}
-                    >
-                        <h1 style={{ fontSize: "30px", color: "#24586f" }}>
+            {/* Container principal */}
+            <div className="flex flex-col lg:flex-row justify-center items-start gap-6 lg:gap-12 max-w-7xl mx-auto">
+                {/* Image du produit */}
+                <div className="w-full lg:w-auto flex justify-center lg:justify-start">
+                    <div className="relative w-full max-w-[300px] sm:max-w-[350px] lg:w-[400px] h-[400px] sm:h-[470px] lg:h-[540px] border border-[#24586f] rounded-[20px] overflow-hidden flex-shrink-0">
+                        <Image
+                            src="/champagne.jpg"
+                            alt="Champagne La Cave"
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 640px) 300px, (max-width: 1024px) 350px, 400px"
+                        />
+                    </div>
+                </div>
+
+                {/* Contenu description + ajout panier */}
+                <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 w-full lg:max-w-[1000px]">
+                    {/* Description */}
+                    <div className="flex flex-col gap-4 sm:gap-5 flex-1">
+                        <h1 className="text-2xl sm:text-3xl lg:text-[30px] text-[#24586f] font-semibold">
                             Champagne La Cave
                         </h1>
 
-                        <p style={{ fontSize: "18px", color: "black" }}>
-                            Champagne Julien HERBERT sélectionné par LA CAVE LA GARENNE <br /><br />
-                            Premier Cru <br />Signature Gilles POTTIER<br /><br />
-                            6 ans de viellissement minimum <br />4.8 g/L - Brut <br /><br />
-                            Cuvée assemblage de trois cépages : 50% Chardonnay - 30% Pinot Noir - 20% Pinot Meunier
-                            <br /><br />
-                            Ce champne est le fruit d'un partenariat entre deux indépendants, Julien Herbert et Gilles Pottier,
-                            partageant des valeurs communes de l'exigence, de l'authenticité, du travail.
-                            <br /><br />29,90€
-                        </p>
+                        <div className="text-base sm:text-lg text-black space-y-4">
+                            <p>
+                                Champagne Julien HERBERT sélectionné par LA CAVE LA GARENNE
+                            </p>
+
+                            <p>
+                                Premier Cru<br />
+                                Signature Gilles POTTIER
+                            </p>
+
+                            <p>
+                                6 ans de viellissement minimum<br />
+                                4.8 g/L - Brut
+                            </p>
+
+                            <p>
+                                Cuvée assemblage de trois cépages : 50% Chardonnay - 30% Pinot Noir - 20% Pinot Meunier
+                            </p>
+
+                            <p>
+                                Ce champagne est le fruit d'un partenariat entre deux indépendants, Julien Herbert et Gilles Pottier,
+                                partageant des valeurs communes de l'exigence, de l'authenticité, du travail.
+                            </p>
+
+                            <p className="text-xl sm:text-2xl font-semibold text-[#24586f]">
+                                29,90€
+                            </p>
+                        </div>
                     </div>
 
-                    <div
-                        style={{
-                            border: "1px solid #24586f",
-                            borderRadius: "20px",
-                            padding: "25px",
-                            display: "flex",
-                            flexDirection: "column",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            alignContent: "center",
-                            justifyItems: "center",
-                            gap: "25px",
-                            height: "fit-content",
-                        }}
-                    >
-                        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                            <button onClick={diminuer} style={{ width: 50, height: 50, fontSize: 24, borderRadius: 10 }}>−</button>
+                    {/* Carte ajout au panier */}
+                    <div className="border border-[#24586f] rounded-[20px] p-6 sm:p-8 flex flex-col justify-center items-center gap-6 w-full lg:w-auto lg:min-w-[280px] bg-[#faf5f1]">
+                        {/* Sélecteur de quantité */}
+                        <div className="flex gap-3 items-center">
+                            <button
+                                onClick={diminuer}
+                                className="w-12 h-12 sm:w-14 sm:h-14 text-2xl rounded-xl border border-[#24586f] hover:bg-[#8ba9b7] hover:text-white transition-colors"
+                                aria-label="Diminuer la quantité"
+                            >
+                                −
+                            </button>
                             <input
                                 type="number"
                                 value={quantitec}
                                 onChange={handleChange}
                                 min={1}
                                 max={MAX_QUANTITE}
-                                style={{ width: 70, height: 50, textAlign: "center", fontSize: 18, borderRadius: 10 }}
+                                className="w-16 sm:w-20 h-12 sm:h-14 text-center text-lg bg-transparent border-none rounded-xl font-semibold text-[#24586f] focus:outline-none"
+                                aria-label="Quantité"
                             />
-                            <button onClick={augmenter} style={{ width: 50, height: 50, fontSize: 24, borderRadius: 10 }}>+</button>
+                            <button
+                                onClick={augmenter}
+                                className="w-12 h-12 sm:w-14 sm:h-14 text-2xl rounded-xl border border-[#24586f] hover:bg-[#8ba9b7] hover:text-white transition-colors"
+                                aria-label="Augmenter la quantité"
+                            >
+                                +
+                            </button>
                         </div>
 
+                        {/* Bouton ajouter */}
                         <button
                             onClick={ajouterAuPanier}
                             disabled={disabled}
-                            style={{
-                                width: 170,
-                                height: 70,
-                                backgroundColor: "#8ba9b7",
-                                border: "1px solid #24586f",
-                                borderRadius: 20,
-                                color: "white",
-                                cursor: disabled ? "not-allowed" : "pointer",
-                                opacity: disabled ? 0.6 : 1,
-                            }}
+                            className="w-full sm:w-[200px] h-16 sm:h-[70px] bg-[#8ba9b7] border border-[#24586f] rounded-[20px] text-white font-medium text-base sm:text-lg hover:bg-[#24586f] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                             Ajouter au panier
                         </button>
 
-                        {message && <p style={{ color: "#24586f", fontSize: 16 }}>{message}</p>}
+                        {/* Message de confirmation */}
+                        {message && (
+                            <p className="text-[#24586f] text-sm sm:text-base text-center">
+                                {message}
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>
-        </>
+        </div>
     );
 }

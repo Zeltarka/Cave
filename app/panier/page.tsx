@@ -17,7 +17,12 @@ type Commande = {
     codepostal: string;
 };
 
+
+
 export default function PanierPage() {
+    useEffect(() => {
+        fetch("/api/commandes/reset", { method: "DELETE" });
+    }, []);
     const [panier, setPanier] = useState<Produit[]>([]);
     const [afficherCommande, setAfficherCommande] = useState(false);
     const [commande, setCommande] = useState<Commande>({
@@ -146,7 +151,7 @@ export default function PanierPage() {
                 setTimeout(() => {
                     setConfirmation(false);
                     window.location.href = "/";
-                }, 2000);
+                }, 10000);
             } else {
                 setMessage(data.message || "Erreur lors de la commande.");
             }

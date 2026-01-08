@@ -22,7 +22,7 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
     title: "La Cave - La Garenne",
-    description: "",
+    description: "Caviste indépendant à La Garenne-Colombes - Vins, Champagnes et Spiritueux",
 };
 
 export default function RootLayout({
@@ -30,9 +30,9 @@ export default function RootLayout({
                                    }: Readonly<{ children: React.ReactNode }>) {
     return (
         <html lang="fr">
-        <body className={`${montserrat.variable} antialiased`} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', margin: 0 }}>
+        <body className={`${montserrat.variable} antialiased flex flex-col min-h-screen m-0`}>
         <Navbar />
-        <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <main className="flex-1 flex flex-col w-full">
             {children}
         </main>
         </body>
