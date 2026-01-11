@@ -44,7 +44,7 @@ export async function POST(req: Request) {
             html: `<h2>Merci pour votre commande ${client.prenom} ${client.nom}</h2>
              <ul>${lignesPanier}</ul>
              <p><strong>Total : ${total.toFixed(2)} €</strong></p>
-             <p>Paiement par virement bancaire</p>
+             <p>Paiement par virement bancaire : RIB : </p>
              <h3>La Cave La Garenne</h3>
              <p>3 rue Voltaire, 92250 La Garenne-Colombes</p>`,
         });
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
              <p><strong>Total : ${total.toFixed(2)} €</strong></p>`,
         });
 
-        // Supprimer le panier après validation - CORRIGÉ pour Next.js 15
+        // Supprimer le panier après validation
         const cookieStore = await cookies();
         cookieStore.delete("panier");
 

@@ -362,7 +362,7 @@ export default function PanierPage() {
                                 className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
                             />
                         </div>
-                        <p className="mt-4 text-gray-700">Paiement par virement bancaire</p>
+                        <p className="mt-4 text-gray-700">Paiement par virement bancaire, vous recevrez les informations nécessaires dans le mail de confirmation.</p>
                         <button
                             onClick={() => {
                                 if (disabled) return;
