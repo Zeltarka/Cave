@@ -5,7 +5,6 @@ import { useState } from "react";
 const PRIX_CARTES = [25, 50, 75, 100];
 
 export default function CarteCadeauPage() {
-    // Quantité pour chaque prix
     const [quantites, setQuantites] = useState<Record<number, number>>({
         25: 0,
         50: 0,
@@ -23,7 +22,6 @@ export default function CarteCadeauPage() {
     const ajouterAuPanier = async () => {
         if (disabled) return;
 
-        // Filtrer les prix avec quantité > 0
         const selections = PRIX_CARTES.map((p) => ({ prix: p, quantite: quantites[p] }))
             .filter((item) => item.quantite > 0);
 
@@ -55,10 +53,8 @@ export default function CarteCadeauPage() {
                 }
             }
 
-            // Calculer le nombre total de cartes ajoutées
             const totalCartes = selections.reduce((sum, item) => sum + item.quantite, 0);
 
-// Après avoir ajouté au panier avec succès
             setMessage(
                 totalCartes === 1
                     ? "1 carte cadeau ajoutée au panier !"
@@ -74,84 +70,70 @@ export default function CarteCadeauPage() {
         }
     };
 
+    const totalQuantite = Object.values(quantites).reduce((sum, q) => sum + q, 0);
+
     return (
-        <div>
-            <h1
-                style={{
-                    textAlign: "center",
-                    fontSize: "4vh",
-                    color: "#24586f",
-                    paddingTop: "5vh",
-                }}
-            >
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+            <h1 className="text-center text-2xl sm:text-3xl lg:text-4xl text-[#24586f] font-semibold mb-8 sm:mb-12">
                 Offrez une carte cadeau La Cave
             </h1>
 
-            <div style={{ display: "flex", gap: "10vh" }}>
-                <Image
-                    src="/cartecadeau.png"
-                    alt="carte cadeau"
-                    width={500}
-                    height={500}
-                    style={{ marginTop: "10vh", marginLeft: "20vh" }}
-                />
+            <div className="flex flex-col lg:flex-row justify-center items-center lg:items-start gap-8 lg:gap-16 xl:gap-24 max-w-6xl mx-auto">
+                {/* Image de la carte cadeau */}
+                <div className="w-full max-w-[300px] sm:max-w-[400px] lg:w-[450px] xl:w-[500px] flex-shrink-0">
+                    <Image
+                        src="/cartecadeau.png"
+                        alt="Carte cadeau La Cave"
+                        width={500}
+                        height={500}
+                        className="w-full h-auto"
+                    />
+                </div>
 
-                <div
-                    style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "1.5vh",
-                        paddingTop: "5vh",
-                        marginTop: "10vh",
-                    }}
-                >
-                    {PRIX_CARTES.map((prix) => (
-                        <div key={prix} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                            <span style={{ fontWeight: "bold", width: 80 }}>{prix} €</span>
-                            <button
-                                onClick={() => handleQuantiteChange(prix, quantites[prix] - 1)}
-                                style={{ width: 30, height: 30, fontSize: 20, cursor: "pointer" }}
+                {/* Sélection des cartes */}
+                <div className="flex flex-col gap-6 w-full max-w-md">
+                    <div className="space-y-4">
+                        {PRIX_CARTES.map((prix) => (
+                            <div
+                                key={prix}
+                                className="flex items-center gap-3 sm:gap-4 bg-white/50 p-3 sm:p-4 rounded-xl"
                             >
-                                −
-                            </button>
-                            <input
-                                type="number"
-                                value={quantites[prix]}
-                                min={0}
-                                onChange={(e) => handleQuantiteChange(prix, parseInt(e.target.value) || 0)}
-                                style={{ width: 50, textAlign: "center" }}
-                            />
-                            <button
-                                onClick={() => handleQuantiteChange(prix, quantites[prix] + 1)}
-                                style={{ width: 30, height: 30, fontSize: 20, cursor: "pointer" }}
-                            >
-                                +
-                            </button>
-                        </div>
-                    ))}
+                                <span className="font-bold text-lg sm:text-xl text-[#24586f] w-16 sm:w-20">
+                                    {prix} €
+                                </span>
+                                <button
+                                    onClick={() => handleQuantiteChange(prix, quantites[prix] - 1)}
+                                    className="w-10 h-10 sm:w-12 sm:h-12 text-xl sm:text-2xl text-[#24586f] bg-transparent border-none cursor-pointer"
+                                >
+                                    −
+                                </button>
+                                <input
+                                    type="number"
+                                    value={quantites[prix]}
+                                    min={0}
+                                    onChange={(e) => handleQuantiteChange(prix, parseInt(e.target.value) || 0)}
+                                    className="w-14 sm:w-16 h-10 sm:h-12 text-center text-lg bg-transparent border-none rounded-xl font-semibold text-[#24586f] focus:outline-none"
+                                />
+                                <button
+                                    onClick={() => handleQuantiteChange(prix, quantites[prix] + 1)}
+                                    className="w-10 h-10 sm:w-12 sm:h-12 text-xl sm:text-2xl text-[#24586f] bg-transparent border-none cursor-pointer"
+                                >
+                                    +
+                                </button>
+                            </div>
+                        ))}
+                    </div>
 
                     <button
                         onClick={ajouterAuPanier}
-                        disabled={disabled || Object.values(quantites).every((q) => q === 0)}
-                        style={{
-                            backgroundColor: "#8ba9b7",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "8px",
-                            padding: "10px",
-                            width: "250px",
-                            marginTop: "1vh",
-                            cursor:
-                                disabled || Object.values(quantites).every((q) => q === 0)
-                                    ? "not-allowed"
-                                    : "pointer",
-                        }}
+                        disabled={disabled || totalQuantite === 0}
+                        className="w-full sm:w-64 h-14 sm:h-16 bg-[#8ba9b7] text-white border border-[#24586f] rounded-xl font-medium text-base sm:text-lg hover:bg-[#24586f] transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer mt-2"
                     >
                         Ajouter au panier
                     </button>
 
                     {message && (
-                        <p style={{ marginTop: "2vh", color: "#24586f", whiteSpace: "nowrap" }}>
+                        <p className="text-[#24586f] text-sm sm:text-base text-center mt-2">
                             {message}
                         </p>
                     )}

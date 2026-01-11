@@ -1,150 +1,76 @@
 "use client";
 import Link from "next/link";
-import React from "react";
+import React, { useState } from "react";
+import Image from "next/image";
 
 export default function Boutique() {
+    const [hoverChampagne, setHoverChampagne] = useState(false);
+    const [hoverRose, setHoverRose] = useState(false);
+
     return (
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "flex-start",
-                textAlign: "center",
-                color: "#24586f",
-                fontSize: "40px",
-                paddingTop: "",
-            }}
-        >
-            <h1 style={{ marginTop: "0px", fontSize: "40px", marginBottom: "5px" }}>
+        <div className="flex flex-col items-center justify-start text-center text-[#24586f] px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <h1 className="mt-0 text-3xl sm:text-4xl lg:text-[40px] mb-2 sm:mb-3 font-semibold">
                 Nos Produits
             </h1>
 
-            <p style={{ fontSize: "18px", color: "black", marginBottom: "10px" }}>
+            <p className="text-base sm:text-lg text-black mb-8 sm:mb-12 max-w-3xl">
                 Tout se passe au 3 rue Voltaire à La Garenne ! Nous avons cependant 2 produits de notre propre marque que nous vendons en ligne.
             </p>
 
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "flex-start",
-                    gap: "300px",
-                    position: "relative",
-                    marginTop: "0px",
-                }}
-            >
-                <Link href="/boutique/champagne">
-                    <button
-                        style={{
-                            position: "relative",
-                            backgroundImage: 'url("/champagne.jpg")',
-                            backgroundSize: "cover",
-                            backgroundPosition: "center",
-                            border: "1px solid #24586f",
-                            width: "40vh",
-                            height: "55vh",
-                            borderRadius: "20px",
-                            cursor: "pointer",
-                            transition: "transform 0.4s ease, box-shadow 0.4s ease",
-                            overflow: "hidden",
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.boxShadow = "0 10px 20px rgba(36, 88, 111, 0.3)";
-                            const text = e.currentTarget.querySelector<HTMLElement>(".overlay-text");
-                            if (text) text.style.opacity = "0.9";
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.boxShadow = "none";
-                            const text = e.currentTarget.querySelector<HTMLElement>(".overlay-text");
-                            if (text) text.style.opacity = "0";
-                        }}
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-8 sm:gap-12 lg:gap-20 xl:gap-32 w-full max-w-7xl mx-auto">
+                {/* Champagne */}
+                <Link href="/boutique/champagne" className="w-full sm:w-auto flex justify-center">
+                    <div
+                        className="relative w-full max-w-[280px] sm:max-w-[320px] lg:w-[350px] xl:w-[400px] h-[380px] sm:h-[420px] lg:h-[480px] xl:h-[550px] border border-[#24586f] rounded-[20px] overflow-hidden cursor-pointer transition-all duration-400 hover:shadow-[0_10px_20px_rgba(36,88,111,0.3)]"
+                        onMouseEnter={() => setHoverChampagne(true)}
+                        onMouseLeave={() => setHoverChampagne(false)}
                     >
-                        <span
-                            className="overlay-text"
-                            style={{
-                                position: "absolute",
-                                top: "0",
-                                left: "0",
-                                right: "0",
-                                bottom: "0",
-                                display: "flex",
-                                justifyContent: "center",
-                                alignItems: "flex-end",
-                                paddingBottom: "15px",
-                                borderBottomLeftRadius: "19px",
-                                borderBottomRightRadius: "19px",
-                                opacity: "0",
-                                transition: "opacity 0.8s ease",
-                                fontWeight: "bold",
-                                fontSize: "20px",
-                                color: "black",
-                                textAlign: "center",
-                                backgroundColor: "rgba(255,255,255,0.9)",
-                            }}
+                        <Image
+                            src="/champagne.jpg"
+                            alt="Champagne La Cave"
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 640px) 280px, (max-width: 1024px) 320px, (max-width: 1280px) 350px, 400px"
+                        />
+
+                        <div
+                            className={`absolute inset-0 flex justify-center items-end pb-4 rounded-b-[19px] bg-white/90 transition-opacity duration-700 ${
+                                hoverChampagne ? "opacity-90" : "opacity-0"
+                            }`}
                         >
-                            Champagne <br /> 29.90€
-                        </span>
-                    </button>
+                            <span className="font-bold text-lg sm:text-xl text-black text-center px-4">
+                                Champagne <br /> 29,90€
+                            </span>
+                        </div>
+                    </div>
                 </Link>
 
-                <Link href="/boutique/rose">
-                    <button
-                        onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                        }}
-                        style={{
-                            position: "relative",
-                            backgroundImage: 'url("/rose.jpg")',
-                            backgroundSize: "cover",
-                            backgroundPosition: "center",
-                            border: "1px solid #24586f",
-                            width: "40vh",
-                            height: "55vh",
-                            borderRadius: "20px",
-                            cursor: "not-allowed",
-                            transition: "transform 0.4s ease, box-shadow 0.4s ease",
-                            overflow: "hidden",
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.boxShadow = "0 10px 20px rgba(36, 88, 111, 0.3)";
-                            const text = e.currentTarget.querySelector<HTMLElement>(".overlay-text");
-                            if (text) text.style.opacity = "0.9";
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.boxShadow = "none";
-                            const text = e.currentTarget.querySelector<HTMLElement>(".overlay-text");
-                            if (text) text.style.opacity = "0";
-                        }}
+                {/* Rosé - Désactivé */}
+                <div className="w-full sm:w-auto flex justify-center">
+                    <div
+                        className="relative w-full max-w-[280px] sm:max-w-[320px] lg:w-[350px] xl:w-[400px] h-[380px] sm:h-[420px] lg:h-[480px] xl:h-[550px] border border-[#24586f] rounded-[20px] overflow-hidden cursor-not-allowed transition-all duration-400 hover:shadow-[0_10px_20px_rgba(36,88,111,0.3)]"
+                        onMouseEnter={() => setHoverRose(true)}
+                        onMouseLeave={() => setHoverRose(false)}
                     >
-                        <span
-                            className="overlay-text"
-                            style={{
-                                position: "absolute",
-                                top: "0",
-                                left: "0",
-                                right: "0",
-                                bottom: "0",
-                                display: "flex",
-                                justifyContent: "center",
-                                alignItems: "flex-end",
-                                paddingBottom: "15px",
-                                borderBottomLeftRadius: "19px",
-                                borderBottomRightRadius: "19px",
-                                opacity: "0",
-                                transition: "opacity 0.8s ease",
-                                fontWeight: "bold",
-                                fontSize: "20px",
-                                color: "black",
-                                textAlign: "center",
-                                backgroundColor: "rgba(143,141,141,0.9)",
-                            }}
+                        <Image
+                            src="/rose.jpg"
+                            alt="Rosé La Cave - Disponible en avril 2026"
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 640px) 280px, (max-width: 1024px) 320px, (max-width: 1280px) 350px, 400px"
+                        />
+
+                        <div
+                            className={`absolute inset-0 flex justify-center items-end pb-4 rounded-b-[19px] bg-gray-500/90 transition-opacity duration-700 ${
+                                hoverRose ? "opacity-90" : "opacity-0"
+                            }`}
                         >
-                            Disponible en avril 2026 <br /> Rosé <br /> 9.90€
-                        </span>
-                    </button>
-                </Link>
+                            <span className="font-bold text-lg sm:text-xl text-black text-center px-4">
+                                Disponible en avril 2026 <br /> Rosé <br /> 9,90€
+                            </span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

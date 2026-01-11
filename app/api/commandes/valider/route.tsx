@@ -38,36 +38,40 @@ export async function POST(req: Request) {
 
         // Email client
         await transporter.sendMail({
-            from: `"Boutique" <${SMTP_USER}>`,
+            from: `"La Cave La Garenne" <${SMTP_USER}>`,
             to: client.email,
             subject: "Confirmation de votre commande",
             html: `<h2>Merci pour votre commande ${client.prenom} ${client.nom}</h2>
              <ul>${lignesPanier}</ul>
-             <p>Total : ${total} €</p>
+             <p><strong>Total : ${total.toFixed(2)} €</strong></p>
              <p>Paiement par virement bancaire</p>
-             <h3>La Cave La Garenne</h3>`,
+             <h3>La Cave La Garenne</h3>
+             <p>3 rue Voltaire, 92250 La Garenne-Colombes</p>`,
         });
 
         // Email vendeur
         await transporter.sendMail({
-            from: `"Boutique" <${SMTP_USER}>`,
+            from: `"La Cave La Garenne" <${SMTP_USER}>`,
             to: VENDEUR_EMAIL,
             subject: "Nouvelle commande reçue",
             html: `<h2>Nouvelle commande</h2>
-             <p>Client : ${client.prenom} ${client.nom}</p>
-             <p>Email : ${client.email}</p>
-             <p>Adresse : ${client.adresse}, ${client.codepostal} ${client.ville}</p>
+             <p><strong>Client :</strong> ${client.prenom} ${client.nom}</p>
+             <p><strong>Email :</strong> ${client.email}</p>
+             <p><strong>Adresse :</strong> ${client.adresse}, ${client.codepostal} ${client.ville}</p>
              <ul>${lignesPanier}</ul>
-             <p>Total : ${total} €</p>`,
+             <p><strong>Total : ${total.toFixed(2)} €</strong></p>`,
         });
 
-        // Supprimer le panier après validation
-        const cookieStore = cookies() as any;
-        cookieStore.delete("panier", { path: "/" });
+        // Supprimer le panier après validation - CORRIGÉ pour Next.js 15
+        const cookieStore = await cookies();
+        cookieStore.delete("panier");
 
         return NextResponse.json({ success: true });
     } catch (err) {
         console.error("ERREUR API COMMANDE :", err);
-        return NextResponse.json({ success: false, message: "Erreur serveur" }, { status: 500 });
+        return NextResponse.json({
+            success: false,
+            message: err instanceof Error ? err.message : "Erreur serveur"
+        }, { status: 500 });
     }
 }

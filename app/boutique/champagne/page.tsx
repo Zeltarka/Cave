@@ -119,7 +119,7 @@ export default function Page() {
                         <div className="flex gap-3 items-center">
                             <button
                                 onClick={diminuer}
-                                className="w-12 h-12 sm:w-14 sm:h-14 text-2xl rounded-xl border border-[#24586f] hover:bg-[#8ba9b7] hover:text-white transition-colors"
+                                className="w-12 h-12 sm:w-14 sm:h-14 text-2xl text-[#24586f] bg-transparent border-none cursor-pointer"
                                 aria-label="Diminuer la quantité"
                             >
                                 −
@@ -135,7 +135,7 @@ export default function Page() {
                             />
                             <button
                                 onClick={augmenter}
-                                className="w-12 h-12 sm:w-14 sm:h-14 text-2xl rounded-xl border border-[#24586f] hover:bg-[#8ba9b7] hover:text-white transition-colors"
+                                className="w-12 h-12 sm:w-14 sm:h-14 text-2xl text-[#24586f] bg-transparent border-none cursor-pointer"
                                 aria-label="Augmenter la quantité"
                             >
                                 +
@@ -146,7 +146,7 @@ export default function Page() {
                         <button
                             onClick={ajouterAuPanier}
                             disabled={disabled}
-                            className="w-full sm:w-[200px] h-16 sm:h-[70px] bg-[#8ba9b7] border border-[#24586f] rounded-[20px] text-white font-medium text-base sm:text-lg hover:bg-[#24586f] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="w-full sm:w-[200px] h-16 sm:h-[70px] bg-[#8ba9b7] border border-[#24586f] rounded-[20px] text-white font-medium text-base sm:text-lg hover:bg-[#24586f] transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
                         >
                             Ajouter au panier
                         </button>

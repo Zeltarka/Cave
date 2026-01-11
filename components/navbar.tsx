@@ -2,9 +2,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 export function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const pathname = usePathname();
+    const isHomePage = pathname === "/";
 
     const navLinks = [
         { href: "/histoire", label: "Histoire" },
@@ -70,60 +73,99 @@ export function Navbar() {
                 </div>
 
                 {/* Container principal - Mobile/Tablet */}
-                <div className="flex lg:hidden items-center justify-between">
-                    {/* Menu burger pour mobile */}
-                    <button
-                        onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className="z-20 p-2 hover:bg-[rgba(250,245,241,0.6)] rounded transition-colors"
-                        aria-label="Menu"
-                    >
-                        <div className="w-6 h-5 flex flex-col justify-between">
-                            <span className={`block h-0.5 w-full bg-[#24586f] transition-transform ${isMenuOpen ? 'rotate-45 translate-y-2' : ''}`} />
-                            <span className={`block h-0.5 w-full bg-[#24586f] transition-opacity ${isMenuOpen ? 'opacity-0' : ''}`} />
-                            <span className={`block h-0.5 w-full bg-[#24586f] transition-transform ${isMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
-                        </div>
-                    </button>
+                <div className="lg:hidden">
+                    <div className="flex items-center justify-between">
+                        {/* Menu burger (sauf page d'accueil) */}
+                        {!isHomePage && (
+                            <button
+                                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                className="z-20 p-2 hover:bg-[rgba(250,245,241,0.6)] rounded transition-colors"
+                                aria-label="Menu"
+                            >
+                                <div className="w-6 h-5 flex flex-col justify-between">
+                                    <span className={`block h-0.5 w-full bg-[#24586f] transition-transform ${isMenuOpen ? 'rotate-45 translate-y-2' : ''}`} />
+                                    <span className={`block h-0.5 w-full bg-[#24586f] transition-opacity ${isMenuOpen ? 'opacity-0' : ''}`} />
+                                    <span className={`block h-0.5 w-full bg-[#24586f] transition-transform ${isMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+                                </div>
+                            </button>
+                        )}
 
-                    {/* Logo centré */}
-                    <div className="flex-1 flex justify-center">
-                        <Link href="/" className="block">
+                        {/* Espace vide si page d'accueil */}
+                        {isHomePage && <div className="w-10"></div>}
+
+                        {/* Logo centré */}
+                        <div className="flex-1 flex justify-center">
+                            <Link href="/" className="block">
+                                <Image
+                                    src="/boutique.png"
+                                    alt="La Cave - La Garenne"
+                                    width={250}
+                                    height={250}
+                                    className="w-32 h-auto sm:w-40 md:w-48"
+                                    priority
+                                />
+                            </Link>
+                        </div>
+
+                        {/* Panier */}
+                        <Link
+                            href="/panier"
+                            className="z-20 hover:scale-110 transition-transform"
+                            aria-label="Panier"
+                        >
                             <Image
-                                src="/boutique.png"
-                                alt="La Cave - La Garenne"
-                                width={250}
-                                height={250}
-                                className="w-32 h-auto sm:w-40 md:w-48"
-                                priority
+                                src="/market-icon.png"
+                                alt="Panier"
+                                width={48}
+                                height={48}
+                                className="w-10 h-10 sm:w-12 sm:h-12"
                             />
                         </Link>
                     </div>
 
-                    {/* Panier (toujours visible) */}
-                    <Link
-                        href="/panier"
-                        className="z-20 hover:scale-110 transition-transform"
-                        aria-label="Panier"
-                    >
-                        <Image
-                            src="/market-icon.png"
-                            alt="Panier"
-                            width={48}
-                            height={48}
-                            className="w-10 h-10 sm:w-12 sm:h-12"
-                        />
-                    </Link>
+                    {/* Liens visibles sur page d'accueil mobile */}
+                    {isHomePage && (
+                        <div className="flex flex-col gap-3 mt-4 text-sm sm:text-base">
+                            <div className="flex justify-center gap-8 sm:gap-12">
+                                <Link
+                                    href="/histoire"
+                                    className="hover:underline transition-all"
+                                >
+                                    Histoire
+                                </Link>
+                                <Link
+                                    href="/la-cave"
+                                    className="hover:underline transition-all"
+                                >
+                                    La Cave
+                                </Link>
+                            </div>
+                            <div className="flex justify-center gap-8 sm:gap-12">
+                                <Link
+                                    href="/rencontres-vignerons"
+                                    className="hover:underline transition-all"
+                                >
+                                    Rencontres Vignerons
+                                </Link>
+                                <Link
+                                    href="/contact"
+                                    className="hover:underline transition-all"
+                                >
+                                    Contact
+                                </Link>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                {/* Menu mobile (overlay) */}
-                {isMenuOpen && (
+                {/* Menu mobile burger (autres pages) */}
+                {!isHomePage && isMenuOpen && (
                     <>
-                        {/* Overlay sombre */}
                         <div
                             className="fixed inset-0 bg-black/50 z-30 lg:hidden"
                             onClick={() => setIsMenuOpen(false)}
                         />
 
-                        {/* Menu mobile */}
                         <div className="fixed top-0 left-0 w-64 sm:w-80 h-full bg-[#faf5f1] z-40 lg:hidden shadow-2xl">
                             <div className="p-6 pt-20">
                                 <div className="flex flex-col gap-6 text-lg">

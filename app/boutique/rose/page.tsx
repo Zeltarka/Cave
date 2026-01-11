@@ -91,12 +91,12 @@ export default function Page() {
                     </div>
 
                     {/* Carte ajout au panier */}
-                    <div className="border border-[#24586f] rounded-[20px] p-6 sm:p-8 flex flex-col justify-center items-center gap-6 w-full lg:w-auto lg:min-w-[280px] bg-[#faf5f1]">
+                    <div className="border border-[#24586f] rounded-[20px] p-6 sm:p-8 flex flex-col justify-center items-center gap-6 w-full lg:w-auto lg:min-w-[280px] bg-[#faf1f5 ]">
                         {/* Sélecteur de quantité */}
                         <div className="flex gap-3 items-center">
                             <button
                                 onClick={diminuer}
-                                className="w-12 h-12 sm:w-14 sm:h-14 text-2xl rounded-xl border border-[#24586f] hover:bg-[#8ba9b7] hover:text-white transition-colors cursor-pointer"
+                                className="w-12 h-12 sm:w-14 sm:h-14 text-2xl text-[#24586f] bg-transparent border-none cursor-pointer"
                                 aria-label="Diminuer la quantité"
                             >
                                 −
@@ -112,7 +112,7 @@ export default function Page() {
                             />
                             <button
                                 onClick={augmenter}
-                                className="w-12 h-12 sm:w-14 sm:h-14 text-2xl rounded-xl border border-[#24586f] hover:bg-[#8ba9b7] hover:text-white transition-colors cursor-pointer"
+                                className="w-12 h-12 sm:w-14 sm:h-14 text-2xl text-[#24586f] bg-transparent border-none cursor-pointer"
                                 aria-label="Augmenter la quantité"
                             >
                                 +

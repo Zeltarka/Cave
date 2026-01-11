@@ -32,7 +32,7 @@ export default function RootLayout({
         <html lang="fr">
         <body className={`${montserrat.variable} antialiased flex flex-col min-h-screen m-0`}>
         <Navbar />
-        <main className="flex-1 flex flex-col w-full">
+        <main className="flex-1 flex flex-col w-full relative">
             {children}
         </main>
         </body>
