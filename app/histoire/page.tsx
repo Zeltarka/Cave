@@ -12,7 +12,7 @@ export default function Page() {
 
                 <p>
                     Ancien militaire de l'Armée de l'Air, Gilles Pottier est devenu développeur d'entreprises dans
-                    les métiers de l'aéronautique, spatial et défense, et l'industries de pointe. Après 20 ans
+                    les métiers de l'aéronautique, spatial et défense, et l'industrie de pointe. Après 20 ans
                     d'activité, où il agit en tant que Directeur de projet mission conseil, il choisit de monter sa
                     propre entreprise…dans le vin!
                 </p>

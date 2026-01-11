@@ -94,7 +94,7 @@ export default function Page() {
                             </p>
 
                             <p>
-                                6 ans de viellissement minimum<br />
+                                6 ans de vieillissement minimum<br />
                                 4.8 g/L - Brut
                             </p>
 
