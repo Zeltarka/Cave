@@ -174,10 +174,18 @@ export default function PanierPage() {
                 )}
 
                 {panierVide ? (
-                    <p className="text-center mt-8 text-lg text-gray-600">Panier vide</p>
+                    <div className="text-center mt-8">
+                        <p className="text-lg text-gray-600 mb-6">Votre panier est vide</p>
+                        <button
+                            onClick={() => window.location.href = "/la-cave"}
+                            className="bg-[#24586f] text-white px-6 py-3 rounded-lg hover:bg-[#1a4557] transition-colors, cursor-pointer"
+                        >
+                            Le remplir
+                        </button>
+                    </div>
                 ) : (
                     <>
-                        {/* Version Desktop - Tableau */}
+                    {/* === Desktop === */}
                         <div className="hidden md:block overflow-x-auto">
                             <table className="w-full border-collapse">
                                 <thead>
@@ -192,18 +200,13 @@ export default function PanierPage() {
                                 <tbody>
                                 {panier.map((produit) => (
                                     <tr key={produit.id} className="border-b border-gray-200">
-                                        <td className="p-3">
-                                            {produit.produit}
-                                            {produit.produit === "Carte cadeau" ? ` - ${produit.prix}€` : ""}
-                                        </td>
+                                        <td className="p-3">{produit.produit}</td>
                                         <td className="p-3">
                                             <div className="flex items-center justify-center gap-2">
                                                 <button
                                                     onClick={() => changerQuantite(produit.id, produit.quantite - 1)}
                                                     className="w-8 h-8 text-lg text-[#24586f] cursor-pointer hover:bg-gray-100 rounded"
-                                                >
-                                                    −
-                                                </button>
+                                                >−</button>
                                                 <input
                                                     type="number"
                                                     value={produit.quantite}
@@ -215,20 +218,39 @@ export default function PanierPage() {
                                                 <button
                                                     onClick={() => changerQuantite(produit.id, produit.quantite + 1)}
                                                     className="w-8 h-8 text-lg text-[#24586f] cursor-pointer hover:bg-gray-100 rounded"
-                                                >
-                                                    +
-                                                </button>
+                                                >+</button>
                                             </div>
                                         </td>
-                                        <td className="p-3 text-right">{produit.prix.toFixed(2)} €</td>
+                                        <td className="p-3 text-right">
+                                            {produit.produit === "Carte cadeau" ? (
+                                                <input
+                                                    type="number"
+                                                    min={10}
+                                                    step={10}
+                                                    value={produit.prix}
+                                                    onChange={async (e) => {
+                                                        const prix = parseFloat(e.target.value) || 0;
+                                                        setPanier(prev => prev.map(p =>
+                                                            p.id === produit.id ? { ...p, prix, quantite: 1 } : p
+                                                        ));
+                                                        await fetch("/api/commandes", {
+                                                            method: "POST",
+                                                            headers: { "Content-Type": "application/json" },
+                                                            body: JSON.stringify({ ...produit, prix, quantite: 1 }),
+                                                        });
+                                                    }}
+                                                    className="w-24 text-right border border-gray-300 rounded px-2 py-1"
+                                                />
+                                            ) : (
+                                                <span>{produit.prix.toFixed(2)} €</span>
+                                            )}
+                                        </td>
                                         <td className="p-3 text-right font-semibold">{(produit.prix * produit.quantite).toFixed(2)} €</td>
                                         <td className="p-3 text-center">
                                             <button
                                                 onClick={() => supprimerProduit(produit.id)}
                                                 className="bg-[#24586f] text-white border-none px-4 py-2 rounded hover:bg-[#1a4557] transition-colors cursor-pointer"
-                                            >
-                                                Supprimer
-                                            </button>
+                                            >Supprimer</button>
                                         </td>
                                     </tr>
                                 ))}
@@ -236,14 +258,11 @@ export default function PanierPage() {
                             </table>
                         </div>
 
-                        {/* Version Mobile - Cartes */}
+                    {/* === Mobile === */}
                         <div className="md:hidden space-y-4">
                             {panier.map((produit) => (
                                 <div key={produit.id} className="border border-gray-300 rounded-lg p-4 bg-white shadow-sm">
-                                    <div className="font-semibold text-lg mb-3 text-[#24586f]">
-                                        {produit.produit}
-                                        {produit.produit === "Carte cadeau" ? ` - ${produit.prix}€` : ""}
-                                    </div>
+                                    <div className="font-semibold text-lg mb-3 text-[#24586f]">{produit.produit}</div>
 
                                     <div className="flex items-center justify-between mb-3">
                                         <span className="text-gray-600">Quantité :</span>
@@ -251,9 +270,7 @@ export default function PanierPage() {
                                             <button
                                                 onClick={() => changerQuantite(produit.id, produit.quantite - 1)}
                                                 className="w-8 h-8 text-lg text-[#24586f] cursor-pointer border border-gray-300 rounded"
-                                            >
-                                                −
-                                            </button>
+                                            >−</button>
                                             <input
                                                 type="number"
                                                 value={produit.quantite}
@@ -265,15 +282,34 @@ export default function PanierPage() {
                                             <button
                                                 onClick={() => changerQuantite(produit.id, produit.quantite + 1)}
                                                 className="w-8 h-8 text-lg text-[#24586f] cursor-pointer border border-gray-300 rounded"
-                                            >
-                                                +
-                                            </button>
+                                            >+</button>
                                         </div>
                                     </div>
 
                                     <div className="flex justify-between items-center mb-3">
                                         <span className="text-gray-600">Prix unitaire :</span>
-                                        <span>{produit.prix.toFixed(2)} €</span>
+                                        {produit.produit === "Carte cadeau" ? (
+                                            <input
+                                                type="number"
+                                                min={10}
+                                                step={10}
+                                                value={produit.prix}
+                                                onChange={async (e) => {
+                                                    const prix = parseFloat(e.target.value) || 0;
+                                                    setPanier(prev => prev.map(p =>
+                                                        p.id === produit.id ? { ...p, prix, quantite: 1 } : p
+                                                    ));
+                                                    await fetch("/api/commandes", {
+                                                        method: "POST",
+                                                        headers: { "Content-Type": "application/json" },
+                                                        body: JSON.stringify({ ...produit, prix, quantite: 1 }),
+                                                    });
+                                                }}
+                                                className="w-24 text-right border border-gray-300 rounded px-2 py-1"
+                                            />
+                                        ) : (
+                                            <span>{produit.prix.toFixed(2)} €</span>
+                                        )}
                                     </div>
 
                                     <div className="flex justify-between items-center mb-3">
@@ -284,9 +320,7 @@ export default function PanierPage() {
                                     <button
                                         onClick={() => supprimerProduit(produit.id)}
                                         className="w-full bg-[#24586f] text-white border-none px-4 py-2 rounded hover:bg-[#1a4557] transition-colors cursor-pointer"
-                                    >
-                                        Supprimer
-                                    </button>
+                                    >Supprimer</button>
                                 </div>
                             ))}
                         </div>
@@ -302,88 +336,35 @@ export default function PanierPage() {
                             <button
                                 onClick={() => {
                                     setAfficherCommande(true);
-                                    // Scroll vers le formulaire après un court délai
                                     setTimeout(() => {
                                         const formulaire = document.getElementById('formulaire-commande');
-                                        if (formulaire) {
-                                            formulaire.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                        }
+                                        if (formulaire) formulaire.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                     }, 100);
                                 }}
                                 className="bg-[#24586f] text-white border-none px-8 py-3 rounded-lg text-base sm:text-lg cursor-pointer hover:bg-[#1a4557] transition-colors"
-                            >
-                                Commander
-                            </button>
+                            >Commander</button>
                         </div>
                     </>
                 )}
 
                 {afficherCommande && !panierVide && (
                     <div id="formulaire-commande" className="mt-8 p-4 sm:p-6 border border-gray-300 rounded-lg bg-white shadow-md">
-                        <h2 className="mb-6 text-xl sm:text-2xl font-semibold text-[#24586f]">
-                            Informations de commande
-                        </h2>
+                        <h2 className="mb-6 text-xl sm:text-2xl font-semibold text-[#24586f]">Informations de commande</h2>
                         <div className="space-y-4">
-                            <input
-                                name="nom"
-                                placeholder="Nom"
-                                onChange={handleChange}
-                                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
-                            />
-                            <input
-                                name="prenom"
-                                placeholder="Prénom"
-                                onChange={handleChange}
-                                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
-                            />
-                            <input
-                                name="email"
-                                type="email"
-                                placeholder="Adresse email"
-                                onChange={handleChange}
-                                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
-                            />
-                            <input
-                                name="adresse"
-                                placeholder="Adresse"
-                                onChange={handleChange}
-                                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
-                            />
-                            <input
-                                name="codepostal"
-                                placeholder="Code Postal"
-                                onChange={handleChange}
-                                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
-                            />
-                            <input
-                                name="ville"
-                                placeholder="Ville"
-                                onChange={handleChange}
-                                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
-                            />
+                            <input name="nom" placeholder="Nom" onChange={handleChange} className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]" />
+                            <input name="prenom" placeholder="Prénom" onChange={handleChange} className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]" />
+                            <input name="email" type="email" placeholder="Adresse email" onChange={handleChange} className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]" />
+                            <input name="adresse" placeholder="Adresse" onChange={handleChange} className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]" />
+                            <input name="codepostal" placeholder="Code Postal" onChange={handleChange} className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]" />
+                            <input name="ville" placeholder="Ville" onChange={handleChange} className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]" />
                         </div>
                         <p className="mt-4 text-gray-700">Paiement par virement bancaire, vous recevrez les informations nécessaires dans le mail de confirmation.</p>
                         <button
-                            onClick={() => {
-                                if (disabled) return;
-                                setDisabled(true);
-                                setCountdown(10);
-                                validerCommande();
-                            }}
+                            onClick={() => { if (disabled) return; setDisabled(true); setCountdown(10); validerCommande(); }}
                             disabled={disabled}
-                            className={`mt-6 w-full px-6 py-3 rounded-lg text-base sm:text-lg font-medium transition-colors ${
-                                disabled
-                                    ? "bg-gray-400 cursor-not-allowed"
-                                    : "bg-[#24586f] hover:bg-[#1a4557] cursor-pointer"
-                            } text-white border-none`}
-                        >
-                            {disabled ? `Patientez... ${countdown}s` : "Valider la commande"}
-                        </button>
-                        {message && (
-                            <p className="text-[#24586f] font-bold mt-4 text-center">
-                                {message}
-                            </p>
-                        )}
+                            className={`mt-6 w-full px-6 py-3 rounded-lg text-base sm:text-lg font-medium transition-colors ${disabled ? "bg-gray-400 cursor-not-allowed" : "bg-[#24586f] hover:bg-[#1a4557] cursor-pointer"} text-white border-none`}
+                        >{disabled ? `Patientez... ${countdown}s` : "Valider la commande"}</button>
+                        {message && <p className="text-[#24586f] font-bold mt-4 text-center">{message}</p>}
                     </div>
                 )}
             </div>
