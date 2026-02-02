@@ -93,35 +93,30 @@ export default function Page() {
                     {/* Carte ajout au panier */}
                     <div className="border border-[#24586f] rounded-[20px] p-6 sm:p-8 flex flex-col justify-center items-center gap-6 w-full lg:w-auto lg:min-w-[280px] bg-[#faf1f5 ]">
                         {/* Sélecteur de quantité */}
-                        <div className="flex gap-3 items-center">
-                            <button
-                                onClick={diminuer}
-                                className="w-12 h-12 sm:w-14 sm:h-14 text-2xl text-[#24586f] bg-transparent border-none cursor-pointer"
-                                aria-label="Diminuer la quantité"
+                        <div className="flex items-center gap-3">
+                            <label
+                                htmlFor="quantite"
+                                className="text-[#24586f] font-semibold"
                             >
-                                −
-                            </button>
-                            <input
-                                type="number"
+                                Quantité :
+                            </label>
+
+                            <select
+                                id="quantite"
                                 value={quantitec}
-                                onChange={handleChange}
-                                min={1}
-                                max={MAX_QUANTITE}
-                                className="w-16 sm:w-20 h-12 sm:h-14 text-center text-lg bg-transparent border-none rounded-xl font-semibold text-[#24586f] focus:outline-none"
-                                aria-label="Quantité"
-                            />
-                            <button
-                                onClick={augmenter}
-                                className="w-12 h-12 sm:w-14 sm:h-14 text-2xl text-[#24586f] bg-transparent border-none cursor-pointer"
-                                aria-label="Augmenter la quantité"
+                                onChange={(e) => setQuantitec(parseInt(e.target.value))}
+                                className="h-12 sm:h-14 px-4 text-lg font-semibold text-[#24586f] border border-[#24586f] rounded-xl bg-transparent focus:outline-none cursor-pointer"
                             >
-                                +
-                            </button>
+                                <option value={6}>6 bouteilles</option>
+                                <option value={12}>12 bouteilles</option>
+                                <option value={18}>18 bouteilles</option>
+                            </select>
                         </div>
+
 
                         {/* Bouton ajouter */}
                         <button
-                            onClick={ajouterAuPanier}
+                       //     onClick={ajouterAuPanier}
                             disabled={disabled}
                             className="w-full sm:w-[200px] h-16 sm:h-[70px] bg-[#8ba9b7] border border-[#24586f] rounded-[20px] text-white font-medium text-base sm:text-lg hover:bg-[#24586f] transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
                         >

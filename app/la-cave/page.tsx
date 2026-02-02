@@ -4,10 +4,31 @@ import Link from "next/link";
 export default function Page() {
     return (
         <div className="flex flex-col justify-start px-4 sm:px-8 md:px-16 lg:px-24 xl:px-32 py-8 sm:py-12 lg:py-16 max-w-6xl mx-auto">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl text-[#24586f] font-semibold mb-6 sm:mb-8 text-center lg:text-left">
-                La Cave
-            </h1>
 
+            {/* Titre + boutons */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl text-[#24586f] font-semibold text-center lg:text-left">
+                    La Cave
+                </h1>
+
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <Link
+                        href="/carte-cadeau"
+                        className="px-6 py-3 rounded-lg border-2 border-[#24586f] text-[#24586f] font-semibold text-center hover:bg-[#24586f] hover:text-white transition-colors"
+                    >
+                        Carte Cadeau
+                    </Link>
+
+                    <Link
+                        href="/boutique"
+                        className="px-6 py-3 rounded-lg border-2 border-[#24586f] text-[#24586f] font-semibold text-center hover:bg-[#24586f] hover:text-white transition-colors"
+                    >
+                        Boutique en ligne
+                    </Link>
+                </div>
+            </div>
+
+            {/* Contenu */}
             <div className="text-black text-base sm:text-lg leading-relaxed space-y-4">
                 <p>
                     La Cave La Garenne vous propose 800 références disponibles en boutique
@@ -42,22 +63,6 @@ export default function Page() {
                     unité, passant par une gamme de vin plaisir du we, aux grands crus. Sur
                     commande, nous travaillons sur des demandes personnalisées.
                 </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row justify-center lg:justify-end gap-6 sm:gap-12 lg:gap-20 mt-8 sm:mt-12 text-[#24586f] text-xl sm:text-2xl lg:text-3xl font-semibold">
-                <Link
-                    href="/carte-cadeau"
-                    className="text-center hover:underline transition-all"
-                >
-                    Carte Cadeau
-                </Link>
-
-                <Link
-                    href="/boutique"
-                    className="text-center hover:underline transition-all"
-                >
-                    Boutique en ligne
-                </Link>
             </div>
         </div>
     );

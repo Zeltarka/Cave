@@ -6,6 +6,8 @@ type ProduitPanier = {
     produit: string;
     quantite: number;
     prix: number;
+    destinataire?: string; // Champ optionnel pour les cartes cadeaux
+    id_dest?: string; // ID unique pour différencier les cartes cadeaux
 };
 
 function parseJSONSafe(value: string | undefined, defaultValue: any) {
@@ -32,7 +34,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: false, message: "JSON invalide" }, { status: 400 });
     }
 
-    const { id, produit, quantite, prix } = body;
+    const { id, produit, quantite, prix, destinataire, id_dest } = body;
 
     // Vérifie que id et produit existent
     if (!id || !produit) {
@@ -45,13 +47,37 @@ export async function POST(req: Request) {
 
     const panier: ProduitPanier[] = parseJSONSafe(cookieStore.get("panier")?.value, []);
 
-    const existant = panier.find((p) => p.id === id);
+    // Pour les cartes cadeaux, utiliser id_dest comme identifiant unique, sinon utiliser id
+    const identifiantUnique = id_dest || id;
+    const existant = panier.find((item) => {
+        // Si le produit a un id_dest, comparer avec id_dest, sinon comparer avec id
+        if (item.id_dest && id_dest) {
+            return item.id_dest === id_dest;
+        }
+        return item.id === id;
+    });
 
     if (existant) {
         existant.quantite = q;
         existant.prix = p;
+        // Mettre à jour le destinataire s'il est fourni
+        if (destinataire) {
+            existant.destinataire = destinataire;
+        }
+        if (id_dest) {
+            existant.id_dest = id_dest;
+        }
     } else {
-        panier.push({ id, produit, quantite: q, prix: p });
+        const nouveauProduit: ProduitPanier = { id, produit, quantite: q, prix: p };
+        // Ajouter le destinataire s'il est fourni
+        if (destinataire) {
+            nouveauProduit.destinataire = destinataire;
+        }
+        // Ajouter l'id_dest s'il est fourni (pour les cartes cadeaux)
+        if (id_dest) {
+            nouveauProduit.id_dest = id_dest;
+        }
+        panier.push(nouveauProduit);
     }
 
     cookieStore.set("panier", JSON.stringify(panier), {
