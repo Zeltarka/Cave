@@ -21,11 +21,14 @@ export default function Page() {
                     id: "rose",
                     produit: "Rosé La Cave",
                     quantite: quantitec,
-                    prix: 29.90,
+                    prix: 9.90,
                 }),
             });
 
             await res.json();
+
+            // ⭐ Mettre à jour le compteur du panier dans la navbar
+            window.dispatchEvent(new Event('cartUpdated'));
 
             setMessage(
                 quantitec === 1
@@ -80,7 +83,7 @@ export default function Page() {
                         <div className="text-base sm:text-lg text-black space-y-4">
 
                             <p className="text-xl sm:text-2xl font-semibold text-[#24586f]">
-                                    9,90€
+                                9,90€
                             </p>
                         </div>
                     </div>

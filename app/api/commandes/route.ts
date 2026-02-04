@@ -96,13 +96,35 @@ export async function POST(req: Request) {
             return NextResponse.json({ ok: true });
         }
 
+        // Vérifier si le produit existe déjà dans le panier
+        const { data: existingData } = await supabase
+            .from("panier")
+            .select("*")
+            .eq("session_id", sessionId)
+            .eq("produit_id", produit.id)
+            .single();
+
+        let nouvelleQuantite = produit.quantite;
+
+        // Si le produit existe déjà et que c'est une bouteille (champagne ou rosé), additionner les quantités
+        if (existingData && (produit.id === "champagne" || produit.id === "rose")) {
+            nouvelleQuantite = existingData.quantite + produit.quantite;
+
+            // Limiter à 24 bouteilles maximum
+            if (nouvelleQuantite > 24) {
+                nouvelleQuantite = 24;
+            }
+
+            console.log(`📊 Addition: ${existingData.quantite} + ${produit.quantite} = ${nouvelleQuantite}`);
+        }
+
         // Préparer les données
         const dataToInsert = {
             session_id: sessionId,
             produit_id: produit.id,
             produit: produit.produit,
-            quantite: produit.quantite,
-            prix: parseFloat(produit.prix.toString()), // S'assurer que c'est un nombre
+            quantite: nouvelleQuantite,
+            prix: parseFloat(produit.prix.toString()),
             destinataire: produit.destinataire || null,
         };
 

@@ -68,10 +68,6 @@ export default function PanierPage() {
         fetchPanier();
     }, []);
 
-    useEffect(() => {
-        localStorage.setItem("panier", JSON.stringify(panier));
-    }, [panier]);
-
     const maxQuantite = (produit: Produit) => {
         if (produit.id.includes("carte-cadeau")) return 10;
         if (produit.id === "champagne" || produit.id === "rose") return 180;
@@ -184,7 +180,6 @@ export default function PanierPage() {
             if (data.success) {
                 setMessage("Commande validée avec succès !");
                 setPanier([]);
-                localStorage.removeItem("panier");
                 setConfirmation(true);
 
                 setTimeout(() => {

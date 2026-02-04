@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 
 export function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [cartItemCount, setCartItemCount] = useState(0);
     const pathname = usePathname();
     const isHomePage = pathname === "/";
 
@@ -15,6 +16,39 @@ export function Navbar() {
         { href: "/rencontres-vignerons", label: "Rencontres Vignerons" },
         { href: "/contact", label: "Contact" },
     ];
+
+    // Fonction pour récupérer le nombre d'articles dans le panier depuis l'API
+    useEffect(() => {
+        const fetchCartCount = async () => {
+            try {
+                const res = await fetch("/api/commandes");
+                const data = await res.json();
+                // Compter uniquement les produits avec une quantité > 0
+                const count = data.filter((item: any) => item.quantite > 0).length;
+                setCartItemCount(count);
+            } catch (error) {
+                console.error("Erreur récupération panier:", error);
+            }
+        };
+
+        // Mettre à jour au chargement
+        fetchCartCount();
+
+        // Écouter un événement personnalisé pour les mises à jour du panier
+        const handleCartUpdate = () => {
+            fetchCartCount();
+        };
+
+        window.addEventListener("cartUpdated", handleCartUpdate);
+
+        // Rafraîchir toutes les 30 secondes (optionnel)
+        const interval = setInterval(fetchCartCount, 30000);
+
+        return () => {
+            window.removeEventListener("cartUpdated", handleCartUpdate);
+            clearInterval(interval);
+        };
+    }, []);
 
     return (
         <nav className="relative bg-[rgba(250,245,241,0.4)] text-[#24586f] px-4 py-4 lg:py-6">
@@ -58,7 +92,7 @@ export function Navbar() {
                         </Link>
                         <Link
                             href="/panier"
-                            className="hover:scale-110 transition-transform"
+                            className="relative hover:scale-110 transition-transform"
                             aria-label="Panier"
                         >
                             <Image
@@ -68,6 +102,11 @@ export function Navbar() {
                                 height={56}
                                 className="w-12 h-12 xl:w-14 xl:h-14"
                             />
+                            {cartItemCount > 0 && (
+                                <span className="absolute -top-2 -right-2 bg-[#24586f] text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                                    {cartItemCount}
+                                </span>
+                            )}
                         </Link>
                     </div>
                 </div>
@@ -110,7 +149,7 @@ export function Navbar() {
                         {/* Panier */}
                         <Link
                             href="/panier"
-                            className="z-20 hover:scale-110 transition-transform"
+                            className="relative z-20 hover:scale-110 transition-transform"
                             aria-label="Panier"
                         >
                             <Image
@@ -120,6 +159,11 @@ export function Navbar() {
                                 height={48}
                                 className="w-10 h-10 sm:w-12 sm:h-12"
                             />
+                            {cartItemCount > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-[#24586f] text-white text-xs font-bold rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
+                                    {cartItemCount}
+                                </span>
+                            )}
                         </Link>
                     </div>
 

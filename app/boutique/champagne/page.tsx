@@ -27,6 +27,9 @@ export default function Page() {
 
             await res.json();
 
+            // ⭐ Mettre à jour le compteur du panier dans la navbar
+            window.dispatchEvent(new Event('cartUpdated'));
+
             setMessage(
                 quantitec === 1
                     ? `${quantitec} bouteille ajoutée au panier !`

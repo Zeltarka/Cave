@@ -8,7 +8,15 @@ export default function Boutique() {
     const [hoverRose, setHoverRose] = useState(false);
 
     return (
-        <div className="flex flex-col items-center justify-start text-center text-[#24586f] px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
+            {/* Lien retour */}
+            <Link
+                href="/la-cave"
+                className="absolute top-0 left-15 inline-flex items-center gap-2 text-black text-base sm:text-lg hover:underline mb-6 sm:mb-8"
+            >
+                ← La Cave
+            </Link>
+        <div className="flex flex-col items-center justify-start text-center text-[#24586f] px-4 sm:px-6 lg:px-8 py-0 sm:py-0">
             <h1 className="mt-0 text-3xl sm:text-4xl lg:text-[40px] mb-2 sm:mb-3 font-semibold">
                 Nos Produits
             </h1>
@@ -72,6 +80,7 @@ export default function Boutique() {
                     </div>
                 </Link>
             </div>
+        </div>
         </div>
     );
 }

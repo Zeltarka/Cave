@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function Page() {
     return (
-        <div className="flex flex-col w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        <div className="flex flex-col w-full px-4 sm:px-6 lg:px-8 py-3 sm:py-0">
             <div className="flex justify-center mb-8 sm:mb-12">
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl text-[#24586f] font-semibold">
                     Contacts
