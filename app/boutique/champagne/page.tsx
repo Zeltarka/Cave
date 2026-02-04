@@ -4,20 +4,10 @@ import { useState } from "react";
 import Image from "next/image";
 
 export default function Page() {
-    const MAX_QUANTITE = 180;
+    const QUANTITES_DISPONIBLES = [6, 12, 18, 24];
     const [quantitec, setQuantitec] = useState(6);
     const [message, setMessage] = useState("");
     const [disabled, setDisabled] = useState(false);
-
-    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        let newValue = parseInt(event.target.value);
-        if (isNaN(newValue) || newValue < 1) newValue = 1;
-        if (newValue > MAX_QUANTITE) newValue = MAX_QUANTITE;
-        setQuantitec(newValue);
-    };
-
-    const augmenter = () => setQuantitec((q) => Math.min(q + 1, MAX_QUANTITE));
-    const diminuer = () => setQuantitec((q) => Math.max(1, q - 1));
 
     const ajouterAuPanier = async () => {
         if (disabled) return;
@@ -43,10 +33,14 @@ export default function Page() {
                     : `${quantitec} bouteilles ajoutées au panier !`
             );
 
-            setTimeout(() => setDisabled(false), 3000);
+            setTimeout(() => {
+                setDisabled(false);
+            }, 3000);
         } catch {
             setMessage("Erreur : impossible d'ajouter le produit.");
-            setTimeout(() => setDisabled(false), 3000);
+            setTimeout(() => {
+                setDisabled(false);
+            }, 3000);
         }
     };
 
@@ -114,25 +108,27 @@ export default function Page() {
                     </div>
 
                     {/* Carte ajout au panier */}
-                    <div className="border border-[#24586f] rounded-[20px] p-6 sm:p-8 flex flex-col justify-center items-center gap-6 w-full lg:w-auto lg:min-w-[280px] bg-[#faf5f1]">
+                    <div className="border border-[#24586f] rounded-[20px] p-6 sm:p-8 flex flex-col justify-center items-center gap-6 w-full lg:w-auto lg:min-w-[320px] bg-[#faf5f1] self-start">
                         {/* Sélecteur de quantité */}
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-col items-center gap-3">
                             <label
                                 htmlFor="quantite"
                                 className="text-[#24586f] font-semibold"
                             >
-                                Quantité :
+                                Quantité
                             </label>
 
                             <select
                                 id="quantite"
                                 value={quantitec}
                                 onChange={(e) => setQuantitec(parseInt(e.target.value))}
-                                className="h-12 sm:h-14 px-4 text-lg font-light text-[#24586f] border border-[#24586f] rounded-xl bg-transparent focus:outline-none cursor-pointer"
+                                className="h-12 sm:h-14 px-4 text-lg font-semibold text-[#24586f] border border-[#24586f] rounded-xl bg-transparent focus:outline-none cursor-pointer"
                             >
-                                <option value={6}>6 bouteilles</option>
-                                <option value={12}>12 bouteilles</option>
-                                <option value={18}>18 bouteilles</option>
+                                {QUANTITES_DISPONIBLES.map((qty) => (
+                                    <option key={qty} value={qty}>
+                                        {qty} bouteilles
+                                    </option>
+                                ))}
                             </select>
                         </div>
 
@@ -140,14 +136,14 @@ export default function Page() {
                         <button
                             onClick={ajouterAuPanier}
                             disabled={disabled}
-                            className="w-full sm:w-[200px] h-16 sm:h-[70px] bg-[#8ba9b7] border border-[#24586f] rounded-[20px] text-white font-medium text-base sm:text-lg hover:bg-[#24586f] transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                            className="w-full h-16 sm:h-[70px] bg-[#8ba9b7] border border-[#24586f] rounded-[20px] text-white font-medium text-base sm:text-lg hover:bg-[#24586f] transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
                         >
                             Ajouter au panier
                         </button>
 
                         {/* Message de confirmation */}
                         {message && (
-                            <p className="text-[#24586f] text-sm sm:text-base text-center">
+                            <p className="text-[#24586f] text-sm sm:text-base text-center font-semibold">
                                 {message}
                             </p>
                         )}

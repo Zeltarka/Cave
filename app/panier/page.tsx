@@ -13,9 +13,14 @@ type Commande = {
     nom: string;
     prenom: string;
     email: string;
+    telephone: string;
     adresse: string;
     ville: string;
     codepostal: string;
+    commentaires: string;
+    modeLivraison: "livraison" | "retrait";
+    modePaiement: "virement" | "boutique";
+    datePassage: string;
 };
 
 export default function PanierPage() {
@@ -25,9 +30,14 @@ export default function PanierPage() {
         nom: "",
         prenom: "",
         email: "",
+        telephone: "",
         adresse: "",
         ville: "",
         codepostal: "",
+        commentaires: "",
+        modeLivraison: "retrait",
+        modePaiement: "virement",
+        datePassage: "",
     });
     const [disabled, setDisabled] = useState(false);
     const [countdown, setCountdown] = useState(0);
@@ -63,9 +73,20 @@ export default function PanierPage() {
     }, [panier]);
 
     const maxQuantite = (produit: Produit) => {
-        if (produit.produit === "Carte cadeau") return 10;
+        if (produit.id.includes("carte-cadeau")) return 10;
         if (produit.id === "champagne" || produit.id === "rose") return 180;
         return 999;
+    };
+
+    // Fonction pour obtenir les quantités disponibles pour les bouteilles
+    const getQuantitesDisponibles = (produit: Produit) => {
+        if (produit.id.includes("carte-cadeau")) {
+            return Array.from({ length: 10 }, (_, i) => i + 1);
+        }
+        if (produit.id === "champagne" || produit.id === "rose") {
+            return [6, 12, 18, 24];
+        }
+        return [6, 12, 18, 24];
     };
 
     const total = panier.reduce((sum, p) => sum + p.prix * p.quantite, 0);
@@ -107,22 +128,37 @@ export default function PanierPage() {
     };
 
     const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
     ) => {
         const { name, value } = e.target;
         setCommande((prev) => ({ ...prev, [name]: value }));
     };
 
     const validerCommande = async () => {
-        if (
-            !commande.nom ||
-            !commande.prenom ||
-            !commande.email ||
-            !commande.adresse ||
-            !commande.codepostal ||
-            !commande.ville
-        ) {
-            alert("Merci de remplir tous les champs");
+        // Validation des champs obligatoires selon le mode de livraison
+        if (commande.modeLivraison === "livraison") {
+            if (
+                !commande.nom ||
+                !commande.prenom ||
+                !commande.email ||
+                !commande.adresse ||
+                !commande.codepostal ||
+                !commande.ville
+            ) {
+                alert("Merci de remplir tous les champs obligatoires pour la livraison");
+                return;
+            }
+        } else {
+            // Pour le retrait en boutique, l'adresse n'est pas obligatoire
+            if (!commande.nom || !commande.prenom || !commande.email) {
+                alert("Merci de remplir le nom, prénom et email");
+                return;
+            }
+        }
+
+        // Validation de la date de passage si paiement en boutique
+        if (commande.modePaiement === "boutique" && !commande.datePassage) {
+            alert("Merci de sélectionner une date de passage en boutique pour le paiement");
             return;
         }
 
@@ -210,7 +246,7 @@ export default function PanierPage() {
                                     <tr key={produit.id} className="border-b border-gray-200">
                                         <td className="p-3">
                                             {produit.produit}
-                                            {produit.produit === "Carte cadeau" && produit.destinataire && (
+                                            {produit.destinataire && (
                                                 <div className="text-sm text-gray-600 mt-1">
                                                     Pour : <span className="font-medium">{produit.destinataire}</span>
                                                 </div>
@@ -219,38 +255,31 @@ export default function PanierPage() {
 
                                         <td className="p-3">
                                             <div className="flex items-center justify-center gap-2">
-                                                <button
-                                                    onClick={() => changerQuantite(produit.id, produit.quantite - 1)}
-                                                    className="w-8 h-8 text-lg text-[#24586f] cursor-pointer hover:bg-gray-100 rounded"
-                                                >
-                                                    −
-                                                </button>
-
-                                                <input
-                                                    type="number"
-                                                    value={produit.quantite}
-                                                    min={0}
-                                                    max={maxQuantite(produit)}
-                                                    onChange={(e) =>
-                                                        changerQuantite(
-                                                            produit.id,
-                                                            parseInt(e.target.value) || 0
-                                                        )
-                                                    }
-                                                    className="w-14 text-center text-base border border-gray-300 rounded px-2 py-1"
-                                                />
-
-                                                <button
-                                                    onClick={() => changerQuantite(produit.id, produit.quantite + 1)}
-                                                    className="w-8 h-8 text-lg text-[#24586f] cursor-pointer hover:bg-gray-100 rounded"
-                                                >
-                                                    +
-                                                </button>
+                                                {produit.id.includes("carte-cadeau") ? (
+                                                    <span className="text-base font-semibold">{produit.quantite}</span>
+                                                ) : (
+                                                    <select
+                                                        value={produit.quantite}
+                                                        onChange={(e) =>
+                                                            changerQuantite(
+                                                                produit.id,
+                                                                parseInt(e.target.value)
+                                                            )
+                                                        }
+                                                        className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
+                                                    >
+                                                        {getQuantitesDisponibles(produit).map((qty) => (
+                                                            <option key={qty} value={qty}>
+                                                                {qty}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                )}
                                             </div>
                                         </td>
 
                                         <td className="p-3 text-right">
-                                            {produit.produit === "Carte cadeau" ? (
+                                            {produit.id.includes("carte-cadeau") ? (
                                                 <input
                                                     type="number"
                                                     min={10}
@@ -311,8 +340,8 @@ export default function PanierPage() {
                                 >
                                     <div className="font-semibold text-lg mb-3 text-[#24586f]">
                                         {produit.produit}
-                                        {produit.produit === "Carte cadeau" && produit.destinataire && (
-                                            <div className="text-sm text-gray-600 mt-1">
+                                        {produit.destinataire && (
+                                            <div className="text-sm text-gray-600 font-normal mt-1">
                                                 Pour : <span className="font-medium">{produit.destinataire}</span>
                                             </div>
                                         )}
@@ -321,37 +350,32 @@ export default function PanierPage() {
                                     <div className="flex items-center justify-between mb-3">
                                         <span className="text-gray-600">Quantité :</span>
                                         <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() => changerQuantite(produit.id, produit.quantite - 1)}
-                                                className="w-8 h-8 text-lg text-[#24586f] cursor-pointer border border-gray-300 rounded"
-                                            >
-                                                −
-                                            </button>
-                                            <input
-                                                type="number"
-                                                value={produit.quantite}
-                                                min={0}
-                                                max={maxQuantite(produit)}
-                                                onChange={(e) =>
-                                                    changerQuantite(
-                                                        produit.id,
-                                                        parseInt(e.target.value) || 0
-                                                    )
-                                                }
-                                                className="w-14 text-center text-base border border-gray-300 rounded px-2 py-1"
-                                            />
-                                            <button
-                                                onClick={() => changerQuantite(produit.id, produit.quantite + 1)}
-                                                className="w-8 h-8 text-lg text-[#24586f] cursor-pointer border border-gray-300 rounded"
-                                            >
-                                                +
-                                            </button>
+                                            {produit.id.includes("carte-cadeau") ? (
+                                                <span className="text-base font-semibold">{produit.quantite}</span>
+                                            ) : (
+                                                <select
+                                                    value={produit.quantite}
+                                                    onChange={(e) =>
+                                                        changerQuantite(
+                                                            produit.id,
+                                                            parseInt(e.target.value)
+                                                        )
+                                                    }
+                                                    className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
+                                                >
+                                                    {getQuantitesDisponibles(produit).map((qty) => (
+                                                        <option key={qty} value={qty}>
+                                                            {qty}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            )}
                                         </div>
                                     </div>
 
                                     <div className="flex justify-between items-center mb-3">
                                         <span className="text-gray-600">Prix unitaire :</span>
-                                        {produit.produit === "Carte cadeau" ? (
+                                        {produit.id.includes("carte-cadeau") ? (
                                             <input
                                                 type="number"
                                                 min={10}
@@ -431,48 +455,179 @@ export default function PanierPage() {
                                 <h2 className="mb-6 text-xl sm:text-2xl font-semibold text-[#24586f]">
                                     Informations de commande
                                 </h2>
+
+                                {/* Choix du mode de livraison */}
+                                <div className="mb-6">
+                                    <label className="block text-gray-700 font-semibold mb-3">
+                                        Mode de récupération *
+                                    </label>
+                                    <div className="space-y-3">
+                                        <label className="flex items-center p-3 border border-gray-300 rounded cursor-pointer hover:bg-gray-50 transition-colors">
+                                            <input
+                                                type="radio"
+                                                name="modeLivraison"
+                                                value="retrait"
+                                                checked={commande.modeLivraison === "retrait"}
+                                                onChange={handleChange}
+                                                className="w-4 h-4 text-[#24586f] focus:ring-[#24586f]"
+                                            />
+                                            <span className="ml-3">
+                                                <span className="font-semibold">Retrait en boutique</span>
+                                                <span className="text-sm text-gray-600 block">3 rue Voltaire, 92250 La Garenne-Colombes</span>
+                                            </span>
+                                        </label>
+                                        <label className="flex items-center p-3 border border-gray-300 rounded cursor-pointer hover:bg-gray-50 transition-colors">
+                                            <input
+                                                type="radio"
+                                                name="modeLivraison"
+                                                value="livraison"
+                                                checked={commande.modeLivraison === "livraison"}
+                                                onChange={handleChange}
+                                                className="w-4 h-4 text-[#24586f] focus:ring-[#24586f]"
+                                            />
+                                            <span className="ml-3">
+                                                <span className="font-semibold">Livraison à domicile</span>
+                                                <span className="text-sm text-gray-600 block">Les frais de port seront calculés et communiqués ultérieurement</span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+
                                 <div className="space-y-4">
-                                    <input
-                                        name="nom"
-                                        placeholder="Nom"
-                                        onChange={handleChange}
-                                        className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
-                                    />
-                                    <input
-                                        name="prenom"
-                                        placeholder="Prénom"
-                                        onChange={handleChange}
-                                        className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
-                                    />
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <input
+                                            name="nom"
+                                            placeholder="Nom *"
+                                            onChange={handleChange}
+                                            className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
+                                        />
+                                        <input
+                                            name="prenom"
+                                            placeholder="Prénom *"
+                                            onChange={handleChange}
+                                            className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
+                                        />
+                                    </div>
                                     <input
                                         name="email"
                                         type="email"
-                                        placeholder="Adresse email"
+                                        placeholder="Adresse email *"
                                         onChange={handleChange}
                                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
                                     />
                                     <input
-                                        name="adresse"
-                                        placeholder="Adresse"
+                                        name="telephone"
+                                        type="tel"
+                                        placeholder="Numéro de téléphone (optionnel)"
                                         onChange={handleChange}
                                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
                                     />
-                                    <input
-                                        name="codepostal"
-                                        placeholder="Code Postal"
+
+                                    {commande.modeLivraison === "livraison" && (
+                                        <>
+                                            <input
+                                                name="adresse"
+                                                placeholder="Adresse *"
+                                                onChange={handleChange}
+                                                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
+                                            />
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <input
+                                                    name="codepostal"
+                                                    placeholder="Code Postal *"
+                                                    onChange={handleChange}
+                                                    className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
+                                                />
+                                                <input
+                                                    name="ville"
+                                                    placeholder="Ville *"
+                                                    onChange={handleChange}
+                                                    className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
+                                                />
+                                            </div>
+                                        </>
+                                    )}
+
+                                    <textarea
+                                        name="commentaires"
+                                        placeholder="Commentaires (optionnel)"
                                         onChange={handleChange}
-                                        className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
-                                    />
-                                    <input
-                                        name="ville"
-                                        placeholder="Ville"
-                                        onChange={handleChange}
-                                        className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
+                                        rows={4}
+                                        className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f] resize-vertical"
                                     />
                                 </div>
-                                <p className="mt-4 text-gray-700">
-                                    Paiement par virement bancaire, vous recevrez les informations nécessaires dans le mail de confirmation.
-                                </p>
+
+                                {commande.modeLivraison === "livraison" && (
+                                    <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded">
+                                        <p className="text-sm text-amber-800">
+                                            <strong>Note :</strong> Les frais de port seront calculés en fonction de votre adresse et vous seront communiqués par email. Le montant total de votre commande sera ajusté en conséquence.
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Choix du mode de paiement */}
+                                <div className="mt-6">
+                                    <label className="block text-gray-700 font-semibold mb-3">
+                                        Mode de paiement *
+                                    </label>
+                                    <div className="space-y-3">
+                                        <label className="flex items-start p-3 border border-gray-300 rounded cursor-pointer hover:bg-gray-50 transition-colors">
+                                            <input
+                                                type="radio"
+                                                name="modePaiement"
+                                                value="virement"
+                                                checked={commande.modePaiement === "virement"}
+                                                onChange={handleChange}
+                                                className="w-4 h-4 mt-1 text-[#24586f] focus:ring-[#24586f]"
+                                            />
+                                            <span className="ml-3">
+                                                <span className="font-semibold">Virement bancaire</span>
+                                                <span className="text-sm text-gray-600 block">
+                                                    Vous recevrez les informations bancaires par email. La commande sera traitée après réception du paiement.
+                                                </span>
+                                            </span>
+                                        </label>
+                                        <label className="flex items-start p-3 border border-gray-300 rounded cursor-pointer hover:bg-gray-50 transition-colors">
+                                            <input
+                                                type="radio"
+                                                name="modePaiement"
+                                                value="boutique"
+                                                checked={commande.modePaiement === "boutique"}
+                                                onChange={handleChange}
+                                                className="w-4 h-4 mt-1 text-[#24586f] focus:ring-[#24586f]"
+                                            />
+                                            <span className="ml-3">
+                                                <span className="font-semibold">Paiement en boutique</span>
+                                                <span className="text-sm text-gray-600 block">
+                                                    Vous paierez directement en boutique lors de la récupération de votre commande.
+                                                </span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {/* Date de passage si paiement en boutique */}
+                                {commande.modePaiement === "boutique" && (
+                                    <div className="mt-4">
+                                        <label className="block text-gray-700 font-semibold mb-2">
+                                            Date de passage en boutique *
+                                        </label>
+                                        <input
+                                            type="date"
+                                            name="datePassage"
+                                            onChange={handleChange}
+                                            min={(() => {
+                                                const afterTomorrow = new Date();
+                                                afterTomorrow.setDate(afterTomorrow.getDate() + 2);
+                                                return afterTomorrow.toISOString().split('T')[0];
+                                            })()}
+                                            className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
+                                        />
+                                        <p className="text-sm text-gray-600 mt-2">
+                                            Indiquez la date à laquelle vous prévoyez de passer en boutique pour récupérer et payer votre commande (à partir d'après-demain).
+                                        </p>
+                                    </div>
+                                )}
                                 <button
                                     onClick={() => {
                                         if (disabled) return;

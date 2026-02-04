@@ -45,16 +45,16 @@ export default function Boutique() {
                     </div>
                 </Link>
 
-                {/* Rosé - Désactivé */}
-                <div className="w-full sm:w-auto flex justify-center">
+                {/* Rosé */}
+                <Link href="/boutique/rose" className="w-full sm:w-auto flex justify-center">
                     <div
-                        className="relative w-full max-w-[280px] sm:max-w-[320px] lg:w-[350px] xl:w-[400px] h-[380px] sm:h-[420px] lg:h-[480px] xl:h-[550px] border border-[#24586f] rounded-[20px] overflow-hidden cursor-not-allowed transition-all duration-400 hover:shadow-[0_10px_20px_rgba(36,88,111,0.3)]"
+                        className="relative w-full max-w-[280px] sm:max-w-[320px] lg:w-[350px] xl:w-[400px] h-[380px] sm:h-[420px] lg:h-[480px] xl:h-[550px] border border-[#24586f] rounded-[20px] overflow-hidden cursor-pointer transition-all duration-400 hover:shadow-[0_10px_20px_rgba(36,88,111,0.3)]"
                         onMouseEnter={() => setHoverRose(true)}
                         onMouseLeave={() => setHoverRose(false)}
                     >
                         <Image
                             src="/rose.jpg"
-                            alt="Rosé La Cave - Disponible en avril 2026"
+                            alt="Rosé La Cave"
                             fill
                             className="object-cover"
                             sizes="(max-width: 640px) 280px, (max-width: 1024px) 320px, (max-width: 1280px) 350px, 400px"
@@ -66,11 +66,11 @@ export default function Boutique() {
                             }`}
                         >
                             <span className="font-bold text-lg sm:text-xl text-black text-center px-4">
-                                Disponible en avril 2026 <br /> Rosé <br /> 9,90€
+                                Rosé <br /> 9,90€
                             </span>
                         </div>
                     </div>
-                </div>
+                </Link>
             </div>
         </div>
     );

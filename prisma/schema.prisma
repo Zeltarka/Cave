@@ -1,12 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
+// prisma/schema.prisma
 generator client {
-  provider = "prisma-client"
-  output   = "../lib/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -14,40 +8,66 @@ datasource db {
   url      = env("POSTGRES_URL_NON_POOLING")
 }
 
-// This is your Prisma schema file
 
-generator client {
-  provider = "prisma-client-js"
+// Modèle Admin
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  nom       String
+  actif     Boolean  @default(true)
+  
+  @@map("admins")
 }
 
-datasource db {
-  provider = "sqlite" // ou "postgresql" si vous préférez
-  url      = env("DATABASE_URL")
-}
-
+// Modèle Commande
 model Commande {
-  id            String   @id @default(cuid())
-  createdAt     DateTime @default(now())
-
-  // Informations client
-  nom           String
-  prenom        String
-  email         String
-  adresse       String
-  codepostal    String
-  ville         String
-
-  // Détails commande
-  produits      Json     // Stocke le panier en JSON
+  id            String          @id @default(cuid())
+  numero        String          @unique
+  
+  // Client
+  clientNom     String
+  clientPrenom  String
+  clientEmail   String
+  clientAdresse String
+  clientVille   String
+  clientCP      String
+  
+  // Commande
+  panier        String // JSON stringifié
   total         Float
-
-  // Statut
-  statut        String   @default("en_attente") // en_attente, payee, expediee, terminee
-
-  // Notes admin (optionnel)
-  notes         String?
-
-  @@index([createdAt])
+  statut        StatutCommande @default(EN_ATTENTE)
+  
+  // Dates
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  payeeAt       DateTime?
+  livreeAt      DateTime?
+  
+  // Notes admin
+  noteAdmin     String?
+  
   @@index([statut])
-  @@index([email])
+  @@index([createdAt])
+  @@map("commandes")
+}
+
+enum StatutCommande {
+  EN_ATTENTE
+  PAYEE
+  PREPAREE
+  PRETE
+  LIVREE
+  ANNULEE
+}
+
+// Modèle Contenu
+model Contenu {
+  id        String   @id @default(cuid())
+  page      String   @unique
+  contenu   String   // JSON stringifié
+  updatedAt DateTime @updatedAt
+  updatedBy String
+  
+  @@map("contenus")
 }
