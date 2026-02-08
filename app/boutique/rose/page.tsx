@@ -1,16 +1,46 @@
+// app/(pages)/boutique/rose/page.tsx
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useMessages } from "@/hooks/useMessages";
+
+type BlocDescription = {
+    type: "paragraphe";
+    contenu: string;
+};
+
+type RoseContenu = {
+    titre: string;
+    prix: number;
+    image: string;
+    blocs_description: BlocDescription[];
+};
 
 export default function Page() {
     const QUANTITES_DISPONIBLES = [6, 12, 18, 24];
     const [quantitec, setQuantitec] = useState(6);
     const [message, setMessage] = useState("");
     const [disabled, setDisabled] = useState(false);
+    const [contenu, setContenu] = useState<RoseContenu | null>(null);
+    const [loading, setLoading] = useState(true);
+    const { messages } = useMessages();
+
+    useEffect(() => {
+        fetch("/api/admin/contenu/rose")
+            .then(res => res.json())
+            .then(data => {
+                setContenu(data.contenu);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Erreur chargement contenu:", err);
+                setLoading(false);
+            });
+    }, []);
 
     const ajouterAuPanier = async () => {
-        if (disabled) return;
+        if (disabled || !contenu || !messages) return;
         setDisabled(true);
 
         try {
@@ -19,33 +49,46 @@ export default function Page() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     id: "rose",
-                    produit: "Rosé La Cave",
+                    produit: contenu.titre,
                     quantite: quantitec,
-                    prix: 9.90,
+                    prix: contenu.prix,
                 }),
             });
 
             await res.json();
-
-            // ⭐ Mettre à jour le compteur du panier dans la navbar
             window.dispatchEvent(new Event('cartUpdated'));
 
-            setMessage(
-                quantitec === 1
-                    ? `${quantitec} bouteille ajoutée au panier !`
-                    : `${quantitec} bouteilles ajoutées au panier !`
-            );
+            // Utiliser le message dynamique avec la variable {quantite}
+            const msg = messages.panier.ajout_succes.replace("{quantite}", quantitec.toString());
+            setMessage(msg);
 
             setTimeout(() => {
                 setDisabled(false);
             }, 3000);
         } catch {
-            setMessage("Erreur : impossible d'ajouter le produit.");
+            // Utiliser le message d'erreur dynamique
+            setMessage(messages.panier.ajout_erreur);
             setTimeout(() => {
                 setDisabled(false);
             }, 3000);
         }
     };
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center min-h-[50vh]">
+                <div className="text-[#24586f] text-lg">Chargement...</div>
+            </div>
+        );
+    }
+
+    if (!contenu) {
+        return (
+            <div className="flex justify-center items-center min-h-[50vh]">
+                <div className="text-red-600">Contenu indisponible</div>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
@@ -63,8 +106,8 @@ export default function Page() {
                 <div className="w-full lg:w-auto flex justify-center lg:justify-start">
                     <div className="relative w-full max-w-[300px] sm:max-w-[350px] lg:w-[400px] h-[400px] sm:h-[470px] lg:h-[540px] border border-[#24586f] rounded-[20px] overflow-hidden flex-shrink-0">
                         <Image
-                            src="/rose.jpg"
-                            alt="Rosé La Cave"
+                            src={`/${contenu.image}`}
+                            alt={contenu.titre}
                             fill
                             className="object-cover"
                             sizes="(max-width: 640px) 300px, (max-width: 1024px) 350px, 400px"
@@ -77,13 +120,21 @@ export default function Page() {
                     {/* Description */}
                     <div className="flex flex-col gap-4 sm:gap-5 flex-1">
                         <h1 className="text-2xl sm:text-3xl lg:text-[30px] text-[#24586f] font-semibold">
-                            Rosé La Cave
+                            {contenu.titre}
                         </h1>
 
                         <div className="text-base sm:text-lg text-black space-y-4">
+                            {contenu.blocs_description.length > 0 ? (
+                                contenu.blocs_description.map((bloc, index) => (
+                                    <div
+                                        key={index}
+                                        dangerouslySetInnerHTML={{ __html: bloc.contenu }}
+                                    />
+                                ))
+                            ) : null}
 
                             <p className="text-xl sm:text-2xl font-semibold text-[#24586f]">
-                                9,90€
+                                {contenu.prix.toFixed(2)}€
                             </p>
                         </div>
                     </div>

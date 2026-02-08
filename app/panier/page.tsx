@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useMessages } from "@/hooks/useMessages"
 
 type Produit = {
     id: string;
@@ -43,6 +44,7 @@ export default function PanierPage() {
     const [countdown, setCountdown] = useState(0);
     const [message, setMessage] = useState("");
     const [confirmation, setConfirmation] = useState(false);
+    const { messages } = useMessages();
 
     useEffect(() => {
         if (countdown <= 0) return;

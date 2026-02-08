@@ -1,35 +1,19 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));
-@custom-variant light (&:is(.light *));
-
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
-    --font-sans: var(--font-geist-sans);
-    --font-mono: var(--font-geist-mono);
-
-    --color-primary: var(--primary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-secondary: var(--secondary);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-accent: var(--accent);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-muted: var(--muted);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-border: var(--border);
-    --color-ring: var(--ring);
-
-    --radius-sm: calc(var(--radius) - 4px);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) + 4px);
 }
 
 :root {
     --background: #faf5f1;
     --foreground: #000000;
     --font-montserrat: 'Montserrat', sans-serif;
+}
+
+.dark {
+    --background: #000000;
+    --foreground: #f9fafb;
 }
 
 html, body {
@@ -42,15 +26,17 @@ html, body {
     color: var(--foreground);
 }
 
-*, *::before, *::after {
-    box-sizing: border-box;
-}
-
 @layer base {
-    * {
-        @apply border-border outline-ring/50;
-    }
     body {
         @apply bg-background text-foreground;
     }
 }
+
+:root {
+    --color-noir: #000000; /* mode clair */
+}
+
+.dark {
+    --color-noir: #ffffff; /* mode sombre */
+}
+

@@ -82,8 +82,15 @@ export function Navbar() {
                         </Link>
                     </div>
 
-                    {/* Contact + Panier droite */}
+                    {/* Galerie + Contact + Panier droite */}
                     <div className="flex gap-8 xl:gap-12 text-lg items-center justify-end">
+                        <Link
+                            href="/galerie"
+                            className="hover:underline transition-all whitespace-nowrap"
+                        >
+                            Galerie Photos
+                        </Link>
+
                         <Link
                             href="/contact"
                             className="hover:underline transition-all whitespace-nowrap"
@@ -190,6 +197,12 @@ export function Navbar() {
                                     className="hover:underline transition-all"
                                 >
                                     Rencontres Vignerons
+                                </Link>
+                                <Link
+                                    href="/galerie"
+                                    className="hover:underline transition-all"
+                                >
+                                    Galerie Photos
                                 </Link>
                                 <Link
                                     href="/contact"

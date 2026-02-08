@@ -1,27 +1,73 @@
+// app/(pages)/la-cave/page.tsx
 "use client";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+
+type Bloc = {
+    type: "titre" | "paragraphe" | "liste";
+    contenu?: string;
+    items?: string[];
+};
+
+type LaCaveContenu = {
+    blocs: Bloc[];
+};
 
 export default function Page() {
+    const [contenu, setContenu] = useState<LaCaveContenu | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetch("/api/admin/contenu/la-cave")
+            .then(res => res.json())
+            .then(data => {
+                setContenu(data.contenu);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Erreur chargement contenu:", err);
+                setLoading(false);
+            });
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center min-h-[50vh]">
+                <div className="text-[#24586f] text-lg">Chargement...</div>
+            </div>
+        );
+    }
+
+    if (!contenu || !contenu.blocs) {
+        return (
+            <div className="flex justify-center items-center min-h-[50vh]">
+                <div className="text-red-600">Contenu indisponible</div>
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col justify-start px-4 sm:px-8 md:px-16 lg:px-24 xl:px-32 py-8 sm:py-12 lg:py-16 max-w-6xl mx-auto">
-
             {/* Titre + boutons */}
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl text-[#24586f] font-semibold text-center lg:text-left">
-                    La Cave
-                </h1>
+                {contenu.blocs[0]?.type === "titre" && (
+                    <h1
+                        className="text-3xl sm:text-4xl lg:text-5xl text-[#24586f] font-semibold text-center lg:text-left"
+                        dangerouslySetInnerHTML={{ __html: contenu.blocs[0].contenu || "" }}
+                    />
+                )}
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Link
                         href="/carte-cadeau"
-                        className="px-6 py-3 rounded-lg border-2 border-[#24586f] text-[#24586f] font-semibold text-center hover:bg-[#24586f] hover:text-white transition-colors"
+                        className="px-6 py-3 border-2 border-[#24586f] text-[#24586f] font-semibold text-center hover:bg-[#24586f] hover:text-white transition-colors"
                     >
                         Carte Cadeau
                     </Link>
 
                     <Link
                         href="/boutique"
-                        className="px-6 py-3 rounded-lg border-2 border-[#24586f] text-[#24586f] font-semibold text-center hover:bg-[#24586f] hover:text-white transition-colors"
+                        className="px-6 py-3 border-2 border-[#24586f] text-[#24586f] font-semibold text-center hover:bg-[#24586f] hover:text-white transition-colors"
                     >
                         Boutique en ligne
                     </Link>
@@ -30,39 +76,34 @@ export default function Page() {
 
             {/* Contenu */}
             <div className="text-black text-base sm:text-lg leading-relaxed space-y-4">
-                <p>
-                    La Cave La Garenne vous propose 800 références disponibles en boutique
-                    (plus de 6000 sur commandes), dont :
-                </p>
+                {contenu.blocs.slice(1).map((bloc, index) => {
+                    if (bloc.type === "titre") {
+                        return (
+                            <h2
+                                key={index}
+                                className="text-2xl font-semibold text-[#24586f] mt-6 mb-4"
+                                dangerouslySetInnerHTML={{ __html: bloc.contenu || "" }}
+                            />
+                        );
+                    }
 
-                <ul className="list-none space-y-2 ml-4">
-                    <li>• 450 vins français et étrangers, plus de 200 issus de l&apos;AB, biodynamie ou HVE</li>
-                    <li>• 60 Champagnes de récoltants</li>
-                    <li>• 200 Whiskies (plus de 1000 références sur commande)</li>
-                    <li>• 120 Rhums (plus de 600 rhums sur commande)</li>
-                    <li>• 30 Cognac et Armagnac, bières, cidres</li>
-                </ul>
+                    if (bloc.type === "liste") {
+                        return (
+                            <ul key={index} className="list-none space-y-2 ml-4">
+                                {bloc.items?.map((item, itemIndex) => (
+                                    <li key={itemIndex}>• {item}</li>
+                                ))}
+                            </ul>
+                        );
+                    }
 
-                <p>
-                    Cadeaux d&apos;entreprise (magnums, caisses bois, grands crus, vins d&apos;exception ...)
-                </p>
-
-                <p>
-                    Mise à disposition de Tonneaux de 5 ou 10 litres pour vos réceptions.
-                </p>
-
-                <p>
-                    En lien direct avec nos vignerons partenaires, afin de maîtriser nos
-                    gammes de produits, nous proposons des dégustations une fois par mois
-                    durant l&apos;année, animées par les producteurs vignerons, et tous les
-                    samedis de novembre à décembre.
-                </p>
-
-                <p>
-                    <span className="font-semibold">Philosophie :</span> « que du bon » nos vins commencent à des prix de 4 à 5 € /
-                    unité, passant par une gamme de vin plaisir du we, aux grands crus. Sur
-                    commande, nous travaillons sur des demandes personnalisées.
-                </p>
+                    return (
+                        <div
+                            key={index}
+                            dangerouslySetInnerHTML={{ __html: bloc.contenu || "" }}
+                        />
+                    );
+                })}
             </div>
         </div>
     );
