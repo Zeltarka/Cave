@@ -206,7 +206,7 @@ function CommandeDetailContent() {
             const pdfBytes = await generateCarteCadeauPDF(destinataire, produit.prix, produit.quantite);
 
             // Créer un Blob à partir des Uint8Array
-            const pdfBlob = new Blob([pdfBytes], { type: "application/pdf" });
+            const pdfBlob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
             const url = URL.createObjectURL(pdfBlob);
 
             setPdfUrl(url);
