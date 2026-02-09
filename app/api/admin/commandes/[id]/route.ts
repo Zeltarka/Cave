@@ -1,6 +1,7 @@
 // app/api/admin/commandes/[id]/route.ts
 import { NextResponse, NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { checkAdminAuth } from "@/lib/api-auth";
 
 // Supabase admin client
 const supabaseAdmin = createClient(
@@ -14,9 +15,12 @@ interface CommandeBody {
 }
 
 export async function GET(
+
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const auth = await checkAdminAuth();
+    if (!auth.authorized) return auth.response;
     try {
         const { id } = await params;
         console.log("🔍 Récupération commande ID:", id);
@@ -106,6 +110,8 @@ export async function PATCH(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const auth = await checkAdminAuth();
+    if (!auth.authorized) return auth.response;
     try {
         const { id } = await params;
         console.log("✏️ Mise à jour commande ID:", id);

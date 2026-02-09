@@ -1,6 +1,7 @@
 // app/api/admin/stats/route.ts
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { checkAdminAuth } from "@/lib/api-auth";
 
 // Client Supabase admin
 const supabaseAdmin = createClient(
@@ -9,6 +10,8 @@ const supabaseAdmin = createClient(
 );
 
 export async function GET() {
+    const auth = await checkAdminAuth();
+    if (!auth.authorized) return auth.response;
     try {
         // Guard : vérifier les env vars
         if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {

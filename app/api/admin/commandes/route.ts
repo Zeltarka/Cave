@@ -1,6 +1,7 @@
 // app/api/admin/commandes/route.ts
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { checkAdminAuth } from "@/lib/api-auth";
 
 // Supabase admin client
 const supabaseAdmin = createClient(
@@ -9,6 +10,8 @@ const supabaseAdmin = createClient(
 );
 
 export async function GET() {
+    const auth = await checkAdminAuth();
+    if (!auth.authorized) return auth.response;
     try {
         // Récupérer toutes les commandes avec leurs lignes
         const { data: commandes, error: commandesError } = await supabaseAdmin

@@ -1,7 +1,7 @@
 // app/api/admin/contenu/[page]/route.ts
 import { NextResponse, NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
+import { checkAdminAuth } from "@/lib/api-auth";
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,6 +12,10 @@ export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ page: string }> }
 ) {
+    // ✅ SÉCURITÉ: Vérification d'authentification JWT
+    const auth = await checkAdminAuth();
+    if (!auth.authorized) return auth.response;
+
     try {
         const { page: pageName } = await params;
         console.log(`🔍 Récupération contenu page: ${pageName}`);
@@ -33,11 +37,10 @@ export async function GET(
             throw error;
         }
 
-        // Le contenu est déjà stocké en JSONB dans Supabase, pas besoin de parser
         const pageFormatted = {
             id: page.id,
             page: page.page,
-            contenu: page.contenu, // Déjà un objet JavaScript
+            contenu: page.contenu,
             updatedAt: page.updated_at
         };
 
@@ -57,27 +60,18 @@ export async function PUT(
     req: NextRequest,
     { params }: { params: Promise<{ page: string }> }
 ) {
+    // ✅ SÉCURITÉ: Vérification d'authentification JWT
+    const auth = await checkAdminAuth();
+    if (!auth.authorized) return auth.response;
+
     try {
         const { page: pageName } = await params;
         console.log(`✏️  Mise à jour contenu page: ${pageName}`);
 
-        // ⭐ Vérifier l'authentification avec le cookie admin_session
-        const cookieStore = await cookies();
-        const session = cookieStore.get("admin_session");
-
-        if (!session) {
-            console.log("❌ Pas de session admin trouvée");
-            return NextResponse.json(
-                { error: "Non authentifié" },
-                { status: 401 }
-            );
-        }
-
-        console.log("✅ Session admin valide");
-
         const body = await req.json();
         const { contenu } = body;
 
+        // ✅ SÉCURITÉ: Validation des données
         if (!contenu) {
             return NextResponse.json(
                 { error: "Contenu manquant" },
@@ -86,9 +80,6 @@ export async function PUT(
         }
 
         console.log("📝 Contenu reçu:", contenu);
-
-        // Le contenu arrive comme objet JavaScript depuis le frontend
-        // Supabase JSONB accepte directement les objets JavaScript, pas besoin de stringify
 
         // Vérifier si la page existe
         const { data: existing } = await supabaseAdmin
@@ -103,7 +94,7 @@ export async function PUT(
             const { data, error } = await supabaseAdmin
                 .from("contenu")
                 .update({
-                    contenu: contenu, // Envoyer directement l'objet
+                    contenu: contenu,
                     updated_at: new Date().toISOString()
                 })
                 .eq("page", pageName)
@@ -121,7 +112,7 @@ export async function PUT(
                 .from("contenu")
                 .insert({
                     page: pageName,
-                    contenu: contenu // Envoyer directement l'objet
+                    contenu: contenu
                 })
                 .select()
                 .single();
@@ -133,11 +124,10 @@ export async function PUT(
             page = data;
         }
 
-        // Le contenu revient déjà comme objet depuis Supabase
         const pageFormatted = {
             id: page.id,
             page: page.page,
-            contenu: page.contenu, // Déjà un objet JavaScript
+            contenu: page.contenu,
             updatedAt: page.updated_at
         };
 

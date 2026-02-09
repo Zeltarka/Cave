@@ -1,6 +1,7 @@
 // app/api/admin/auth/login/route.ts
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { createAdminToken } from "@/lib/api-auth";
 
 export async function POST(req: Request) {
     try {
@@ -13,27 +14,29 @@ export async function POST(req: Request) {
         if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
             console.error("❌ Variables d'environnement ADMIN manquantes");
             return NextResponse.json(
-                { message: "Configuration serveur manquante" },
+                { error: "Configuration serveur manquante" },
                 { status: 500 }
             );
         }
 
         if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
+            console.log("❌ Identifiants incorrects");
             return NextResponse.json(
-                { message: "Email ou mot de passe incorrect" },
+                { error: "Email ou mot de passe incorrect" },
                 { status: 401 }
             );
         }
 
-        // Créer une session
-        const cookieStore = await cookies();
-        const sessionToken = crypto.randomUUID();
+        // Créer un JWT avec la fonction de ton lib/api-auth.ts
+        const token = createAdminToken(email);
 
-        cookieStore.set("admin_session", sessionToken, {
+        // Stocker le JWT dans un cookie
+        const cookieStore = await cookies();
+        cookieStore.set("admin_session", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
-            maxAge: 60 * 60 * 24 * 7, // 7 jours
+            maxAge: 60 * 60 * 24,// session d'une journée ¨Pour 7 jours : '*7'
             path: "/",
         });
 
@@ -43,7 +46,7 @@ export async function POST(req: Request) {
     } catch (error) {
         console.error("❌ Erreur login:", error);
         return NextResponse.json(
-            { message: "Erreur serveur" },
+            { error: "Erreur serveur" },
             { status: 500 }
         );
     }
