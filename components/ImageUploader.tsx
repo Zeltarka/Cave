@@ -25,7 +25,7 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
             return;
         }
 
-        if (file.size > 5 * 1024 * 1024) {
+        if (file.size > 50 * 1024 * 1024) {
             setError("L'image doit faire moins de 5 MB");
             return;
         }
@@ -121,7 +121,7 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
 
             {/* Info */}
             <p className="text-xs text-gray-500">
-                Formats acceptés : JPG, PNG, WebP, SVG • Max 5 MB
+                Formats acceptés : JPG, PNG, WebP, SVG • Max 50 MB
             </p>
         </div>
     );
