@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import AdminGuard from "@/components/AdminGuard";
 import ImageUploader from "@/components/ImageUploader";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 type Produit = {
     nom: string;
@@ -22,8 +23,12 @@ function BoutiqueEditor() {
     const [contenu, setContenu] = useState<BoutiqueContenu | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [message, setMessage] = useState("");
-    const [messageType, setMessageType] = useState<"success" | "error">("success");
+
+    // States pour la modal
+    const [modalOpen, setModalOpen] = useState(false);
+    const [modalType, setModalType] = useState<"success" | "error" | "info">("success");
+    const [modalTitle, setModalTitle] = useState("");
+    const [modalMessage, setModalMessage] = useState("");
 
     useEffect(() => {
         fetchContenu();
@@ -44,9 +49,10 @@ function BoutiqueEditor() {
     };
 
     const afficherMessage = (msg: string, type: "success" | "error" = "success") => {
-        setMessage(msg);
-        setMessageType(type);
-        setTimeout(() => setMessage(""), 4000);
+        setModalType(type);
+        setModalTitle(type === "success" ? "Succès" : "Erreur");
+        setModalMessage(msg);
+        setModalOpen(true);
     };
 
     const mettreAJourChamp = (champ: keyof BoutiqueContenu, valeur: any) => {
@@ -65,7 +71,6 @@ function BoutiqueEditor() {
     const sauvegarder = async () => {
         if (!contenu) return;
         setSaving(true);
-        setMessage("");
 
         try {
             const res = await fetch("/api/admin/contenu/boutique", {
@@ -79,7 +84,7 @@ function BoutiqueEditor() {
                 throw new Error(errorData.error || "Erreur lors de la sauvegarde");
             }
 
-            afficherMessage("✅ Modifications sauvegardées avec succès", "success");
+            afficherMessage("Modifications sauvegardées avec succès !", "success");
             fetchContenu();
         } catch (err) {
             console.error("Erreur sauvegarde:", err);
@@ -121,12 +126,6 @@ function BoutiqueEditor() {
             </header>
 
             <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {message && (
-                    <div className={`mb-6 p-4 rounded-lg border ${messageType === "success" ? "bg-green-50 text-green-800 border-green-200" : "bg-red-50 text-red-800 border-red-200"}`}>
-                        {message}
-                    </div>
-                )}
-
                 <div className="space-y-6">
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                         <h3 className="text-lg font-semibold text-[#24586f] mb-4">Informations générales</h3>
@@ -170,6 +169,15 @@ function BoutiqueEditor() {
                     </button>
                 </div>
             </main>
+
+            {/* Modal de confirmation */}
+            <ConfirmationModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                type={modalType}
+                title={modalTitle}
+                message={modalMessage}
+            />
         </div>
     );
 }

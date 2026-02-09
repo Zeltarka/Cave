@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import AdminGuard from "@/components/AdminGuard";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 type Horaire = {
     jour: string;
@@ -25,8 +26,12 @@ function ContactEditor() {
     const [contenu, setContenu] = useState<ContactContenu | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [message, setMessage] = useState("");
-    const [messageType, setMessageType] = useState<"success" | "error">("success");
+
+    // States pour la modal
+    const [modalOpen, setModalOpen] = useState(false);
+    const [modalType, setModalType] = useState<"success" | "error" | "info">("success");
+    const [modalTitle, setModalTitle] = useState("");
+    const [modalMessage, setModalMessage] = useState("");
 
     useEffect(() => {
         fetchContenu();
@@ -48,9 +53,10 @@ function ContactEditor() {
     };
 
     const afficherMessage = (msg: string, type: "success" | "error" = "success") => {
-        setMessage(msg);
-        setMessageType(type);
-        setTimeout(() => setMessage(""), 4000);
+        setModalType(type);
+        setModalTitle(type === "success" ? "Succès" : "Erreur");
+        setModalMessage(msg);
+        setModalOpen(true);
     };
 
     const mettreAJourChamp = (champ: keyof ContactContenu, valeur: any) => {
@@ -90,7 +96,6 @@ function ContactEditor() {
         if (!contenu) return;
 
         setSaving(true);
-        setMessage("");
 
         try {
             const res = await fetch("/api/admin/contenu/contact", {
@@ -105,7 +110,7 @@ function ContactEditor() {
                 return;
             }
 
-            afficherMessage("✅ Modifications sauvegardées avec succès", "success");
+            afficherMessage("Modifications sauvegardées avec succès !", "success");
             fetchContenu();
         } catch (err) {
             console.error("Erreur sauvegarde:", err);
@@ -161,19 +166,6 @@ function ContactEditor() {
 
             {/* Main Content */}
             <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Message */}
-                {message && (
-                    <div
-                        className={`mb-6 p-4 rounded-lg border ${
-                            messageType === "success"
-                                ? "bg-green-50 text-green-800 border-green-200"
-                                : "bg-red-50 text-red-800 border-red-200"
-                        }`}
-                    >
-                        {message}
-                    </div>
-                )}
-
                 <div className="space-y-6">
                     {/* Titre */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -249,11 +241,6 @@ function ContactEditor() {
                                                     value={plage}
                                                     onChange={(e) => mettreAJourHoraire(index, plageIndex, e.target.value)}
                                                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f] focus:border-transparent"
-                                                    placeholder={
-                                                        plageIndex === 0
-                                                            ? "Matin (ex: 10:00 - 13:30) ou 'Fermé'"
-                                                            : "Après-midi (ex: 14:30 - 19:30)"
-                                                    }
                                                 />
                                                 {horaire.plages.length > 1 && (
                                                     <button
@@ -353,6 +340,15 @@ function ContactEditor() {
                     </button>
                 </div>
             </main>
+
+            {/* Modal de confirmation */}
+            <ConfirmationModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                type={modalType}
+                title={modalTitle}
+                message={modalMessage}
+            />
         </div>
     );
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import AdminGuard from "@/components/AdminGuard";
 import ImageUploader from "@/components/ImageUploader";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 type HomeContenu = {
     image_principale: string;
@@ -17,6 +18,7 @@ function HomeEditor() {
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState<"success" | "error">("success");
+    const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
         fetchContenu();
@@ -39,7 +41,7 @@ function HomeEditor() {
     const afficherMessage = (msg: string, type: "success" | "error" = "success") => {
         setMessage(msg);
         setMessageType(type);
-        setTimeout(() => setMessage(""), 4000);
+        setShowModal(true);
     };
 
     const mettreAJourChamp = (champ: keyof HomeContenu, valeur: string) => {
@@ -63,7 +65,7 @@ function HomeEditor() {
                 throw new Error(errorData.error || "Erreur lors de la sauvegarde");
             }
 
-            afficherMessage("✅ Modifications sauvegardées avec succès", "success");
+            afficherMessage("Modifications sauvegardées avec succès", "success");
             fetchContenu();
         } catch (err) {
             console.error("Erreur sauvegarde:", err);
@@ -105,12 +107,6 @@ function HomeEditor() {
             </header>
 
             <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {message && (
-                    <div className={`mb-6 p-4 rounded-lg border ${messageType === "success" ? "bg-green-50 text-green-800 border-green-200" : "bg-red-50 text-red-800 border-red-200"}`}>
-                        {message}
-                    </div>
-                )}
-
                 <div className="space-y-6">
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -121,7 +117,6 @@ function HomeEditor() {
                             value={contenu.texte_bandeau || ""}
                             onChange={(e) => mettreAJourChamp("texte_bandeau", e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f]"
-
                         />
                         <p className="text-sm text-gray-500 mt-2">
                             Ce texte s'affichera en haut de la page, au-dessus de l'image. Laissez vide pour ne rien afficher.
@@ -156,6 +151,15 @@ function HomeEditor() {
                     </button>
                 </div>
             </main>
+
+            {/* Modale de confirmation */}
+            <ConfirmationModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                type={messageType}
+                title={messageType === "success" ? "Succès" : "Erreur"}
+                message={message}
+            />
         </div>
     );
 }

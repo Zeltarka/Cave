@@ -1,7 +1,6 @@
 // components/ImageUploader.tsx
 "use client";
 import React, { useState, useRef } from "react";
-import Image from "next/image";
 
 type ImageUploaderProps = {
     currentImage: string;
@@ -25,8 +24,8 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
             return;
         }
 
-        if (file.size > 50 * 1024 * 1024) {
-            setError("L'image doit faire moins de 5 MB");
+        if (file.size > 20 * 1024 * 1024) {
+            setError("L'image doit faire moins de 20 MB");
             return;
         }
 
@@ -70,7 +69,8 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
         }
     };
 
-    const displayImage = preview || `/${currentImage}`;
+    // Ajouter un timestamp pour éviter le cache
+    const displayImage = preview || (currentImage ? `/${currentImage}?t=${Date.now()}` : null);
 
     return (
         <div className="space-y-3">
@@ -81,11 +81,14 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
             {/* Prévisualisation */}
             <div className="relative w-full h-48 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden bg-gray-50">
                 {displayImage ? (
-                    <Image
+                    <img
                         src={displayImage}
                         alt="Preview"
-                        fill
-                        className="object-contain"
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                            console.error("Erreur chargement image:", displayImage);
+                            setError("Impossible de charger l'image");
+                        }}
                     />
                 ) : (
                     <div className="flex items-center justify-center h-full text-gray-400">
@@ -93,6 +96,8 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
                     </div>
                 )}
             </div>
+
+
 
             {/* Boutons */}
             <div className="flex gap-2">
@@ -121,7 +126,7 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
 
             {/* Info */}
             <p className="text-xs text-gray-500">
-                Formats acceptés : JPG, PNG, WebP, SVG • Max 50 MB
+                Formats acceptés : JPG, PNG, WebP, SVG • Max 20 MB
             </p>
         </div>
     );

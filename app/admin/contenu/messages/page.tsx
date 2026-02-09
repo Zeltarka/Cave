@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import AdminGuard from "@/components/AdminGuard";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 type Messages = {
     panier: {
@@ -53,6 +54,7 @@ function MessagesEditor() {
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState<"success" | "error">("success");
+    const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
         fetchContenu();
@@ -132,7 +134,7 @@ function MessagesEditor() {
     const afficherMessage = (msg: string, type: "success" | "error" = "success") => {
         setMessage(msg);
         setMessageType(type);
-        setTimeout(() => setMessage(""), 4000);
+        setShowModal(true);
     };
 
     const mettreAJourMessage = (categorie: keyof Messages, cle: string, valeur: string) => {
@@ -175,7 +177,7 @@ function MessagesEditor() {
                 throw new Error(errorData.error || "Erreur lors de la sauvegarde");
             }
 
-            afficherMessage("✅ Modifications sauvegardées avec succès", "success");
+            afficherMessage("Modifications sauvegardées avec succès", "success");
             fetchContenu();
         } catch (err) {
             console.error("Erreur sauvegarde:", err);
@@ -217,12 +219,6 @@ function MessagesEditor() {
             </header>
 
             <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {message && (
-                    <div className={`mb-6 p-4 rounded-lg border ${messageType === "success" ? "bg-green-50 text-green-800 border-green-200" : "bg-red-50 text-red-800 border-red-200"}`}>
-                        {message}
-                    </div>
-                )}
-
                 <div className="space-y-6">
                     {/* Messages Panier */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -345,7 +341,7 @@ function MessagesEditor() {
                             </div>
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Montant minimum 
+                                    Montant minimum
                                 </label>
                                 <input
                                     type="text"
@@ -573,6 +569,15 @@ function MessagesEditor() {
                     </button>
                 </div>
             </main>
+
+            {/* Modale de confirmation */}
+            <ConfirmationModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                type={messageType}
+                title={messageType === "success" ? "Succès" : "Erreur"}
+                message={message}
+            />
         </div>
     );
 }

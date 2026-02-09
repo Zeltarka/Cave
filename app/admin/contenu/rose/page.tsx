@@ -5,6 +5,7 @@ import Link from "next/link";
 import AdminGuard from "@/components/AdminGuard";
 import RichTextEditor from "@/components/RichTextEditor";
 import ImageUploader from "@/components/ImageUploader";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 type BlocDescription = {
     type: "paragraphe";
@@ -24,6 +25,7 @@ function RoseEditor() {
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState<"success" | "error">("success");
+    const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
         fetchContenu();
@@ -47,7 +49,7 @@ function RoseEditor() {
     const afficherMessage = (msg: string, type: "success" | "error" = "success") => {
         setMessage(msg);
         setMessageType(type);
-        setTimeout(() => setMessage(""), 4000);
+        setShowModal(true);
     };
 
     const mettreAJourChamp = (champ: keyof RoseContenu, valeur: any) => {
@@ -118,7 +120,7 @@ function RoseEditor() {
                 throw new Error(errorData.error || "Erreur lors de la sauvegarde");
             }
 
-            afficherMessage("✅ Modifications sauvegardées avec succès", "success");
+            afficherMessage("Modifications sauvegardées avec succès", "success");
             fetchContenu();
         } catch (err) {
             console.error("Erreur sauvegarde:", err);
@@ -174,19 +176,6 @@ function RoseEditor() {
 
             {/* Main Content */}
             <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Message */}
-                {message && (
-                    <div
-                        className={`mb-6 p-4 rounded-lg border ${
-                            messageType === "success"
-                                ? "bg-green-50 text-green-800 border-green-200"
-                                : "bg-red-50 text-red-800 border-red-200"
-                        }`}
-                    >
-                        {message}
-                    </div>
-                )}
-
                 <div className="space-y-6">
                     {/* Informations de base */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -290,6 +279,15 @@ function RoseEditor() {
                     </button>
                 </div>
             </main>
+
+            {/* Modale de confirmation */}
+            <ConfirmationModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                type={messageType}
+                title={messageType === "success" ? "Succès" : "Erreur"}
+                message={message}
+            />
         </div>
     );
 }

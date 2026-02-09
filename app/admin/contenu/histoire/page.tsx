@@ -104,7 +104,7 @@ function HistoireEditor() {
                 throw new Error(errorData.error || "Erreur lors de la sauvegarde");
             }
 
-            afficherMessage("✅ Modifications sauvegardées avec succès", "success");
+            afficherMessage("Modifications sauvegardées avec succès", "success");
             fetchContenu();
         } catch (err) {
             console.error("Erreur sauvegarde:", err);
@@ -158,19 +158,6 @@ function HistoireEditor() {
 
             {/* Main Content */}
             <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Message */}
-                {message && (
-                    <div
-                        className={`mb-6 p-4 rounded-lg border ${
-                            messageType === "success"
-                                ? "bg-green-50 text-green-800 border-green-200"
-                                : "bg-red-50 text-red-800 border-red-200"
-                        }`}
-                    >
-                        {message}
-                    </div>
-                )}
-
                 {/* Blocs */}
                 <div className="space-y-6">
                     {contenu.blocs.map((bloc, index) => (
@@ -211,12 +198,12 @@ function HistoireEditor() {
                                     {/* Supprimer */}
                                     {bloc.type === "paragraphe" &&(
                                         <button
-                                        onClick={() => supprimerBloc(index)}
-                                        className="p-2 text-red-600 hover:bg-red-50 rounded"
-                                        title="Supprimer ce bloc"
-                                    >
-                                        x
-                                    </button>)}
+                                            onClick={() => supprimerBloc(index)}
+                                            className="p-2 text-red-600 hover:bg-red-50 rounded"
+                                            title="Supprimer ce bloc"
+                                        >
+                                            x
+                                        </button>)}
                                 </div>
                             </div>
 
@@ -263,8 +250,6 @@ function HistoireEditor() {
                 type={messageType}
                 title={messageType === "success" ? "Succès" : "Erreur"}
                 message={message}
-                autoClose={messageType === "success"}
-                autoCloseDelay={2000}
             />
         </div>
     );

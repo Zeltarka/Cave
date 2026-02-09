@@ -1,101 +1,76 @@
 // app/api/admin/images/upload/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, unlink } from "fs/promises";
-import { join } from "path";
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
+import { createClient } from "@supabase/supabase-js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "votre-secret-jwt-changez-moi";
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
     try {
-        // Vérifier l'authentification
-        const cookieStore = await cookies();
-        const token = cookieStore.get("admin-token");
+        console.log("🔵 Début upload");
 
-        if (!token) {
-            return NextResponse.json(
-                { error: "Non authentifié" },
-                { status: 401 }
-            );
+        const formData = await request.formData();
+        const file = formData.get("file");
+        const oldFileName = formData.get("oldFileName");
+
+        console.log("📦 File:", file);
+        console.log("🗑️ Old file:", oldFileName);
+
+        if (!file || !(file instanceof File)) {
+            console.log("❌ Pas de fichier");
+            return NextResponse.json({ error: "Aucun fichier fourni" }, { status: 400 });
         }
 
-        try {
-            jwt.verify(token.value, JWT_SECRET);
-        } catch {
-            return NextResponse.json(
-                { error: "Token invalide" },
-                { status: 401 }
-            );
+        // Vérifier la taille
+        if (file.size > 20 * 1024 * 1024) {
+            console.log("❌ Fichier trop gros");
+            return NextResponse.json({ error: "Fichier trop volumineux (max 20 MB)" }, { status: 400 });
         }
 
-        // Récupérer le fichier
-        const formData = await req.formData();
-        const file = formData.get("file") as File;
-        const oldFileName = formData.get("oldFileName") as string;
-
-        if (!file) {
-            return NextResponse.json(
-                { error: "Aucun fichier fourni" },
-                { status: 400 }
-            );
-        }
-
-        // Vérifications
-        if (!file.type.startsWith("image/")) {
-            return NextResponse.json(
-                { error: "Le fichier doit être une image" },
-                { status: 400 }
-            );
-        }
-
-        if (file.size > 5 * 1024 * 1024) {
-            return NextResponse.json(
-                { error: "L'image doit faire moins de 5 MB" },
-                { status: 400 }
-            );
-        }
-
-        // Générer un nom de fichier unique
-        const ext = file.name.split(".").pop();
+        // Générer un nom unique
         const timestamp = Date.now();
-        const fileName = `${file.name.replace(/\.[^/.]+$/, "")}-${timestamp}.${ext}`;
+        const extension = file.name.split(".").pop() || "jpg";
+        const fileName = `${timestamp}.${extension}`;
 
-        // Convertir le fichier en buffer
+        console.log("📝 Nouveau nom:", fileName);
+
+        // Convertir en buffer
         const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
+        const buffer = new Uint8Array(bytes);
 
-        // Sauvegarder dans /public
-        const publicPath = join(process.cwd(), "public", fileName);
-        await writeFile(publicPath, buffer);
+        console.log("📤 Upload vers Supabase...");
 
-        console.log(`✅ Image uploadée: ${fileName}`);
+        // Upload
+        const { error: uploadError } = await supabase.storage
+            .from("images")
+            .upload(fileName, buffer, {
+                contentType: file.type,
+            });
 
-        // Supprimer l'ancienne image si elle existe
-        if (oldFileName && oldFileName !== fileName) {
-            try {
-                const oldPath = join(process.cwd(), "public", oldFileName);
-                await unlink(oldPath);
-                console.log(`🗑️  Ancienne image supprimée: ${oldFileName}`);
-            } catch (err) {
-                console.log(`⚠️  Impossible de supprimer l'ancienne image: ${oldFileName}`);
-            }
+        if (uploadError) {
+            console.error("❌ Erreur Supabase:", uploadError);
+            return NextResponse.json({ error: uploadError.message }, { status: 500 });
         }
+
+        // URL publique
+        const { data: { publicUrl } } = supabase.storage
+            .from("images")
+            .getPublicUrl(fileName);
+
+        console.log("✅ Succès:", publicUrl);
 
         return NextResponse.json({
             success: true,
-            fileName: fileName,
-            url: `/${fileName}`,
+            fileName: publicUrl,
         });
 
     } catch (error) {
-        console.error("❌ Erreur upload image:", error);
+        console.error("❌ Erreur catch:", error);
         return NextResponse.json(
-            { error: "Erreur lors de l'upload" },
+            { error: "Erreur serveur" },
             { status: 500 }
         );
     }
 }
-
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";

@@ -15,9 +15,12 @@ function FraisPortEditor() {
     const [frais, setFrais] = useState<FraisPort[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [message, setMessage] = useState("");
-    const [messageType, setMessageType] = useState<"success" | "error">("success");
-    const [showModal, setShowModal] = useState(false);
+
+    // States pour la modal
+    const [modalOpen, setModalOpen] = useState(false);
+    const [modalType, setModalType] = useState<"success" | "error" | "info">("success");
+    const [modalTitle, setModalTitle] = useState("");
+    const [modalMessage, setModalMessage] = useState("");
 
     useEffect(() => {
         fetchFrais();
@@ -38,9 +41,10 @@ function FraisPortEditor() {
     };
 
     const afficherMessage = (msg: string, type: "success" | "error" = "success") => {
-        setMessage(msg);
-        setMessageType(type);
-        setShowModal(true);
+        setModalType(type);
+        setModalTitle(type === "success" ? "Succès" : "Erreur");
+        setModalMessage(msg);
+        setModalOpen(true);
     };
 
     const mettreAJourFrais = (id: string, champ: keyof FraisPort, valeur: number) => {
@@ -77,7 +81,7 @@ function FraisPortEditor() {
             }
 
             setFrais(prev => prev.filter(f => f.id !== id));
-            afficherMessage("Tranche supprimée", "success");
+            afficherMessage("Tranche supprimée avec succès !", "success");
         } catch (err) {
             console.error("Erreur:", err);
             afficherMessage("Erreur lors de la suppression", "error");
@@ -99,7 +103,7 @@ function FraisPortEditor() {
                 throw new Error(errorData.error || "Erreur lors de la sauvegarde");
             }
 
-            afficherMessage("Frais de port sauvegardés avec succès", "success");
+            afficherMessage("Frais de port sauvegardés avec succès !", "success");
             fetchFrais();
         } catch (err) {
             console.error("Erreur sauvegarde:", err);
@@ -217,14 +221,13 @@ function FraisPortEditor() {
                 </div>
             </main>
 
+            {/* Modal de confirmation */}
             <ConfirmationModal
-                isOpen={showModal}
-                onClose={() => setShowModal(false)}
-                type={messageType}
-                title={messageType === "success" ? "Succès" : "Erreur"}
-                message={message}
-                autoClose={messageType === "success"}
-                autoCloseDelay={2000}
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                type={modalType}
+                title={modalTitle}
+                message={modalMessage}
             />
         </div>
     );
