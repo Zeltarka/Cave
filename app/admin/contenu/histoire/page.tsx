@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import AdminGuard from "@/components/AdminGuard";
 import RichTextEditor from "@/components/RichTextEditor";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 type Bloc = {
     type: "titre" | "paragraphe";
@@ -25,6 +26,7 @@ function HistoireEditor() {
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState<"success" | "error">("success");
+    const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
         fetchContenu();
@@ -48,7 +50,7 @@ function HistoireEditor() {
     const afficherMessage = (msg: string, type: "success" | "error" = "success") => {
         setMessage(msg);
         setMessageType(type);
-        setTimeout(() => setMessage(""), 4000);
+        setShowModal(true);
     };
 
     const mettreAJourBloc = (index: number, nouveauContenu: string) => {
@@ -207,13 +209,14 @@ function HistoireEditor() {
                                     </button>
 
                                     {/* Supprimer */}
-                                    <button
+                                    {bloc.type === "paragraphe" &&(
+                                        <button
                                         onClick={() => supprimerBloc(index)}
                                         className="p-2 text-red-600 hover:bg-red-50 rounded"
                                         title="Supprimer ce bloc"
                                     >
-                                        🗑️
-                                    </button>
+                                        x
+                                    </button>)}
                                 </div>
                             </div>
 
@@ -252,6 +255,17 @@ function HistoireEditor() {
                     </button>
                 </div>
             </main>
+
+            {/* Modale de confirmation */}
+            <ConfirmationModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                type={messageType}
+                title={messageType === "success" ? "Succès" : "Erreur"}
+                message={message}
+                autoClose={messageType === "success"}
+                autoCloseDelay={2000}
+            />
         </div>
     );
 }

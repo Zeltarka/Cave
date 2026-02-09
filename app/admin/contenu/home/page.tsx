@@ -8,6 +8,7 @@ import ImageUploader from "@/components/ImageUploader";
 type HomeContenu = {
     image_principale: string;
     alt: string;
+    texte_bandeau?: string;
 };
 
 function HomeEditor() {
@@ -111,6 +112,22 @@ function HomeEditor() {
                 )}
 
                 <div className="space-y-6">
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Texte bandeau (optionnel)
+                        </label>
+                        <input
+                            type="text"
+                            value={contenu.texte_bandeau || ""}
+                            onChange={(e) => mettreAJourChamp("texte_bandeau", e.target.value)}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f]"
+
+                        />
+                        <p className="text-sm text-gray-500 mt-2">
+                            Ce texte s'affichera en haut de la page, au-dessus de l'image. Laissez vide pour ne rien afficher.
+                        </p>
+                    </div>
+
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                         <ImageUploader
                             currentImage={contenu.image_principale}

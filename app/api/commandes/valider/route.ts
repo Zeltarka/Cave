@@ -145,7 +145,17 @@ export async function POST(req: Request) {
         console.log("📦 Début validation commande");
 
         const body = await req.json();
-        const { client, panier, total }: { client: ClientCommande; panier: ProduitPanier[]; total: number } = body;
+        const {
+            client,
+            panier,
+            total,
+            fraisPort
+        }: {
+            client: ClientCommande;
+            panier: ProduitPanier[];
+            total: number;
+            fraisPort: number;
+        } = body;
 
         // ── Validations basiques ──
         if (!client?.email) {
@@ -160,14 +170,22 @@ export async function POST(req: Request) {
         // ── Vérification ENV Supabase ──
         if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
             console.error("❌ ENV Supabase manquante");
-            // On continue quand même avec l'email, mais on log l'erreur
         }
 
         // ── Nettoyage des valeurs ──
         const totalNumber = Number(total);
+        const fraisPortNumber = Number(fraisPort) || 0;
         const datePassageProp = client.datePassage && client.datePassage.trim() !== ""
             ? client.datePassage
             : null;
+
+        // Calculer le sous-total (total - frais de port)
+        const sousTotal = totalNumber - fraisPortNumber;
+
+        // Calculer le nombre de bouteilles pour l'affichage
+        const nombreBouteilles = panier
+            .filter(p => !p.id.includes("carte-cadeau"))
+            .reduce((sum, p) => sum + p.quantite, 0);
 
         let commandeId = `CMD-${Date.now()}`;
 
@@ -191,6 +209,7 @@ export async function POST(req: Request) {
                         date_passage:   datePassageProp,
                         commentaires:   client.commentaires || null,
                         total:          totalNumber,
+                        frais_port:     fraisPortNumber,
                         statut:         "en_attente",
                     })
                     .select("id")
@@ -293,9 +312,6 @@ export async function POST(req: Request) {
         // ── Blocs HTML réutilisables ──
         const livraisonHtml = modeLivraison === "livraison"
             ? `<p style="margin:5px 0;color:#333;"><strong>Récupération :</strong> Livraison à domicile</p>
-               <div style="background:#fff8e1;padding:10px;border-radius:6px;margin-top:10px;border-left:4px solid #ff9800;">
-                   <p style="margin:0;color:#f57c00;font-size:14px;"><strong>Note :</strong> Les frais de port seront calculés et ajoutés au montant total. Vous recevrez une confirmation du montant final par email.</p>
-               </div>
                <p style="margin:10px 0 0;color:#333;"><strong>Adresse :</strong><br/>${client.adresse}<br/>${client.codepostal} ${client.ville}</p>`
             : `<p style="margin:5px 0;color:#333;"><strong>Récupération :</strong> Retrait en boutique — 3 rue Voltaire, 92250 La Garenne-Colombes</p>`;
 
@@ -333,20 +349,27 @@ export async function POST(req: Request) {
         const mailClient: any = {
             from:    `"La Cave La Garenne" <${SMTP_USER}>`,
             to:      client.email,
-            subject: `Confirmation commande #${commandeId} — La Cave La Garenne`,
+            subject: `Confirmation commande — La Cave La Garenne`,
             html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8f9fa;padding:30px;border-radius:15px;">
                 ${logoAttachment ? `<div style="text-align:center;margin-bottom:20px;"><img src="cid:logo@boutique" alt="La Cave La Garenne" style="max-width:250px;"/></div>` : ""}
 
                 <div style="background:#24586f;padding:25px;border-radius:12px;margin-bottom:25px;text-align:center;">
                     <h2 style="color:#fff;margin:0;">Merci pour votre commande !</h2>
-                    <p style="color:#f1f5ff;margin:10px 0 0;font-size:16px;">${client.prenom} ${client.nom} — Commande #${commandeId}</p>
+                    <p style="color:#f1f5ff;margin:10px 0 0;font-size:16px;">${client.prenom} ${client.nom}</p>
                 </div>
 
                 <div style="background:#fff;padding:20px;border-radius:12px;border:2px solid #8ba9b7;margin-bottom:20px;">
                     <h3 style="color:#24586f;margin-top:0;">Détails de votre commande</h3>
                     <ul style="line-height:1.8;color:#333;">${lignesPanierHtml}</ul>
                     <div style="background:#f1f5ff;padding:15px;border-radius:8px;margin-top:15px;border-left:4px solid #24586f;">
-                        <p style="font-size:20px;font-weight:bold;color:#24586f;margin:0;">Total ${modeLivraison === "livraison" ? "(hors frais de port) " : ""}: ${totalNumber.toFixed(2)} €</p>
+                        ${modeLivraison === "livraison" && fraisPortNumber > 0 ? `
+                            <p style="margin:5px 0;color:#24586f;">Sous-total produits : ${sousTotal.toFixed(2)} €</p>
+                            <p style="margin:5px 0;color:#24586f;">Frais de port (${nombreBouteilles} bouteille${nombreBouteilles > 1 ? 's' : ''}) : ${fraisPortNumber.toFixed(2)} €</p>
+                            <hr style="border:none;border-top:1px solid #8ba9b7;margin:10px 0;">
+                            <p style="font-size:20px;font-weight:bold;color:#24586f;margin:5px 0 0;">Total TTC : ${totalNumber.toFixed(2)} €</p>
+                        ` : `
+                            <p style="font-size:20px;font-weight:bold;color:#24586f;margin:0;">Total : ${totalNumber.toFixed(2)} €</p>
+                        `}
                     </div>
                 </div>
 
@@ -385,7 +408,6 @@ export async function POST(req: Request) {
             ? `<div style="background:#fff8e1;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid #ff9800;">
                    <p style="margin:0;color:#f57c00;font-weight:bold;">⚠️ Commande avec livraison</p>
                    <p style="margin:10px 0 0;color:#333;"><strong>Adresse :</strong><br/>${client.adresse}<br/>${client.codepostal} ${client.ville}</p>
-                   <p style="margin:10px 0 0;color:#e65100;font-size:14px;">→ Calculer les frais de port et communiquer le montant total au client.</p>
                </div>`
             : `<p style="margin:5px 0;"><strong>Récupération :</strong> <span style="color:#4caf50;">Retrait en boutique</span></p>`;
 
@@ -416,7 +438,16 @@ export async function POST(req: Request) {
 
                 <h3 style="color:#24586f;">Détails de la commande :</h3>
                 <ul style="line-height:1.8;">${lignesPanierHtml}</ul>
-                <p style="font-size:18px;font-weight:bold;color:#24586f;">Total ${modeLivraison === "livraison" ? "(hors frais de port) " : ""}: ${totalNumber.toFixed(2)} €</p>
+
+                ${modeLivraison === "livraison" && fraisPortNumber > 0 ? `
+                    <p style="margin:10px 0;font-size:16px;color:#333;">
+                        <strong>Sous-total produits :</strong> ${sousTotal.toFixed(2)} €<br/>
+                        <strong>Frais de port (${nombreBouteilles} bouteille${nombreBouteilles > 1 ? 's' : ''}) :</strong> ${fraisPortNumber.toFixed(2)} €
+                    </p>
+                    <p style="font-size:18px;font-weight:bold;color:#24586f;">Total TTC : ${totalNumber.toFixed(2)} €</p>
+                ` : `
+                    <p style="font-size:18px;font-weight:bold;color:#24586f;">Total : ${totalNumber.toFixed(2)} €</p>
+                `}
 
                 ${cartesCadeaux.length
                 ? `<div style="background:#d4edda;padding:15px;border-radius:8px;margin:15px 0;">

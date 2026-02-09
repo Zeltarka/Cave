@@ -190,7 +190,7 @@ function GalerieEditor() {
                                 <div className="flex gap-2">
                                     <button onClick={() => deplacerPhoto(index, "haut")} disabled={index === 0} className="p-2 text-gray-600 hover:bg-gray-100 rounded disabled:opacity-30">↑</button>
                                     <button onClick={() => deplacerPhoto(index, "bas")} disabled={index === contenu.photos.length - 1} className="p-2 text-gray-600 hover:bg-gray-100 rounded disabled:opacity-30">↓</button>
-                                    <button onClick={() => supprimerPhoto(index)} className="p-2 text-red-600 hover:bg-red-50 rounded">🗑️</button>
+                                    <button onClick={() => supprimerPhoto(index)} className="p-2 text-red-600 hover:bg-red-50 rounded">x</button>
                                 </div>
                             </div>
 

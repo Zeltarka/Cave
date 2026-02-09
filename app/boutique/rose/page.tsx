@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useMessages } from "@/hooks/useMessages";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 type BlocDescription = {
     type: "paragraphe";
@@ -21,6 +22,8 @@ export default function Page() {
     const QUANTITES_DISPONIBLES = [6, 12, 18, 24];
     const [quantitec, setQuantitec] = useState(6);
     const [message, setMessage] = useState("");
+    const [messageType, setMessageType] = useState<"success" | "error">("success");
+    const [showModal, setShowModal] = useState(false);
     const [disabled, setDisabled] = useState(false);
     const [contenu, setContenu] = useState<RoseContenu | null>(null);
     const [loading, setLoading] = useState(true);
@@ -58,16 +61,21 @@ export default function Page() {
             await res.json();
             window.dispatchEvent(new Event('cartUpdated'));
 
-            // Utiliser le message dynamique avec la variable {quantite}
+            // Afficher la modale de succès
             const msg = messages.panier.ajout_succes.replace("{quantite}", quantitec.toString());
             setMessage(msg);
+            setMessageType("success");
+            setShowModal(true);
 
             setTimeout(() => {
                 setDisabled(false);
             }, 3000);
         } catch {
-            // Utiliser le message d'erreur dynamique
+            // Afficher la modale d'erreur
             setMessage(messages.panier.ajout_erreur);
+            setMessageType("error");
+            setShowModal(true);
+
             setTimeout(() => {
                 setDisabled(false);
             }, 3000);
@@ -182,6 +190,16 @@ export default function Page() {
                     </div>
                 </div>
             </div>
+
+            {/* Modale de confirmation */}
+            <ConfirmationModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                type={messageType}
+                message={message}
+                autoClose={true}
+                autoCloseDelay={3000}
+            />
         </div>
     );
 }

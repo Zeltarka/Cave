@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useMessages } from "@/hooks/useMessages"
+import { useMessages } from "@/hooks/useMessages";
+import ConfirmationModal from "@/components/ConfirmationModal";
+import Link from "next/link";
 
 type Produit = {
     id: string;
@@ -41,20 +43,16 @@ export default function PanierPage() {
         datePassage: "",
     });
     const [disabled, setDisabled] = useState(false);
-    const [countdown, setCountdown] = useState(0);
-    const [message, setMessage] = useState("");
-    const [confirmation, setConfirmation] = useState(false);
+    const [fraisPort, setFraisPort] = useState(0);
+
+    // States pour la modal de confirmation
+    const [modalOpen, setModalOpen] = useState(false);
+    const [modalType, setModalType] = useState<"success" | "error" | "info">("success");
+    const [modalTitle, setModalTitle] = useState("");
+    const [modalMessage, setModalMessage] = useState("");
+    const [commandeValidee, setCommandeValidee] = useState(false);
+
     const { messages } = useMessages();
-
-    useEffect(() => {
-        if (countdown <= 0) return;
-        const timer = setInterval(() => setCountdown(c => c - 1), 1000);
-        return () => clearInterval(timer);
-    }, [countdown]);
-
-    useEffect(() => {
-        if (countdown === 0) setDisabled(false);
-    }, [countdown]);
 
     const fetchPanier = async () => {
         try {
@@ -69,6 +67,31 @@ export default function PanierPage() {
     useEffect(() => {
         fetchPanier();
     }, []);
+
+    // Calcul du nombre de bouteilles (exclut les cartes cadeaux)
+    const nombreBouteilles = panier
+        .filter(p => !p.id.includes("carte-cadeau"))
+        .reduce((sum, p) => sum + p.quantite, 0);
+
+    // Récupération des frais de port
+    useEffect(() => {
+        const fetchFraisPort = async () => {
+            if (commande.modeLivraison === "livraison" && nombreBouteilles > 0) {
+                try {
+                    const res = await fetch(`/api/frais-port?nombre=${nombreBouteilles}`);
+                    const data = await res.json();
+                    setFraisPort(data.frais || 0);
+                } catch (err) {
+                    console.error("Erreur récupération frais de port:", err);
+                    setFraisPort(0);
+                }
+            } else {
+                setFraisPort(0);
+            }
+        };
+
+        fetchFraisPort();
+    }, [commande.modeLivraison, nombreBouteilles]);
 
     const maxQuantite = (produit: Produit) => {
         if (produit.id.includes("carte-cadeau")) return 10;
@@ -88,6 +111,7 @@ export default function PanierPage() {
     };
 
     const total = panier.reduce((sum, p) => sum + p.prix * p.quantite, 0);
+    const totalAvecPort = total + fraisPort;
     const panierVide = panier.length === 0 || panier.every((p) => p.quantite === 0);
 
     const changerQuantite = async (id: string, nouvelleQuantite: number) => {
@@ -125,6 +149,24 @@ export default function PanierPage() {
         }
     };
 
+    // Fonction pour vider tout le panier en BDD
+    const viderPanierBDD = async () => {
+        try {
+            // Supprimer chaque produit du panier en BDD
+            await Promise.all(
+                panier.map(produit =>
+                    fetch("/api/commandes", {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ id: produit.id }),
+                    })
+                )
+            );
+        } catch (err) {
+            console.error("Erreur vidage panier en BDD :", err);
+        }
+    };
+
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
     ) => {
@@ -143,61 +185,104 @@ export default function PanierPage() {
                 !commande.codepostal ||
                 !commande.ville
             ) {
-                alert("Merci de remplir tous les champs obligatoires pour la livraison");
+                setModalType("error");
+                setModalTitle("Erreur");
+                setModalMessage("Merci de remplir tous les champs obligatoires pour la livraison");
+                setModalOpen(true);
                 return;
             }
         } else {
             // Pour le retrait en boutique, l'adresse n'est pas obligatoire
             if (!commande.nom || !commande.prenom || !commande.email) {
-                alert("Merci de remplir le nom, prénom et email");
+                setModalType("error");
+                setModalTitle("Erreur");
+                setModalMessage("Merci de remplir le nom, prénom et email");
+                setModalOpen(true);
                 return;
             }
         }
 
-        // Validation de la date de passage si paiement en boutique
-        if (commande.modePaiement === "boutique" && !commande.datePassage) {
-            alert("Merci de sélectionner une date de passage en boutique pour le paiement");
+        // Validation de la date de passage si retrait en boutique OU paiement en boutique
+        if ((commande.modeLivraison === "retrait" || commande.modePaiement === "boutique") && !commande.datePassage) {
+            setModalType("error");
+            setModalTitle("Erreur");
+            setModalMessage("Merci de sélectionner une date de passage en boutique");
+            setModalOpen(true);
             return;
         }
 
         // Validation email simple
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(commande.email)) {
-            alert("Veuillez entrer une adresse email valide");
+            setModalType("error");
+            setModalTitle("Erreur");
+            setModalMessage("Veuillez entrer une adresse email valide");
+            setModalOpen(true);
             return;
         }
 
         setDisabled(true);
-        setCountdown(15);
 
         try {
             const res = await fetch("/api/commandes/valider", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ client: commande, panier, total }),
+                body: JSON.stringify({
+                    client: commande,
+                    panier,
+                    total: totalAvecPort, // Envoyer le total avec frais de port
+                    fraisPort // Envoyer les frais de port séparément
+                }),
             });
 
             const data = await res.json();
 
             if (data.success) {
-                setMessage("Commande validée avec succès !");
-                setPanier([]);
-                setConfirmation(true);
+                // Vider le panier en BDD
+                await viderPanierBDD();
 
-                setTimeout(() => {
-                    setConfirmation(false);
-                    window.location.href = "/";
-                }, 10000);
+                // Vider le panier localement
+                setPanier([]);
+
+                // Réinitialiser le formulaire
+                setAfficherCommande(false);
+                setCommande({
+                    nom: "",
+                    prenom: "",
+                    email: "",
+                    telephone: "",
+                    adresse: "",
+                    ville: "",
+                    codepostal: "",
+                    commentaires: "",
+                    modeLivraison: "retrait",
+                    modePaiement: "virement",
+                    datePassage: "",
+                });
+
+                // Marquer la commande comme validée
+                setCommandeValidee(true);
+
+                // Afficher la modal de succès
+                setModalType("success");
+                setModalTitle("Commande validée !");
+                setModalMessage("Votre commande a été validée avec succès ! Vous allez recevoir un email de confirmation.");
+                setModalOpen(true);
             } else {
-                setMessage(data.message || "Erreur lors de la commande.");
-                setDisabled(false);
-                setCountdown(0);
+                // Afficher la modal d'erreur
+                setModalType("error");
+                setModalTitle("Erreur");
+                setModalMessage(data.message || "Erreur lors de la validation de la commande.");
+                setModalOpen(true);
             }
         } catch (err) {
             console.error("Erreur validation commande :", err);
-            setMessage("Erreur serveur.");
+            setModalType("error");
+            setModalTitle("Erreur serveur");
+            setModalMessage("Une erreur est survenue. Veuillez réessayer.");
+            setModalOpen(true);
+        } finally {
             setDisabled(false);
-            setCountdown(0);
         }
     };
 
@@ -207,12 +292,6 @@ export default function PanierPage() {
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl text-[#24586f] text-center mb-6 sm:mb-8 font-semibold">
                     Panier
                 </h1>
-
-                {confirmation && (
-                    <p className="text-center text-[#24586f] font-bold mb-6 text-base sm:text-lg">
-                        Votre commande a été traitée ! <br /> Vous allez recevoir un email
-                    </p>
-                )}
 
                 {panierVide ? (
                     <div className="text-center mt-8">
@@ -425,10 +504,39 @@ export default function PanierPage() {
 
                         {!panierVide && (
                             <>
-                                <div className="mt-8 text-xl sm:text-2xl font-bold text-center text-[#24586f]">
-                                    Total : {total.toFixed(2)} €
+                                {/* Récapitulatif avec frais de port */}
+                                <div className="mt-8 bg-[#f1f5ff] border-2 border-[#24586f] rounded-lg p-6">
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-lg text-gray-700">Sous-total produits</span>
+                                            <span className="text-xl font-semibold text-[#24586f]">{total.toFixed(2)} €</span>
+                                        </div>
+
+                                        {commande.modeLivraison === "livraison" && nombreBouteilles > 0 && (
+                                            <div className="flex justify-between items-center border-t pt-3">
+                                                <span className="text-lg text-gray-700">
+                                                    Frais de port ({nombreBouteilles} bouteille{nombreBouteilles > 1 ? 's' : ''})
+                                                </span>
+                                                <span className="text-xl font-semibold text-[#24586f]">{fraisPort.toFixed(2)} €</span>
+                                            </div>
+                                        )}
+
+                                        <div className="flex justify-between items-center border-t-2 border-[#24586f] pt-3">
+                                            <span className="text-2xl font-bold text-[#24586f]">Total</span>
+                                            <span className="text-3xl font-bold text-[#24586f]">
+                                                {totalAvecPort.toFixed(2)} €
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
+
                                 <div className="text-center mt-6">
+                                    <Link
+                                        href="/la-cave"
+                                        className="inline-block mr-4 px-6 py-3 border-2 border-[#24586f] text-[#24586f] rounded-lg hover:bg-[#24586f] hover:text-white transition-colors font-medium"
+                                    >
+                                        Continuer mes achats
+                                    </Link>
                                     <button
                                         onClick={() => {
                                             setAfficherCommande(true);
@@ -439,9 +547,9 @@ export default function PanierPage() {
                                                 }
                                             }, 100);
                                         }}
-                                        className="bg-[#24586f] text-white border-none px-8 py-3 rounded-lg text-base sm:text-lg cursor-pointer hover:bg-[#1a4557] transition-colors"
+                                        className="inline-block px-6 py-3 bg-[#24586f] text-white rounded-lg hover:bg-[#1a4557] transition-colors font-medium cursor-pointer"
                                     >
-                                        Commander
+                                        Valider ma commande
                                     </button>
                                 </div>
                             </>
@@ -484,23 +592,32 @@ export default function PanierPage() {
                                             />
                                             <span className="ml-3">
                                                 <span className="font-semibold">Livraison à domicile</span>
-                                                <span className="text-sm text-gray-600 block">Les frais de port seront calculés et communiqués ultérieurement</span>
+                                                <span className='text-sm text-gray-600 block'>Les frais de port sont ajustés automatiquement</span>
+                                                {nombreBouteilles > 0 && fraisPort > 0 && (
+                                                    <span className="text-sm text-gray-600 block">
+                                                        Frais de port : {fraisPort.toFixed(2)} € pour {nombreBouteilles} bouteille{nombreBouteilles > 1 ? 's' : ''}
+                                                    </span>
+                                                )}
                                             </span>
                                         </label>
                                     </div>
                                 </div>
 
                                 <div className="space-y-4">
+                                    <p className="block text-gray-700 font-semibold mb-3">Coordonnées de l'acheteur * </p>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
                                         <input
                                             name="nom"
                                             placeholder="Nom *"
+                                            value={commande.nom}
                                             onChange={handleChange}
                                             className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
                                         />
                                         <input
                                             name="prenom"
                                             placeholder="Prénom *"
+                                            value={commande.prenom}
                                             onChange={handleChange}
                                             className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
                                         />
@@ -509,6 +626,7 @@ export default function PanierPage() {
                                         name="email"
                                         type="email"
                                         placeholder="Adresse email *"
+                                        value={commande.email}
                                         onChange={handleChange}
                                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
                                     />
@@ -516,6 +634,7 @@ export default function PanierPage() {
                                         name="telephone"
                                         type="tel"
                                         placeholder="Numéro de téléphone (optionnel)"
+                                        value={commande.telephone}
                                         onChange={handleChange}
                                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
                                     />
@@ -525,6 +644,7 @@ export default function PanierPage() {
                                             <input
                                                 name="adresse"
                                                 placeholder="Adresse *"
+                                                value={commande.adresse}
                                                 onChange={handleChange}
                                                 className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
                                             />
@@ -532,12 +652,14 @@ export default function PanierPage() {
                                                 <input
                                                     name="codepostal"
                                                     placeholder="Code Postal *"
+                                                    value={commande.codepostal}
                                                     onChange={handleChange}
                                                     className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
                                                 />
                                                 <input
                                                     name="ville"
                                                     placeholder="Ville *"
+                                                    value={commande.ville}
                                                     onChange={handleChange}
                                                     className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
                                                 />
@@ -548,19 +670,12 @@ export default function PanierPage() {
                                     <textarea
                                         name="commentaires"
                                         placeholder="Commentaires (optionnel)"
+                                        value={commande.commentaires}
                                         onChange={handleChange}
                                         rows={4}
                                         className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f] resize-vertical"
                                     />
                                 </div>
-
-                                {commande.modeLivraison === "livraison" && (
-                                    <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded">
-                                        <p className="text-sm text-amber-800">
-                                            <strong>Note :</strong> Les frais de port seront calculés en fonction de votre adresse et vous seront communiqués par email. Le montant total de votre commande sera ajusté en conséquence.
-                                        </p>
-                                    </div>
-                                )}
 
                                 {/* Choix du mode de paiement */}
                                 <div className="mt-6">
@@ -603,15 +718,16 @@ export default function PanierPage() {
                                     </div>
                                 </div>
 
-                                {/* Date de passage si paiement en boutique */}
-                                {commande.modePaiement === "boutique" && (
+                                {/* Date de passage si retrait en boutique OU paiement en boutique */}
+                                {(commande.modeLivraison === "retrait" || commande.modePaiement === "boutique") && (
                                     <div className="mt-4">
                                         <label className="block text-gray-700 font-semibold mb-2">
-                                            Date de passage en boutique *
+                                            Date de passage en boutique souhaitée *
                                         </label>
                                         <input
                                             type="date"
                                             name="datePassage"
+                                            value={commande.datePassage}
                                             onChange={handleChange}
                                             min={(() => {
                                                 const afterTomorrow = new Date();
@@ -621,7 +737,13 @@ export default function PanierPage() {
                                             className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
                                         />
                                         <p className="text-sm text-gray-600 mt-2">
-                                            Indiquez la date à laquelle vous prévoyez de passer en boutique pour récupérer et payer votre commande (à partir d'après-demain).
+                                            Indiquez la date à laquelle vous prévoyez de passer en boutique
+                                            {commande.modeLivraison === "retrait" && commande.modePaiement === "boutique"
+                                                ? " pour récupérer et payer votre commande"
+                                                : commande.modeLivraison === "retrait"
+                                                    ? " pour récupérer votre commande"
+                                                    : " pour payer votre commande"}
+                                            {" "}(à partir d'après-demain).
                                         </p>
                                     </div>
                                 )}
@@ -637,18 +759,27 @@ export default function PanierPage() {
                                             : "bg-[#24586f] hover:bg-[#1a4457] cursor-pointer"
                                     } text-white border-none`}
                                 >
-                                    {disabled ? `Patientez... ${countdown}s` : "Valider la commande"}
+                                    {disabled ? "Traitement en cours..." : "Valider la commande"}
                                 </button>
-                                {message && (
-                                    <p className="text-[#24586f] font-bold mt-4 text-center">
-                                        {message}
-                                    </p>
-                                )}
                             </div>
                         )}
                     </>
                 )}
             </div>
+
+            {/* Modal de confirmation */}
+            <ConfirmationModal
+                isOpen={modalOpen}
+                onClose={() => {
+                    setModalOpen(false);
+                    if (commandeValidee) {
+                        window.location.href = "/";
+                    }
+                }}
+                type={modalType}
+                title={modalTitle}
+                message={modalMessage}
+            />
         </div>
     );
 }

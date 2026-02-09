@@ -64,6 +64,11 @@ const PAGES: PageItem[] = [
         nom: "Messages Système",
         url: "/admin/contenu/messages",
 
+    },
+    {
+        nom: "Frais de Port",
+        url: "/admin/contenu/frais-port",
+
     }
 ];
 

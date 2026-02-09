@@ -257,7 +257,7 @@ function ChampagneEditor() {
                                                 onClick={() => supprimerBloc(index)}
                                                 className="p-1 text-red-600 hover:bg-red-50 rounded"
                                             >
-                                                🗑️
+                                                x
                                             </button>
                                         </div>
                                     </div>

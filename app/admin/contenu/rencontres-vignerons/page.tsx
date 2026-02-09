@@ -156,7 +156,8 @@ function RencontresEditor() {
                                 <div className="flex gap-2">
                                     <button onClick={() => deplacerBloc(index, "haut")} disabled={index === 0} className="p-2 text-gray-600 hover:bg-gray-100 rounded disabled:opacity-30">↑</button>
                                     <button onClick={() => deplacerBloc(index, "bas")} disabled={index === contenu.blocs.length - 1} className="p-2 text-gray-600 hover:bg-gray-100 rounded disabled:opacity-30">↓</button>
-                                    <button onClick={() => supprimerBloc(index)} className="p-2 text-red-600 hover:bg-red-50 rounded">🗑️</button>
+                                    {bloc.type === "paragraphe" &&(
+                                        <button onClick={() => supprimerBloc(index)} className="p-2 text-red-600 hover:bg-red-50 rounded">x</button>)}
                                 </div>
                             </div>
 

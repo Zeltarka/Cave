@@ -4,6 +4,7 @@ import Image from "next/image";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useMessages } from "@/hooks/useMessages";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 type CarteCadeauContenu = {
     titre: string;
@@ -16,6 +17,8 @@ type CarteCadeauContenu = {
 export default function CarteCadeauPage() {
     const [montant, setMontant] = useState<string>("");
     const [message, setMessage] = useState("");
+    const [messageType, setMessageType] = useState<"success" | "error">("success");
+    const [showModal, setShowModal] = useState(false);
     const [disabled, setDisabled] = useState(false);
     const [destinataire, setDestinataire] = useState("");
     const [contenu, setContenu] = useState<CarteCadeauContenu | null>(null);
@@ -48,7 +51,8 @@ export default function CarteCadeauPage() {
         // Validation nom avec message dynamique
         if (!destinataire.trim()) {
             setMessage(messages.carte_cadeau.nom_requis);
-            setTimeout(() => setMessage(""), 3000);
+            setMessageType("error");
+            setShowModal(true);
             return;
         }
 
@@ -56,7 +60,8 @@ export default function CarteCadeauPage() {
         if (montantNum < contenu.montant_minimum) {
             const msg = messages.carte_cadeau.montant_minimum.replace("{montant}", contenu.montant_minimum.toString());
             setMessage(msg);
-            setTimeout(() => setMessage(""), 3000);
+            setMessageType("error");
+            setShowModal(true);
             return;
         }
 
@@ -83,6 +88,8 @@ export default function CarteCadeauPage() {
             if (!res.ok) {
                 console.error("Erreur API:", data);
                 setMessage(data.error || messages.carte_cadeau.ajout_erreur);
+                setMessageType("error");
+                setShowModal(true);
                 setTimeout(() => setDisabled(false), 2000);
                 return;
             }
@@ -94,16 +101,19 @@ export default function CarteCadeauPage() {
                 .replace("{montant}", montantNum.toFixed(2))
                 .replace("{destinataire}", destinataire);
             setMessage(msg);
+            setMessageType("success");
+            setShowModal(true);
 
             setMontant("");
             setDestinataire("");
             setTimeout(() => {
-                setMessage("");
                 setDisabled(false);
             }, 3000);
         } catch (err) {
             console.error("Erreur catch:", err);
             setMessage(messages.carte_cadeau.ajout_erreur);
+            setMessageType("error");
+            setShowModal(true);
             setTimeout(() => setDisabled(false), 2000);
         }
     };
@@ -179,6 +189,16 @@ export default function CarteCadeauPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Modale de confirmation */}
+            <ConfirmationModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                type={messageType}
+                message={message}
+                autoClose={messageType === "success"}
+                autoCloseDelay={3000}
+            />
         </div>
     );
 }
