@@ -16,6 +16,7 @@ type RoseContenu = {
     titre: string;
     prix: number;
     image: string;
+    disponible: boolean;
     blocs_description: BlocDescription[];
 };
 
@@ -203,6 +204,24 @@ function RoseEditor() {
                                     onChange={(e) => mettreAJourChamp("prix", parseFloat(e.target.value) || 0)}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f]"
                                 />
+                            </div>
+                            <div className="pt-4 border-t border-gray-200">
+                                <label className="flex items-center gap-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={contenu.disponible ?? true}
+                                        onChange={(e) => mettreAJourChamp("disponible", e.target.checked)}
+                                        className="w-5 h-5 text-[#24586f] border-gray-300 rounded focus:ring-[#24586f] cursor-pointer"
+                                    />
+                                    <span className="text-sm font-semibold text-gray-700">
+                                        Produit disponible à la vente
+                                    </span>
+                                </label>
+                                {!(contenu.disponible ?? true) && (
+                                    <p className="text-sm text-red-600 mt-2 ml-8">
+                                        Produit indisponible à la vente
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>

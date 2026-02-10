@@ -9,6 +9,7 @@ type Produit = {
     prix: number;
     image: string;
     lien: string;
+    disponible?: boolean;
 };
 
 type BoutiqueContenu = {
@@ -82,7 +83,15 @@ export default function Boutique() {
                                     sizes="(max-width: 640px) 280px, (max-width: 1024px) 320px, (max-width: 1280px) 350px, 400px"
                                 />
 
-                                <div className={`absolute inset-0 flex justify-center items-end pb-4 rounded-b-[19px] ${index === 0 ? 'bg-white/90' : 'bg-gray-500/90'} transition-opacity duration-700 ${hoverIndex === index ? "opacity-90" : "opacity-0"}`}>
+
+
+                                {/* Overlay hover - texte AU MILIEU */}
+                                <div className={`absolute inset-0 flex flex-col justify-center items-center bg-white/90 transition-opacity duration-700 ${hoverIndex === index ? "opacity-90" : "opacity-0"}`}>
+                                    {produit.disponible === false && (
+                                        <div className="absolute top-4 right-4 bg-red-600 text-white font-bold text-base sm:text-lg px-4 py-2 rounded-lg mb-4">
+                                            INDISPONIBLE
+                                        </div>
+                                    )}
                                     <span className="font-bold text-lg sm:text-xl text-black text-center px-4">
                                         {produit.nom} <br /> {produit.prix.toFixed(2)}€
                                     </span>

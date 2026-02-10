@@ -11,6 +11,7 @@ type Produit = {
     prix: number;
     image: string;
     lien: string;
+    disponible?: boolean; // ← AJOUTÉ
 };
 
 type BoutiqueContenu = {
@@ -157,6 +158,27 @@ function BoutiqueEditor() {
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">Lien</label>
                                     <input type="text" value={produit.lien} onChange={(e) => mettreAJourProduit(index, "lien", e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f]" />
                                 </div>
+
+                                {/* ✅ TOGGLE DISPONIBILITÉ */}
+                                <div className="pt-4 border-t border-gray-200">
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={produit.disponible ?? true}
+                                            onChange={(e) => mettreAJourProduit(index, "disponible", e.target.checked)}
+                                            className="w-5 h-5 text-[#24586f] border-gray-300 rounded focus:ring-[#24586f] cursor-pointer"
+                                        />
+                                        <span className="text-sm font-semibold text-gray-700">
+                                            Produit disponible à la vente
+                                        </span>
+                                    </label>
+                                    {!(produit.disponible ?? true) && (
+                                        <p className="text-sm text-red-600 mt-2 ml-8">
+                                            Produit indisponible à la vente.
+                                        </p>
+                                    )}
+                                </div>
+
                                 <ImageUploader currentImage={produit.image} onImageChange={(newImage) => mettreAJourProduit(index, "image", newImage)} label="Image du produit" />
                             </div>
                         </div>

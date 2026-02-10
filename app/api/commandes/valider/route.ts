@@ -349,7 +349,7 @@ export async function POST(req: Request) {
         const mailClient: any = {
             from:    `"La Cave La Garenne" <${SMTP_USER}>`,
             to:      client.email,
-            subject: `Confirmation commande — La Cave La Garenne`,
+            subject: `Confirmation de votre commande — La Cave La Garenne`,
             html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8f9fa;padding:30px;border-radius:15px;">
                 ${logoAttachment ? `<div style="text-align:center;margin-bottom:20px;"><img src="cid:logo@boutique" alt="La Cave La Garenne" style="max-width:250px;"/></div>` : ""}
 

@@ -15,6 +15,7 @@ type RoseContenu = {
     titre: string;
     prix: number;
     image: string;
+    disponible?: boolean;
     blocs_description: BlocDescription[];
 };
 
@@ -172,14 +173,62 @@ export default function Page() {
                             </select>
                         </div>
 
-                        {/* Bouton ajouter */}
-                        <button
-                            onClick={ajouterAuPanier}
-                            disabled={disabled}
-                            className="w-full h-16 sm:h-[70px] bg-[#8ba9b7] border border-[#24586f] rounded-[20px] text-white font-medium text-base sm:text-lg hover:bg-[#24586f] transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-                        >
-                            Ajouter au panier
-                        </button>
+                        {/* Carte ajout au panier */}
+                        <div className="border border-[#24586f] rounded-[20px] p-6 sm:p-8 flex flex-col justify-center items-center gap-6 w-full lg:w-auto lg:min-w-[320px] bg-[#faf5f1] self-start">
+
+                            {/* Si indisponible : gros message */}
+                            {contenu.disponible === false ? (
+                                <div className="text-center py-8">
+                                    <div className="text-3xl sm:text-4xl font-bold text-red-600 mb-3">
+                                        INDISPONIBLE
+                                    </div>
+                                    <p className="text-base text-gray-700">
+                                        Ce produit est temporairement indisponible
+                                    </p>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Sélecteur de quantité */}
+                                    <div className="flex flex-col items-center gap-3">
+                                        <label
+                                            htmlFor="quantite"
+                                            className="text-[#24586f] font-semibold"
+                                        >
+                                            Quantité
+                                        </label>
+
+                                        <select
+                                            id="quantite"
+                                            value={quantitec}
+                                            onChange={(e) => setQuantitec(parseInt(e.target.value))}
+                                            className="h-12 sm:h-14 px-4 text-lg font-semibold text-[#24586f] border border-[#24586f] rounded-xl bg-transparent focus:outline-none cursor-pointer"
+                                        >
+                                            {QUANTITES_DISPONIBLES.map((qty) => (
+                                                <option key={qty} value={qty}>
+                                                    {qty} bouteilles
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Bouton ajouter */}
+                                    <button
+                                        onClick={ajouterAuPanier}
+                                        disabled={disabled}
+                                        className="w-full h-16 sm:h-[70px] bg-[#8ba9b7] border border-[#24586f] rounded-[20px] text-white font-medium text-base sm:text-lg hover:bg-[#24586f] transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                                    >
+                                        Ajouter au panier
+                                    </button>
+
+                                    {/* Message de confirmation */}
+                                    {message && (
+                                        <p className="text-[#24586f] text-sm sm:text-base text-center font-semibold">
+                                            {message}
+                                        </p>
+                                    )}
+                                </>
+                            )}
+                        </div>
 
                         {/* Message de confirmation */}
                         {message && (
