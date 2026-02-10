@@ -51,7 +51,8 @@ export async function GET() {
             modePaiement: cmd.mode_paiement,
             datePassage: cmd.date_passage,
             commentaires: cmd.commentaires,
-            total: cmd.total,
+            total: Number(cmd.total) || 0,
+            fraisPort: Number(cmd.frais_port) || 0,
             statut: cmd.statut,
             noteAdmin: cmd.note_admin,
             createdAt: cmd.created_at,
@@ -63,7 +64,7 @@ export async function GET() {
                 id: ligne.produit_id,
                 produit: ligne.nom_produit,
                 quantite: ligne.quantite,
-                prix: ligne.prix_unitaire,
+                prix: Number(ligne.prix_unitaire),
                 destinataire: ligne.destinataire,
             })),
         }));

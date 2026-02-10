@@ -15,7 +15,6 @@ interface CommandeBody {
 }
 
 export async function GET(
-
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
@@ -61,6 +60,7 @@ export async function GET(
             prenom: commande.prenom,
             email: commande.email,
             statut: commande.statut,
+            frais_port: commande.frais_port,
         });
 
         // Formater les données
@@ -78,6 +78,7 @@ export async function GET(
             datePassage: commande.date_passage,
             commentaires: commande.commentaires || "",
             total: Number(commande.total) || 0,
+            fraisPort: Number(commande.frais_port) || 0,
             statut: commande.statut || "en_attente",
             noteAdmin: commande.note_admin || "",
             createdAt: commande.created_at,
@@ -94,6 +95,8 @@ export async function GET(
         console.log("✅ Commande formatée:", {
             id: commandeFormatted.id,
             statut: commandeFormatted.statut,
+            total: commandeFormatted.total,
+            fraisPort: commandeFormatted.fraisPort,
         });
 
         return NextResponse.json(commandeFormatted);
@@ -184,6 +187,7 @@ export async function PATCH(
             datePassage: commande.date_passage,
             commentaires: commande.commentaires || "",
             total: Number(commande.total) || 0,
+            fraisPort: Number(commande.frais_port) || 0,
             statut: commande.statut || "en_attente",
             noteAdmin: commande.note_admin || "",
             createdAt: commande.created_at,

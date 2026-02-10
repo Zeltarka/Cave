@@ -12,9 +12,7 @@ export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ page: string }> }
 ) {
-    // ✅ SÉCURITÉ: Vérification d'authentification JWT
-    const auth = await checkAdminAuth();
-    if (!auth.authorized) return auth.response;
+
 
     try {
         const { page: pageName } = await params;

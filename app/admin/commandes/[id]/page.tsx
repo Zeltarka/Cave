@@ -28,6 +28,7 @@ type Commande = {
     modePaiement: "virement" | "boutique";
     datePassage?: string;
     total: number;
+    fraisPort: number;
     statut: string;
     createdAt: string;
     panier: ProduitPanier[];
@@ -295,6 +296,9 @@ function CommandeDetailContent() {
         p.produit.toLowerCase().includes("carte cadeau")
     );
 
+    // Calculer le total avec frais de port
+    const totalAvecPort = commande.total + commande.fraisPort;
+
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Modal PDF */}
@@ -498,12 +502,13 @@ function CommandeDetailContent() {
                                             <br />
                                             {commande.codepostal} {commande.ville}
                                         </p>
-                                        <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                            <p className="text-sm text-amber-800">
-                                                <strong>Livraison</strong> — Les frais de port doivent
-                                                être calculés et communiqués au client.
-                                            </p>
-                                        </div>
+                                        {commande.fraisPort > 0 && (
+                                            <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                                <p className="text-sm text-green-800">
+                                                    <strong>Frais de port :</strong> {commande.fraisPort.toFixed(2)} €
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -612,16 +617,18 @@ function CommandeDetailContent() {
 
                             <div className="space-y-3 mb-6">
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">Sous-total</span>
+                                    <span className="text-gray-600">Sous-total produits</span>
                                     <span className="text-gray-900">
                                         {commande.total.toFixed(2)} €
                                     </span>
                                 </div>
 
-                                {commande.modeLivraison === "livraison" && (
+                                {commande.fraisPort > 0 && (
                                     <div className="flex justify-between text-sm">
                                         <span className="text-gray-600">Frais de port</span>
-                                        <span className="text-amber-600 font-medium">À calculer</span>
+                                        <span className="text-gray-900 font-medium">
+                                            {commande.fraisPort.toFixed(2)} €
+                                        </span>
                                     </div>
                                 )}
                             </div>
@@ -629,10 +636,10 @@ function CommandeDetailContent() {
                             <div className="pt-3 border-t border-gray-200">
                                 <div className="flex justify-between items-center">
                                     <span className="text-base font-semibold text-gray-900">
-                                        Total {commande.modeLivraison === "livraison" ? "(HT frais de port)" : ""}
+                                        Total
                                     </span>
                                     <span className="text-xl font-bold text-[#24586f]">
-                                        {commande.total.toFixed(2)} €
+                                        {totalAvecPort.toFixed(2)} €
                                     </span>
                                 </div>
                             </div>
