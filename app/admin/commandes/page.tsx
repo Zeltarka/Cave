@@ -1,4 +1,5 @@
 // app/admin/commandes/page.tsx
+
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -18,10 +19,8 @@ type Commande = {
     prenom: string;
     email: string;
     total: number;
-    fraisPort: number;
     statut: string;
     createdAt: string;
-    modeLivraison: string;
     panier: ProduitPanier[];
 };
 
@@ -31,7 +30,6 @@ function CommandesContent(){
     const [filtreStatut, setFiltreStatut] = useState<string>("TOUS");
     const [recherche, setRecherche] = useState("");
     const [error, setError] = useState("");
-    const [changingStatus, setChangingStatus] = useState<number | null>(null);
 
     useEffect(() => {
         fetchCommandes();
@@ -65,10 +63,6 @@ function CommandesContent(){
     };
 
     const changerStatut = async (id: number, nouveauStatut: string) => {
-        if (changingStatus === id) return; // Empêcher les doubles clics
-
-        setChangingStatus(id);
-
         try {
             console.log(`🔄 Changement statut commande #${id} vers "${nouveauStatut}"`);
 
@@ -79,25 +73,19 @@ function CommandesContent(){
             });
 
             if (res.ok) {
-                const updatedCommande = await res.json();
-                console.log(`✅ Statut changé avec succès:`, updatedCommande.statut);
-
+                console.log(`✅ Statut changé avec succès`);
                 // Mettre à jour localement
                 setCommandes((prev) =>
                     prev.map((cmd) =>
-                        cmd.id === id ? { ...cmd, statut: updatedCommande.statut } : cmd
+                        cmd.id === id ? { ...cmd, statut: nouveauStatut } : cmd
                     )
                 );
             } else {
                 const errorData = await res.json();
                 console.error("❌ Erreur changement statut:", errorData);
-                alert(`Erreur: ${errorData.error || 'Impossible de changer le statut'}`);
             }
         } catch (err) {
             console.error("❌ Erreur changement statut:", err);
-            alert("Erreur de connexion au serveur");
-        } finally {
-            setChangingStatus(null);
         }
     };
 
@@ -107,12 +95,12 @@ function CommandesContent(){
 
         const matchStatut =
             filtreStatut === "TOUS" || statutCmd === filtreStatutLower;
+        const termeLower = recherche.toLowerCase();
         const matchRecherche =
             recherche === "" ||
-            String(cmd.id).toLowerCase().includes(recherche.toLowerCase()) ||
-            cmd.nom.toLowerCase().includes(recherche.toLowerCase()) ||
-            cmd.prenom.toLowerCase().includes(recherche.toLowerCase()) ||
-            cmd.email.toLowerCase().includes(recherche.toLowerCase());
+            cmd.nom.toLowerCase().includes(termeLower) ||
+            cmd.prenom.toLowerCase().includes(termeLower) ||
+            cmd.panier?.some(p => p.destinataire?.toLowerCase().includes(termeLower));
         return matchStatut && matchRecherche;
     });
 
@@ -261,83 +249,66 @@ function CommandesContent(){
                                 </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                {commandesFiltrees.map((commande) => {
-                                    const totalAvecPort = commande.total + commande.fraisPort;
-
-                                    return (
-                                        <tr key={commande.id} className="hover:bg-gray-50">
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-medium text-gray-900">
-                                                    #{commande.id}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="text-sm text-gray-900">
-                                                    {commande.prenom} {commande.nom}
-                                                </div>
-                                                <div className="text-sm text-gray-500">
-                                                    {commande.email}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {new Date(commande.createdAt).toLocaleDateString("fr-FR", {
-                                                    year: "numeric",
-                                                    month: "short",
-                                                    day: "numeric",
-                                                    hour: "2-digit",
-                                                    minute: "2-digit",
-                                                })}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="text-sm text-gray-900">
-                                                    {commande.panier.length} article(s)
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-semibold text-gray-900">
-                                                    {totalAvecPort.toFixed(2)} €
-                                                </div>
-                                                {commande.fraisPort > 0 && (
-                                                    <div className="text-xs text-gray-500">
-                                                        dont {commande.fraisPort.toFixed(2)} € de port
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <select
-                                                    value={commande.statut}
-                                                    onChange={(e) =>
-                                                        changerStatut(commande.id, e.target.value)
-                                                    }
-                                                    disabled={changingStatus === commande.id}
-                                                    className={`text-xs font-semibold rounded-full px-3 py-1 border ${getStatutColor(
-                                                        commande.statut
-                                                    )} ${changingStatus === commande.id ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                                >
-                                                    <option value="en_attente">En attente</option>
-                                                    <option value="payee">Payée</option>
-                                                    <option value="preparee">En préparation</option>
-                                                    <option value="prete">Prête</option>
-                                                    <option value="livree">Livrée</option>
-                                                    <option value="annulee">Annulée</option>
-                                                </select>
-                                                {changingStatus === commande.id && (
-                                                    <div className="text-xs text-gray-500 mt-1">
-                                                        Mise à jour...
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                                                <Link
-                                                    href={`/admin/commandes/${commande.id}`}
-                                                    className="text-[#24586f] hover:text-[#1a4557] font-medium"
-                                                >
-                                                    Détails →
-                                                </Link>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
+                                {commandesFiltrees.map((commande) => (
+                                    <tr key={commande.id} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm font-medium text-gray-900">
+                                                #{commande.id}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm text-gray-900">
+                                                {commande.prenom} {commande.nom}
+                                            </div>
+                                            <div className="text-sm text-gray-500">
+                                                {commande.email}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {new Date(commande.createdAt).toLocaleDateString("fr-FR", {
+                                                year: "numeric",
+                                                month: "short",
+                                                day: "numeric",
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                            })}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm text-gray-900">
+                                                {commande.panier.length} article(s)
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                                            {commande.total.toFixed(2)} €
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <select
+                                                value={commande.statut}
+                                                onChange={(e) =>
+                                                    changerStatut(commande.id, e.target.value)
+                                                }
+                                                className={`text-xs font-semibold rounded-full px-3 py-1 border cursor-pointer ${getStatutColor(
+                                                    commande.statut
+                                                )}`}
+                                            >
+                                                <option value="en_attente">En attente</option>
+                                                <option value="payee">Payée</option>
+                                                <option value="preparee">En préparation</option>
+                                                <option value="prete">Prête</option>
+                                                <option value="livree">Livrée</option>
+                                                <option value="annulee">Annulée</option>
+                                            </select>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                                            <Link
+                                                href={`/admin/commandes/${commande.id}`}
+                                                className="text-[#24586f] hover:text-[#1a4557] font-medium"
+                                            >
+                                                Détails →
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                ))}
                                 </tbody>
                             </table>
                         </div>
