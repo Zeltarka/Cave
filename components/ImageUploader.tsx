@@ -4,7 +4,7 @@ import React, { useState, useRef } from "react";
 
 type ImageUploaderProps = {
     currentImage: string;
-    onImageChange: (newImageName: string) => void;
+    onImageChange: (newImageUrl: string) => void;
     label: string;
 };
 
@@ -18,7 +18,7 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Vérifications
+        // Vérifications côté client
         if (!file.type.startsWith("image/")) {
             setError("Le fichier doit être une image");
             return;
@@ -33,7 +33,7 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
         setUploading(true);
 
         try {
-            // Créer une preview locale
+            // Créer une preview locale immédiate
             const reader = new FileReader();
             reader.onloadend = () => {
                 setPreview(reader.result as string);
@@ -43,7 +43,7 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
             // Upload vers l'API
             const formData = new FormData();
             formData.append("file", file);
-            formData.append("oldFileName", currentImage);
+            formData.append("oldFileName", currentImage); // Pour supprimer l'ancienne image
 
             const res = await fetch("/api/admin/images/upload", {
                 method: "POST",
@@ -56,9 +56,12 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
                 throw new Error(data.error || "Erreur lors de l'upload");
             }
 
-            // Mettre à jour le nom du fichier (sans /public/)
+            // Mettre à jour avec l'URL complète de Supabase
             onImageChange(data.fileName);
+            setPreview(null); // Retirer la preview locale, utiliser l'URL de Supabase
             setError("");
+
+            console.log("✅ Image uploadée:", data.fileName);
 
         } catch (err) {
             console.error("Erreur upload:", err);
@@ -69,8 +72,21 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
         }
     };
 
-    // Ajouter un timestamp pour éviter le cache
-    const displayImage = preview || (currentImage ? `/${currentImage}?t=${Date.now()}` : null);
+    // Gérer l'affichage : preview locale OU URL Supabase OU chemin local (rétrocompatibilité)
+    const getDisplayImage = () => {
+        if (preview) return preview; // Preview locale en cours d'upload
+        if (!currentImage) return null;
+
+        // Si c'est déjà une URL complète (Supabase)
+        if (currentImage.startsWith("http")) {
+            return currentImage;
+        }
+
+        // Sinon, chemin local (anciens fichiers)
+        return `/${currentImage}`;
+    };
+
+    const displayImage = getDisplayImage();
 
     return (
         <div className="space-y-3">
@@ -95,9 +111,17 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
                         Aucune image
                     </div>
                 )}
+
+                {/* Indicateur de chargement */}
+                {uploading && (
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                        <div className="text-white text-center">
+                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white mb-2"></div>
+                            <div className="text-sm">Upload en cours...</div>
+                        </div>
+                    </div>
+                )}
             </div>
-
-
 
             {/* Boutons */}
             <div className="flex gap-2">
@@ -121,13 +145,25 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
 
             {/* Erreur */}
             {error && (
-                <p className="text-sm text-red-600">{error}</p>
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600">{error}</p>
+                </div>
             )}
 
             {/* Info */}
             <p className="text-xs text-gray-500">
-                Formats acceptés : JPG, PNG, WebP, SVG • Max 20 MB
+                Formats acceptés : JPG, PNG, WebP, SVG, GIF • Max 20 MB
             </p>
+
+            {/* Debug info (à retirer en production) */}
+            {process.env.NODE_ENV === "development" && currentImage && (
+                <details className="text-xs text-gray-400">
+                    <summary className="cursor-pointer">Debug info</summary>
+                    <pre className="mt-2 p-2 bg-gray-100 rounded overflow-x-auto">
+                        {JSON.stringify({ currentImage, isUrl: currentImage.startsWith("http") }, null, 2)}
+                    </pre>
+                </details>
+            )}
         </div>
     );
 }
