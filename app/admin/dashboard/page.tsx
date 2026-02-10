@@ -96,6 +96,12 @@ function DashboardContent() {
                             >
                                 Modifier le contenu
                             </Link>
+                            <Link
+                                href="/admin/carte-cadeau"
+                                className="px-4 py-2 bg-[#8ba9b7] text-white rounded-lg hover:bg-[#24586f] transition-colors"
+                            >
+                                Carte Cadeau
+                            </Link>
                         </div>
                     </div>
                 </div>

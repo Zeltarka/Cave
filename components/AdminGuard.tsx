@@ -42,40 +42,47 @@ export default function AdminGuard({ children }: AdminGuardProps) {
         }
     };
 
+    // Dans la fonction handleLogin de AdminGuard.tsx
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
         setLoading(true);
 
         try {
-            console.log("🔐 Tentative de connexion...");
             const res = await fetch("/api/admin/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, password }),
             });
 
-            console.log("📊 Response login:", res.status);
             const data = await res.json();
 
-            if (!res.ok) {
-                console.error("❌ Échec login:", data);
-                setError(data.message || "Erreur de connexion");
+            if (res.status === 429) {
+                // Trop de tentatives
+                setError(data.error || "Trop de tentatives. Veuillez patienter.");
                 setLoading(false);
                 return;
             }
 
-            console.log("✅ Connexion réussie");
+            if (!res.ok) {
+                const errorMsg = data.remainingAttempts !== undefined
+                    ? `${data.error} (${data.remainingAttempts} tentative${data.remainingAttempts > 1 ? 's' : ''} restante${data.remainingAttempts > 1 ? 's' : ''})`
+                    : data.error || "Erreur de connexion";
+
+                setError(errorMsg);
+                setLoading(false);
+                return;
+            }
+
+            // Connexion réussie
             setIsAuthenticated(true);
-            setError("");
         } catch (err) {
-            console.error("❌ Erreur serveur login:", err);
-            setError("Erreur serveur");
+            console.error("❌ Échec login:", err);
+            setError("Erreur de connexion au serveur");
         } finally {
             setLoading(false);
         }
     };
-
     const handleLogout = async () => {
         try {
             await fetch("/api/admin/auth/logout", { method: "POST" });

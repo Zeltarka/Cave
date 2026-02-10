@@ -383,19 +383,14 @@ function CommandeDetailContent() {
             {/* Contenu */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Informations client */}
+                    {/* Colonne principale */}
                     <div className="lg:col-span-2 space-y-6">
                         {/* Cartes cadeaux */}
                         {cartesCadeaux.length > 0 && (
-                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl shadow-sm border-2 border-green-200 p-6">
-                                <div className="flex items-center mb-4">
-                                    <svg className="w-6 h-6 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-                                    </svg>
-                                    <h2 className="text-lg font-semibold text-gray-900">
-                                        Cartes cadeaux ({cartesCadeaux.length})
-                                    </h2>
-                                </div>
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                                    Cartes cadeaux ({cartesCadeaux.length})
+                                </h2>
                                 <div className="space-y-3">
                                     {cartesCadeaux.map((carte, index) => {
                                         const carteId = `${carte.id}-${carte.destinataire || 'default'}`;
@@ -406,7 +401,7 @@ function CommandeDetailContent() {
                                         return (
                                             <div
                                                 key={index}
-                                                className="flex justify-between items-center p-4 bg-white border border-green-300 rounded-lg hover:shadow-md transition-shadow"
+                                                className="flex justify-between items-center p-4 bg-white rounded-lg"
                                             >
                                                 <div className="flex-1">
                                                     <p className="font-medium text-gray-900 text-lg">
@@ -420,7 +415,7 @@ function CommandeDetailContent() {
                                                     <p className="text-sm text-gray-500 mt-1">
                                                         <span className="font-medium">Quantité :</span> {carte.quantite} {carte.quantite > 1 ? 'cartes' : 'carte'}
                                                     </p>
-                                                    <p className="text-xs text-gray-400 mt-2 font-mono bg-gray-50 p-2 rounded border border-gray-200">
+                                                    <p className="text-m text-black mt-2 font-mono bg-gray-50 p-2 rounded border border-gray-200">
                                                         <span className="font-semibold">ID :</span> {idUnique}
                                                     </p>
                                                 </div>

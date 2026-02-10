@@ -4,6 +4,8 @@ import nodemailer from "nodemailer";
 import { cookies } from "next/headers";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { createClient } from "@supabase/supabase-js";
+import { generateCarteCadeauId } from "@/lib/carte-cadeau-utils";
+
 
 export const runtime = "nodejs";
 
@@ -61,21 +63,17 @@ async function generateCarteCadeauPDF(
         logoImage = await pdfDoc.embedPng(logoBytes);
     } catch {}
 
-    const now     = new Date();
-    const clean   = (s: string) => s.replace(/[^a-z0-9]/gi, "_");
-    const dateStr = now
-        .toLocaleString("fr-FR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
-        .replace(/[/:]/g, "-")
-        .replace(", ", "_");
-
+    const now = new Date();
     const bleuPrincipal = rgb(0.14, 0.35, 0.44);
     const bleuClair     = rgb(0.95, 0.96, 1);
     const grisClaire    = rgb(0.6, 0.6, 0.6);
 
     for (let i = 1; i <= quantite; i++) {
-        const page          = pdfDoc.addPage([595, 842]);
+        const page = pdfDoc.addPage([595, 842]);
         const { width, height } = page.getSize();
-        const idUnique      = `CarteCadeau-${clean(destinataire)}-${montant}EUR-${dateStr}-${i}`;
+
+        // ✅ NOUVEAU FORMAT: CarteCadeau-{Dest}-{Prix}-{Date}-{Heure}-{Minute}-{Hash}
+        const idUnique = generateCarteCadeauId(destinataire, montant);
 
         page.drawRectangle({ x: 0, y: 0, width, height, color: bleuClair });
         page.drawRectangle({ x: 50, y: 50, width: width - 100, height: height - 100, borderColor: bleuPrincipal, borderWidth: 3 });
@@ -89,42 +87,101 @@ async function generateCarteCadeauPDF(
                 height: (logoImage.height / logoImage.width) * logoWidth,
             });
         } else {
-            page.drawText("La Cave La Garenne", { x: width / 2 - 160, y: height - 120, size: 32, font: helveticaBold, color: bleuPrincipal });
+            page.drawText("La Cave La Garenne", {
+                x: width / 2 - 160,
+                y: height - 120,
+                size: 32,
+                font: helveticaBold,
+                color: bleuPrincipal
+            });
         }
 
-        page.drawText("Carte Cadeau", { x: width / 2 - 100, y: height - 200, size: 28, font: timesRomanBold, color: rgb(0.55, 0.66, 0.72) });
+        page.drawText("Carte Cadeau", {
+            x: width / 2 - 100,
+            y: height - 200,
+            size: 28,
+            font: timesRomanBold,
+            color: rgb(0.55, 0.66, 0.72)
+        });
 
         const montantText = `${montant.toFixed(2)} €`;
-        page.drawText(montantText, { x: (width - helveticaBold.widthOfTextAtSize(montantText, 60)) / 2, y: height - 300, size: 60, font: helveticaBold, color: bleuPrincipal });
+        page.drawText(montantText, {
+            x: (width - helveticaBold.widthOfTextAtSize(montantText, 60)) / 2,
+            y: height - 300,
+            size: 60,
+            font: helveticaBold,
+            color: bleuPrincipal
+        });
 
         const benefText = `Offerte à : ${destinataire}`;
-        page.drawText(benefText, { x: (width - helvetica.widthOfTextAtSize(benefText, 18)) / 2, y: height - 400, size: 18, font: helvetica, color: rgb(0, 0, 0) });
+        page.drawText(benefText, {
+            x: (width - helvetica.widthOfTextAtSize(benefText, 18)) / 2,
+            y: height - 400,
+            size: 18,
+            font: helvetica,
+            color: rgb(0, 0, 0)
+        });
 
         const codeText = `Code : ${idUnique}`;
-        page.drawText(codeText, { x: (width - helvetica.widthOfTextAtSize(codeText, 10)) / 2, y: height - 470, size: 10, font: helvetica, color: grisClaire });
+        page.drawText(codeText, {
+            x: (width - helvetica.widthOfTextAtSize(codeText, 10)) / 2,
+            y: height - 470,
+            size: 10,
+            font: helvetica,
+            color: grisClaire
+        });
 
         const dateText = `Émise le : ${now.toLocaleDateString("fr-FR")} à ${now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`;
-        page.drawText(dateText, { x: (width - helvetica.widthOfTextAtSize(dateText, 12)) / 2, y: height - 500, size: 12, font: helvetica, color: grisClaire });
+        page.drawText(dateText, {
+            x: (width - helvetica.widthOfTextAtSize(dateText, 12)) / 2,
+            y: height - 500,
+            size: 12,
+            font: helvetica,
+            color: grisClaire
+        });
 
         if (quantite > 1) {
             const numText = `Carte ${i} / ${quantite}`;
-            page.drawText(numText, { x: (width - helveticaBold.widthOfTextAtSize(numText, 14)) / 2, y: height - 530, size: 14, font: helveticaBold, color: bleuPrincipal });
+            page.drawText(numText, {
+                x: (width - helveticaBold.widthOfTextAtSize(numText, 14)) / 2,
+                y: height - 530,
+                size: 14,
+                font: helveticaBold,
+                color: bleuPrincipal
+            });
         }
 
-        const infos = ["La Cave La Garenne", "3 rue Voltaire, 92250 La Garenne-Colombes", "Tél : 01 47 84 57 63", "boutique@lacavelagarenne.fr"];
+        const infos = [
+            "La Cave La Garenne",
+            "3 rue Voltaire, 92250 La Garenne-Colombes",
+            "Tél : 01 47 84 57 63",
+            "boutique@lacavelagarenne.fr"
+        ];
         let yPos = 200;
         infos.forEach(info => {
-            page.drawText(info, { x: (width - helvetica.widthOfTextAtSize(info, 10)) / 2, y: yPos, size: 10, font: helvetica, color: grisClaire });
+            page.drawText(info, {
+                x: (width - helvetica.widthOfTextAtSize(info, 10)) / 2,
+                y: yPos,
+                size: 10,
+                font: helvetica,
+                color: grisClaire
+            });
             yPos -= 20;
         });
 
         const conditions = "Cette carte cadeau est valable en boutique. Non remboursable, non échangeable contre des espèces.";
-        let condY       = 90;
+        let condY = 90;
         let currentLine = "";
         conditions.split(" ").forEach(word => {
             const test = currentLine + (currentLine ? " " : "") + word;
             if (helvetica.widthOfTextAtSize(test, 8) > width - 200) {
-                page.drawText(currentLine, { x: (width - helvetica.widthOfTextAtSize(currentLine, 8)) / 2, y: condY, size: 8, font: helvetica, color: grisClaire });
+                page.drawText(currentLine, {
+                    x: (width - helvetica.widthOfTextAtSize(currentLine, 8)) / 2,
+                    y: condY,
+                    size: 8,
+                    font: helvetica,
+                    color: grisClaire
+                });
                 condY -= 12;
                 currentLine = word;
             } else {
@@ -132,7 +189,13 @@ async function generateCarteCadeauPDF(
             }
         });
         if (currentLine) {
-            page.drawText(currentLine, { x: (width - helvetica.widthOfTextAtSize(currentLine, 8)) / 2, y: condY, size: 8, font: helvetica, color: grisClaire });
+            page.drawText(currentLine, {
+                x: (width - helvetica.widthOfTextAtSize(currentLine, 8)) / 2,
+                y: condY,
+                size: 8,
+                font: helvetica,
+                color: grisClaire
+            });
         }
     }
 

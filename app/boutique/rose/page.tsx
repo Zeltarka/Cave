@@ -148,30 +148,7 @@ export default function Page() {
                         </div>
                     </div>
 
-                    {/* Carte ajout au panier */}
-                    <div className="border border-[#24586f] rounded-[20px] p-6 sm:p-8 flex flex-col justify-center items-center gap-6 w-full lg:w-auto lg:min-w-[320px] bg-[#faf5f1] self-start">
-                        {/* Sélecteur de quantité */}
-                        <div className="flex flex-col items-center gap-3">
-                            <label
-                                htmlFor="quantite"
-                                className="text-[#24586f] font-semibold"
-                            >
-                                Quantité
-                            </label>
 
-                            <select
-                                id="quantite"
-                                value={quantitec}
-                                onChange={(e) => setQuantitec(parseInt(e.target.value))}
-                                className="h-12 sm:h-14 px-4 text-lg font-semibold text-[#24586f] border border-[#24586f] rounded-xl bg-transparent focus:outline-none cursor-pointer"
-                            >
-                                {QUANTITES_DISPONIBLES.map((qty) => (
-                                    <option key={qty} value={qty}>
-                                        {qty} bouteilles
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
 
                         {/* Carte ajout au panier */}
                         <div className="border border-[#24586f] rounded-[20px] p-6 sm:p-8 flex flex-col justify-center items-center gap-6 w-full lg:w-auto lg:min-w-[320px] bg-[#faf5f1] self-start">
@@ -238,7 +215,7 @@ export default function Page() {
                         )}
                     </div>
                 </div>
-            </div>
+
 
             {/* Modale de confirmation */}
             <ConfirmationModal
