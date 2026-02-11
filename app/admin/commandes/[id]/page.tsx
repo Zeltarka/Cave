@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import AdminGuard from "@/components/AdminGuard";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { generateCarteCadeauId } from "@/lib/carte-cadeau-utils";
 
 type ProduitPanier = {
     id: string;
@@ -12,6 +13,7 @@ type ProduitPanier = {
     quantite: number;
     prix: number;
     destinataire?: string;
+    carteCadeauId?: string;
 };
 
 type Commande = {
@@ -32,26 +34,22 @@ type Commande = {
     statut: string;
     createdAt: string;
     panier: ProduitPanier[];
+    source?: string;
 };
 
 // ─── Génération PDF carte cadeau ───
 async function generateCarteCadeauPDF(
     destinataire: string,
     montant: number,
-    quantite: number
+    quantite: number,
+    idUnique: string  // ✅ Prendre l'ID en paramètre
 ): Promise<Uint8Array> {
     const pdfDoc = await PDFDocument.create();
     const helveticaBold  = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const helvetica      = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const timesRomanBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
 
-    const now     = new Date();
-    const clean   = (s: string) => s.replace(/[^a-z0-9]/gi, "_");
-    const dateStr = now
-        .toLocaleString("fr-FR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
-        .replace(/[/:]/g, "-")
-        .replace(", ", "_");
-
+    const now = new Date();
     const bleuPrincipal = rgb(0.14, 0.35, 0.44);
     const bleuClair     = rgb(0.95, 0.96, 1);
     const grisClaire    = rgb(0.6, 0.6, 0.6);
@@ -59,7 +57,6 @@ async function generateCarteCadeauPDF(
     for (let i = 1; i <= quantite; i++) {
         const page = pdfDoc.addPage([595, 842]);
         const { width, height } = page.getSize();
-        const idUnique = `CarteCadeau-${clean(destinataire)}-${montant}EUR-${dateStr}-${i}`;
 
         page.drawRectangle({ x: 0, y: 0, width, height, color: bleuClair });
         page.drawRectangle({ x: 50, y: 50, width: width - 100, height: height - 100, borderColor: bleuPrincipal, borderWidth: 3 });
@@ -73,6 +70,7 @@ async function generateCarteCadeauPDF(
         const benefText = `Offerte à : ${destinataire}`;
         page.drawText(benefText, { x: (width - helvetica.widthOfTextAtSize(benefText, 18)) / 2, y: height - 400, size: 18, font: helvetica, color: rgb(0, 0, 0) });
 
+        // ✅ Utiliser l'ID unique passé en paramètre
         const codeText = `Code : ${idUnique}`;
         page.drawText(codeText, { x: (width - helvetica.widthOfTextAtSize(codeText, 10)) / 2, y: height - 470, size: 10, font: helvetica, color: grisClaire });
 
@@ -113,18 +111,6 @@ async function generateCarteCadeauPDF(
     return pdfBytes;
 }
 
-// Fonction pour générer l'ID unique d'une carte cadeau
-function genererIdCarteCadeau(destinataire: string, montant: number): string {
-    const now = new Date();
-    const clean = (s: string) => s.replace(/[^a-z0-9]/gi, "_");
-    const dateStr = now
-        .toLocaleString("fr-FR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
-        .replace(/[/:]/g, "-")
-        .replace(", ", "_");
-
-    return `CarteCadeau-${clean(destinataire)}-${montant}EUR-${dateStr}-1`;
-}
-
 function CommandeDetailContent() {
     const params = useParams();
     const [commande, setCommande] = useState<Commande | null>(null);
@@ -134,6 +120,7 @@ function CommandeDetailContent() {
     const [changingStatus, setChangingStatus] = useState(false);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [pdfModalOpen, setPdfModalOpen] = useState(false);
+    const [sendingEmail, setSendingEmail] = useState(false);
 
     useEffect(() => {
         if (params.id) {
@@ -202,9 +189,14 @@ function CommandeDetailContent() {
 
         try {
             const destinataire = produit.destinataire || `${commande.prenom} ${commande.nom}`;
-            console.log(`📄 Génération PDF pour: ${destinataire}, montant: ${produit.prix}€, quantité: ${produit.quantite}`);
 
-            const pdfBytes = await generateCarteCadeauPDF(destinataire, produit.prix, produit.quantite);
+            // ✅ Utiliser l'ID unique stocké en BDD
+            const idUnique = produit.carteCadeauId || generateCarteCadeauId(destinataire, produit.prix);
+
+            console.log(`📄 Génération PDF pour: ${destinataire}, montant: ${produit.prix}€, quantité: ${produit.quantite}, ID de la carte: ${idUnique}`);
+
+            // ✅ Passer l'ID unique au PDF (celui de la BDD avec le hash)
+            const pdfBytes = await generateCarteCadeauPDF(destinataire, produit.prix, produit.quantite, idUnique);
 
             // Créer un Blob à partir des Uint8Array
             const pdfBlob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
@@ -295,6 +287,15 @@ function CommandeDetailContent() {
         p.id.toLowerCase().includes("cadeau") ||
         p.produit.toLowerCase().includes("carte cadeau")
     );
+
+    // 🔍 DEBUG: Afficher les IDs des cartes cadeaux
+    if (cartesCadeaux.length > 0) {
+        console.log("🎁 Cartes cadeaux détectées:", cartesCadeaux.map(c => ({
+            id: c.id,
+            destinataire: c.destinataire,
+            prix: c.prix
+        })));
+    }
 
     // Calculer le total avec frais de port
     const totalAvecPort = commande.total + commande.fraisPort;
@@ -396,12 +397,12 @@ function CommandeDetailContent() {
                                         const carteId = `${carte.id}-${carte.destinataire || 'default'}`;
                                         const isGenerating = generatingPDF === carteId;
                                         const destinataire = carte.destinataire || `${commande.prenom} ${commande.nom}`;
-                                        const idUnique = genererIdCarteCadeau(destinataire, carte.prix);
+                                        const idUnique = carte.carteCadeauId || "ID non disponible";
 
                                         return (
                                             <div
                                                 key={index}
-                                                className="flex justify-between items-center p-4 bg-white rounded-lg"
+                                                className="flex justify-between items-center p-4 bg-white rounded-lg border border-green-200"
                                             >
                                                 <div className="flex-1">
                                                     <p className="font-medium text-gray-900 text-lg">
@@ -415,7 +416,7 @@ function CommandeDetailContent() {
                                                     <p className="text-sm text-gray-500 mt-1">
                                                         <span className="font-medium">Quantité :</span> {carte.quantite} {carte.quantite > 1 ? 'cartes' : 'carte'}
                                                     </p>
-                                                    <p className="text-m text-black mt-2 font-mono bg-gray-50 p-2 rounded border border-gray-200">
+                                                    <p className="text-xs text-gray-700 mt-2 font-mono bg-gray-50 p-2 rounded border border-gray-200 break-all">
                                                         <span className="font-semibold">ID :</span> {idUnique}
                                                     </p>
                                                 </div>
@@ -451,9 +452,12 @@ function CommandeDetailContent() {
 
                         {/* Détails du client */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                                Informations client
-                            </h2>
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-lg font-semibold text-gray-900">
+                                    Informations client
+                                </h2>
+
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <p className="text-sm text-gray-500">Nom complet</p>
@@ -473,6 +477,16 @@ function CommandeDetailContent() {
                                 )}
                             </div>
                         </div>
+                        {commande.source === "boutique_admin" && (
+                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
+                                <svg className="w-5 h-5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p className="text-sm font-medium text-amber-800">
+                                    Commande créée en boutique par un administrateur
+                                </p>
+                            </div>
+                        )}
 
                         {/* Mode de livraison */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">

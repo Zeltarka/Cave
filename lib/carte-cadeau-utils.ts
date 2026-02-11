@@ -15,11 +15,10 @@ export function generateCarteCadeauId(destinataire: string, montant: number): st
         .replace(/[^a-zA-Z0-9]/g, ''); // Enlever caractères spéciaux
 
     // Date au format YYYYMMDD
-    const date = now.toLocaleDateString('fr-FR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-    }).split('/').reverse().join('');
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const date = `${year}${month}${day}`;
 
     // Heure (00-23)
     const heure = String(now.getHours()).padStart(2, '0');

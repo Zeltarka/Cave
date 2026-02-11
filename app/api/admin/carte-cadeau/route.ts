@@ -4,7 +4,7 @@ import nodemailer from "nodemailer";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { createClient } from "@supabase/supabase-js";
 import { checkAdminAuth } from "@/lib/api-auth";
-import { generateCarteCadeauId } from "@/lib/carte-cadeau-utils";
+import { generateCarteCadeauId } from "@/lib/carte-cadeau-utils"; // ✅ Import de la lib
 
 export const runtime = "nodejs";
 
@@ -23,7 +23,8 @@ type CarteLigne = {
 // ─── Génération PDF ───────────────────────────────────────
 async function generateCarteCadeauPDF(
     destinataire: string,
-    montant: number
+    montant: number,
+    idCarte: string,    // ID formaté généré par generateCarteCadeauId()
 ): Promise<Buffer> {
     const pdfDoc         = await PDFDocument.create();
     const helveticaBold  = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -38,9 +39,7 @@ async function generateCarteCadeauPDF(
         logoImage = await pdfDoc.embedPng(logoBytes);
     } catch {}
 
-    const now = new Date();
-    const idUnique = generateCarteCadeauId(destinataire, montant);
-
+    const now           = new Date();
     const bleuPrincipal = rgb(0.14, 0.35, 0.44);
     const bleuClair     = rgb(0.95, 0.96, 1);
     const grisClaire    = rgb(0.6, 0.6, 0.6);
@@ -54,8 +53,7 @@ async function generateCarteCadeauPDF(
     if (logoImage) {
         const logoWidth = 200;
         page.drawImage(logoImage, {
-            x: (width - logoWidth) / 2,
-            y: height - 140,
+            x: (width - logoWidth) / 2, y: height - 140,
             width: logoWidth,
             height: (logoImage.height / logoImage.width) * logoWidth,
         });
@@ -71,8 +69,9 @@ async function generateCarteCadeauPDF(
     const benefText = `Offerte à : ${destinataire}`;
     page.drawText(benefText, { x: (width - helvetica.widthOfTextAtSize(benefText, 18)) / 2, y: height - 400, size: 18, font: helvetica, color: rgb(0, 0, 0) });
 
-    const codeText = `Code : ${idUnique}`;
-    page.drawText(codeText, { x: (width - helvetica.widthOfTextAtSize(codeText, 10)) / 2, y: height - 470, size: 10, font: helvetica, color: grisClaire });
+    // Code lisible sur le PDF
+    const codeText = `Code : ${idCarte}`;
+    page.drawText(codeText, { x: (width - helvetica.widthOfTextAtSize(codeText, 9)) / 2, y: height - 470, size: 9, font: helvetica, color: grisClaire });
 
     const dateText = `Émise le : ${now.toLocaleDateString("fr-FR")} à ${now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`;
     page.drawText(dateText, { x: (width - helvetica.widthOfTextAtSize(dateText, 12)) / 2, y: height - 500, size: 12, font: helvetica, color: grisClaire });
@@ -106,20 +105,26 @@ async function generateCarteCadeauPDF(
 
 // ─── POST /api/admin/carte-cadeau ─────────────────────────
 export async function POST(req: Request) {
-    // 🔒 Auth admin obligatoire
     const auth = await checkAdminAuth();
     if (!auth.authorized) return auth.response;
 
     try {
         const body = await req.json();
-        const { cartes, nomAcheteur, prenomAcheteur, emailAcheteur, commentaire }:
-            {
-                cartes: CarteLigne[];
-                nomAcheteur?: string;
-                prenomAcheteur?: string;
-                emailAcheteur?: string;
-                commentaire?: string;
-            } = body;
+        const {
+            cartes,
+            nomAcheteur,
+            prenomAcheteur,
+            emailAcheteur,
+            envoyerEmailAcheteur,   // ← booléen : true seulement si bouton cliqué
+            commentaire,
+        }: {
+            cartes: CarteLigne[];
+            nomAcheteur?: string;
+            prenomAcheteur?: string;
+            emailAcheteur?: string;
+            envoyerEmailAcheteur?: boolean;
+            commentaire?: string;
+        } = body;
 
         console.log("📦 Création de cartes cadeau admin:", {
             nombreCartes: cartes.length,
@@ -140,16 +145,24 @@ export async function POST(req: Request) {
             }
         }
 
-        const emailRegex  = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const total       = cartes.reduce((sum, c) => sum + Number(c.montant), 0);
-        const now         = new Date();
-        const nomCmd      = nomAcheteur?.trim() || "Admin";
-        const prenomCmd   = prenomAcheteur?.trim() || "Boutique";
-        const emailCmd    = emailAcheteur?.trim() || process.env.VENDEUR_EMAIL || "boutique@lacavelagarenne.fr";
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const total      = cartes.reduce((sum, c) => sum + Number(c.montant), 0);
+        const now        = new Date();
+        const nomCmd     = nomAcheteur   || "Admin";
+        const prenomCmd  = prenomAcheteur || "Boutique";
+        const emailCmd   = emailAcheteur || process.env.VENDEUR_EMAIL || "boutique@lacavelagarenne.fr";
 
-        // ── 1. Insertion en BDD (UNE commande, N lignes) ──
+        // ── 1. Générer les IDs cartes AVANT l'insertion BDD ──
+        // ✅ Utilise la lib generateCarteCadeauId
+        const cartesAvecId = cartes.map(c => ({
+            ...c,
+            idCarte: generateCarteCadeauId(c.destinataire.trim(), Number(c.montant)),
+        }));
+
+        console.log("🎫 IDs générés:", cartesAvecId.map(c => ({ dest: c.destinataire, id: c.idCarte })));
+
+        // ── 2. Insertion en BDD ──
         let commandeId: string | number = `CC-ADMIN-${Date.now()}`;
-
         try {
             console.log("💾 Insertion commande dans Supabase...");
 
@@ -161,16 +174,16 @@ export async function POST(req: Request) {
                     email:          emailCmd,
                     mode_livraison: "retrait",
                     mode_paiement:  "boutique",
-                    commentaires:   commentaire?.trim() || null,
+                    commentaires:   commentaire || null,
                     total,
                     frais_port:     0,
-                    statut:         "payee",  // ✅ Statut payée directement
+                    statut:         "payee",
                 })
                 .select("id")
                 .single();
 
             if (errCommande) {
-                console.error("❌ Erreur insertion commande:", errCommande);
+                console.error("❌ Erreur insertion commande:", errCommande.message);
                 throw new Error(`Erreur BDD commande: ${errCommande.message}`);
             }
 
@@ -181,26 +194,22 @@ export async function POST(req: Request) {
             commandeId = commande.id;
             console.log(`✅ Commande #${commandeId} créée`);
 
-            // ── 2. Insertion des lignes (une par carte) ──
-            const lignes = cartes.map((c) => {
-                const carteId = generateCarteCadeauId(c.destinataire.trim(), Number(c.montant));
-
-                return {
-                    commande_id:   commandeId,
-                    produit_id:    carteId,  // ✅ Utilise le nouvel ID format
-                    nom_produit:   `Carte cadeau ${Number(c.montant).toFixed(2)}€`,
-                    quantite:      1,
-                    prix_unitaire: Number(c.montant),
-                    destinataire:  c.destinataire.trim(),
-                };
-            });
+            // Insertion des lignes
+            const lignes = cartesAvecId.map(c => ({
+                commande_id:   commandeId,
+                produit_id:    c.idCarte,   // ← l'ID formaté comme produit_id
+                nom_produit:   `Carte cadeau ${Number(c.montant).toFixed(2)}€`,
+                quantite:      1,
+                prix_unitaire: Number(c.montant),
+                destinataire:  c.destinataire.trim(),
+                carte_cadeau_id: c.idCarte,
+            }));
 
             console.log(`💾 Insertion de ${lignes.length} ligne(s) de commande...`);
 
             const { error: errLignes } = await supabaseAdmin.from("lignes_commande").insert(lignes);
-
             if (errLignes) {
-                console.error("❌ Erreur insertion lignes:", errLignes);
+                console.error("❌ Erreur insertion lignes:", errLignes.message);
                 throw new Error(`Erreur BDD lignes: ${errLignes.message}`);
             }
 
@@ -208,20 +217,23 @@ export async function POST(req: Request) {
 
         } catch (dbErr) {
             console.error("❌ Erreur critique BDD:", dbErr);
-            return NextResponse.json({ success: false, message: dbErr instanceof Error ? dbErr.message : "Erreur base de données" }, { status: 500 });
+            return NextResponse.json({
+                success: false,
+                message: dbErr instanceof Error ? dbErr.message : "Erreur base de données"
+            }, { status: 500 });
         }
 
         // ── 3. Génération des PDFs ──
-        type PdfEntry = { carte: CarteLigne; buffer: Buffer; filename: string };
+        type PdfEntry = { carte: typeof cartesAvecId[0]; buffer: Buffer; filename: string };
         const pdfs: PdfEntry[] = [];
 
         console.log("📄 Génération des PDFs...");
-        for (const carte of cartes) {
+        for (const carte of cartesAvecId) {
             try {
-                const buffer   = await generateCarteCadeauPDF(carte.destinataire.trim(), Number(carte.montant));
-                const filename = `CarteCadeau_${Number(carte.montant)}EUR_${carte.destinataire.trim().replace(/\s+/g, "_")}.pdf`;
+                const buffer   = await generateCarteCadeauPDF(carte.destinataire.trim(), Number(carte.montant), carte.idCarte);
+                const filename = `${carte.idCarte}.pdf`;
                 pdfs.push({ carte, buffer, filename });
-                console.log(`  ✅ PDF généré pour ${carte.destinataire}`);
+                console.log(`  ✅ PDF généré pour ${carte.destinataire} (${carte.idCarte})`);
             } catch (pdfErr) {
                 console.error(`  ❌ Erreur PDF pour ${carte.destinataire}:`, pdfErr);
             }
@@ -256,14 +268,16 @@ export async function POST(req: Request) {
                 content:     p.buffer,
                 contentType: "application/pdf",
             }));
-
             const allAttachments = logoAttachment ? [...allPdfAttachments, logoAttachment] : allPdfAttachments;
 
-            const cartesHtml = cartes.map(c =>
-                `<li>${c.destinataire} — <strong>${Number(c.montant).toFixed(2)} €</strong>${c.emailDestinataire ? ` <span style="color:#666;font-size:12px;">(envoyée à ${c.emailDestinataire})</span>` : ""}</li>`
+            const cartesHtml = cartesAvecId.map(c =>
+                `<li>${c.destinataire} — <strong>${Number(c.montant).toFixed(2)} €</strong>
+                 <br/><span style="color:#999;font-size:11px;">Code : ${c.idCarte}</span>
+                 ${c.emailDestinataire ? `<br/><span style="color:#666;font-size:12px;">(envoyée à ${c.emailDestinataire})</span>` : ""}
+                 </li>`
             ).join("");
 
-            // ── Email vendeur ──
+            // ── Email vendeur (toujours) ──
             try {
                 await transporter.sendMail({
                     from:        `"La Cave La Garenne" <${SMTP_USER}>`,
@@ -278,7 +292,7 @@ export async function POST(req: Request) {
                                 ${nomAcheteur || prenomAcheteur ? `<p style="margin:5px 0;"><strong>Acheteur :</strong> ${prenomCmd} ${nomCmd}</p>` : ""}
                                 ${emailAcheteur ? `<p style="margin:5px 0;"><strong>Email acheteur :</strong> ${emailAcheteur}</p>` : ""}
                                 <p style="margin:10px 0 5px;"><strong>Carte${cartes.length > 1 ? "s" : ""} :</strong></p>
-                                <ul style="margin:0;padding-left:20px;line-height:1.8;">${cartesHtml}</ul>
+                                <ul style="margin:0;padding-left:20px;line-height:2;">${cartesHtml}</ul>
                                 <p style="margin:15px 0 0;font-size:18px;font-weight:bold;color:#24586f;">Total : ${total.toFixed(2)} €</p>
                                 ${commentaire ? `<p style="margin:10px 0 0;"><strong>Commentaire :</strong> ${commentaire}</p>` : ""}
                             </div>
@@ -292,8 +306,8 @@ export async function POST(req: Request) {
                 console.error("  ❌ Erreur email vendeur:", emailErr);
             }
 
-            // ── Email acheteur ──
-            if (emailAcheteur?.trim() && emailRegex.test(emailAcheteur.trim())) {
+            // ── Email acheteur (SEULEMENT si envoyerEmailAcheteur === true) ──
+            if (envoyerEmailAcheteur === true && emailAcheteur?.trim() && emailRegex.test(emailAcheteur.trim())) {
                 try {
                     await transporter.sendMail({
                         from:        `"La Cave La Garenne" <${SMTP_USER}>`,
@@ -316,8 +330,7 @@ export async function POST(req: Request) {
                                 <p style="text-align:center;color:#333;">Les PDFs de vos cartes cadeau sont en pièce jointe.</p>
                                 <hr style="border:none;border-top:2px solid #8ba9b7;margin:30px 0;">
                                 <div style="text-align:center;color:#666;">
-                                    <p style="margin:5px 0;">La Cave La Garenne</p>
-                                    <p style="margin:5px 0;">3 rue Voltaire, 92250 La Garenne-Colombes</p>
+                                    <p style="margin:5px 0;">La Cave La Garenne — 3 rue Voltaire, 92250 La Garenne-Colombes</p>
                                     <p style="margin:5px 0;">Tél : 01 47 84 57 63</p>
                                 </div>
                             </div>
@@ -329,7 +342,7 @@ export async function POST(req: Request) {
                 }
             }
 
-            // ── Email à chaque destinataire ──
+            // ── Email à chaque destinataire (si email fourni sur la carte) ──
             for (const { carte, buffer, filename } of pdfs) {
                 if (!carte.emailDestinataire?.trim()) continue;
                 if (!emailRegex.test(carte.emailDestinataire.trim())) continue;
@@ -347,7 +360,7 @@ export async function POST(req: Request) {
                             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8f9fa;padding:30px;border-radius:15px;">
                                 ${logoAttachment ? `<div style="text-align:center;margin-bottom:20px;"><img src="cid:logo@boutique" alt="La Cave La Garenne" style="max-width:250px;"/></div>` : ""}
                                 <div style="background:#24586f;padding:25px;border-radius:12px;margin-bottom:25px;text-align:center;">
-                                    <h2 style="color:#fff;margin:0;">🎁 Vous avez reçu une carte cadeau !</h2>
+                                    <h2 style="color:#fff;margin:0;">Vous avez reçu une carte cadeau !</h2>
                                     <p style="color:#f1f5ff;margin:10px 0 0;font-size:16px;">${carte.destinataire}</p>
                                 </div>
                                 <div style="background:#fff;padding:20px;border-radius:12px;border:2px solid #8ba9b7;margin-bottom:20px;text-align:center;">
@@ -357,8 +370,7 @@ export async function POST(req: Request) {
                                 <p style="text-align:center;color:#333;">Votre carte cadeau est en pièce jointe de cet email.</p>
                                 <hr style="border:none;border-top:2px solid #8ba9b7;margin:30px 0;">
                                 <div style="text-align:center;color:#666;">
-                                    <p style="margin:5px 0;">La Cave La Garenne</p>
-                                    <p style="margin:5px 0;">3 rue Voltaire, 92250 La Garenne-Colombes</p>
+                                    <p style="margin:5px 0;">La Cave La Garenne — 3 rue Voltaire, 92250 La Garenne-Colombes</p>
                                     <p style="margin:5px 0;">Tél : 01 47 84 57 63</p>
                                 </div>
                             </div>
@@ -376,6 +388,9 @@ export async function POST(req: Request) {
 
     } catch (err) {
         console.error("❌ Erreur création carte cadeau admin:", err);
-        return NextResponse.json({ success: false, message: err instanceof Error ? err.message : "Erreur lors de la création" }, { status: 500 });
+        return NextResponse.json({
+            success: false,
+            message: err instanceof Error ? err.message : "Erreur lors de la création"
+        }, { status: 500 });
     }
 }

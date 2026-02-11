@@ -13,7 +13,7 @@ type ProduitPanier = {
 };
 
 type Commande = {
-    id: number;
+    id: string | number;
     nom: string;
     prenom: string;
     email: string;
@@ -22,6 +22,14 @@ type Commande = {
     createdAt: string;
     panier: ProduitPanier[];
 };
+
+// Formate un ID Supabase (UUID) ou numérique pour l'affichage
+function formatId(id: string | number): string {
+    const str = String(id);
+    // UUID → 8 derniers caractères en majuscules
+    if (str.includes("-")) return str.slice(-8).toUpperCase();
+    return str;
+}
 
 function CommandesContent() {
     const [commandes, setCommandes] = useState<Commande[]>([]);
@@ -54,7 +62,7 @@ function CommandesContent() {
         }
     };
 
-    const changerStatut = async (id: number, nouveauStatut: string) => {
+    const changerStatut = async (id: string | number, nouveauStatut: string) => {
         try {
             const res = await fetch(`/api/admin/commandes/${id}`, {
                 method: "PATCH",
@@ -107,11 +115,8 @@ function CommandesContent() {
         return labels[statut.toLowerCase()] || statut;
     };
 
-    // Extraire les destinataires des cartes cadeaux d'une commande
     const getDestinataires = (panier: ProduitPanier[]): string[] => {
-        return panier
-            .filter(p => p.destinataire)
-            .map(p => p.destinataire!);
+        return panier.filter(p => p.destinataire).map(p => p.destinataire!);
     };
 
     const statuts = ["TOUS", "en_attente", "payee", "preparee", "prete", "livree", "annulee"];
@@ -128,7 +133,6 @@ function CommandesContent() {
                             </Link>
                             <h1 className="text-2xl font-bold text-[#24586f]">Gestion des commandes</h1>
                         </div>
-
                     </div>
                 </div>
             </header>
@@ -200,7 +204,13 @@ function CommandesContent() {
                                     return (
                                         <tr key={commande.id} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-medium text-gray-900">#{commande.id}</div>
+                                                {/* Affichage court + titre avec UUID complet au survol */}
+                                                <div
+                                                    className="text-sm font-medium text-gray-900 font-mono cursor-default"
+                                                    title={String(commande.id)}
+                                                >
+                                                    #{formatId(commande.id)}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="text-sm font-medium text-gray-900">
@@ -221,14 +231,11 @@ function CommandesContent() {
                                                 <div className="text-sm text-gray-900">
                                                     {nbArticles} article{nbArticles > 1 ? "s" : ""}
                                                 </div>
-                                                {/* Destinataires cartes cadeaux */}
                                                 {destinataires.length > 0 && (
                                                     <div className="mt-1 flex flex-wrap gap-1">
                                                         {destinataires.map((dest, i) => (
-                                                            <span
-                                                                key={i}
-                                                                className="inline-flex items-center gap-1 px-2 py-0.5 text-[#24586f] text-xs "
-                                                            >Carte Cadeau pour {dest}
+                                                            <span key={i} className="text-[#24586f] text-xs">
+                                                                    Carte cadeau pour {dest}
                                                                 </span>
                                                         ))}
                                                     </div>

@@ -6,7 +6,6 @@ import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { createClient } from "@supabase/supabase-js";
 import { generateCarteCadeauId } from "@/lib/carte-cadeau-utils";
 
-
 export const runtime = "nodejs";
 
 // ─── Supabase admin ─────────────────────────────
@@ -38,6 +37,16 @@ type ClientCommande = {
     datePassage?: string;
 };
 
+type LigneCommande = {
+    commande_id: number;
+    produit_id: string;
+    nom_produit: string;
+    quantite: number;
+    prix_unitaire: number;
+    destinataire: string | null;
+    carte_cadeau_id: string | null;
+};
+
 // ─── Fonction pour récupérer session_id ──────────
 async function getSessionId(): Promise<string | null> {
     const cookieStore = await cookies();
@@ -48,7 +57,8 @@ async function getSessionId(): Promise<string | null> {
 async function generateCarteCadeauPDF(
     destinataire: string,
     montant: number,
-    quantite: number
+    quantite: number,
+    idUnique: string
 ): Promise<Buffer> {
     const pdfDoc = await PDFDocument.create();
     const helveticaBold  = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -71,9 +81,6 @@ async function generateCarteCadeauPDF(
     for (let i = 1; i <= quantite; i++) {
         const page = pdfDoc.addPage([595, 842]);
         const { width, height } = page.getSize();
-
-        // ✅ NOUVEAU FORMAT: CarteCadeau-{Dest}-{Prix}-{Date}-{Heure}-{Minute}-{Hash}
-        const idUnique = generateCarteCadeauId(destinataire, montant);
 
         page.drawRectangle({ x: 0, y: 0, width, height, color: bleuClair });
         page.drawRectangle({ x: 50, y: 50, width: width - 100, height: height - 100, borderColor: bleuPrincipal, borderWidth: 3 });
@@ -250,7 +257,8 @@ export async function POST(req: Request) {
             .filter(p => !p.id.includes("carte-cadeau"))
             .reduce((sum, p) => sum + p.quantite, 0);
 
-        let commandeId = `CMD-${Date.now()}`;
+        let commandeId: number | null = null;
+        let lignes: LigneCommande[] = [];
 
         // ── 1. Tentative d'insertion dans Supabase (optionnelle) ──
         if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -283,17 +291,26 @@ export async function POST(req: Request) {
                     console.log("   → On continue avec l'email uniquement");
                 } else if (commande) {
                     commandeId = commande.id;
+                    const idCommande = commande.id; // ← variable locale, TypeScript sait que c'est number
                     console.log(`✅ Commande #${commandeId} insérée dans Supabase`);
 
-                    // Insérer les lignes de commande
-                    const lignes = panier.map((p) => ({
-                        commande_id:   commandeId,
-                        produit_id:    p.id,
-                        nom_produit:   p.produit,
-                        quantite:      p.quantite,
-                        prix_unitaire: p.prix,
-                        destinataire:  p.destinataire || null,
-                    }));
+                    lignes = panier.map((p) => {
+                        const isCarteCadeau = p.id.includes("carte-cadeau") || p.produit.toLowerCase().includes("carte cadeau");
+                        const destinataire = p.destinataire || `${client.prenom} ${client.nom}`;
+                        const carteCadeauId = isCarteCadeau
+                            ? generateCarteCadeauId(destinataire, p.prix)
+                            : null;
+
+                        return {
+                            commande_id:     idCommande,  // ← utiliser la variable locale
+                            produit_id:      p.id,
+                            nom_produit:     p.produit,
+                            quantite:        p.quantite,
+                            prix_unitaire:   p.prix,
+                            destinataire:    p.destinataire || null,
+                            carte_cadeau_id: carteCadeauId,
+                        };
+                    });
 
                     const { error: errLignes } = await supabaseAdmin.from("lignes_commande").insert(lignes);
                     if (errLignes) {
@@ -342,17 +359,28 @@ export async function POST(req: Request) {
         const attachments: { filename: string; content: Buffer; contentType: string }[] = [];
 
         for (let i = 0; i < cartesCadeaux.length; i++) {
-            const carte        = cartesCadeaux[i];
+            const carte = cartesCadeaux[i];
             const destinataire = carte.destinataire || `${client.prenom} ${client.nom}`;
+
+            // ✅ Trouver la ligne de commande correspondante pour récupérer l'ID unique
+            const ligneCorrespondante = lignes.find(l =>
+                l.produit_id === carte.id &&
+                (l.destinataire || null) === (carte.destinataire || null)
+            );
+
+            // ✅ Récupérer l'ID unique depuis la ligne de commande (ou générer si pas trouvé)
+            const idUnique = ligneCorrespondante?.carte_cadeau_id || generateCarteCadeauId(destinataire, carte.prix);
+
             try {
-                console.log(`  📄 Génération PDF carte cadeau pour ${destinataire}…`);
-                const pdfBuffer = await generateCarteCadeauPDF(destinataire, carte.prix, carte.quantite);
+                console.log(`  📄 Génération PDF pour ${destinataire} avec ID ${idUnique}…`);
+                const pdfBuffer = await generateCarteCadeauPDF(destinataire, carte.prix, carte.quantite, idUnique);
+
                 attachments.push({
-                    filename:    `CarteCadeau_${carte.prix}EUR_${destinataire.replace(/\s+/g, "_")}_${String(i + 1).padStart(2, "0")}.pdf`,
+                    filename:    `${idUnique}.pdf`,
                     content:     pdfBuffer,
                     contentType: "application/pdf",
                 });
-                console.log(`  ✅ PDF généré`);
+                console.log(`  ✅ PDF généré: ${idUnique}.pdf`);
             } catch (pdfErr) {
                 console.error("  ⚠️  Erreur génération PDF:", pdfErr);
             }
@@ -485,7 +513,7 @@ export async function POST(req: Request) {
         const mailVendeur: any = {
             from:    `"La Cave La Garenne" <${SMTP_USER}>`,
             to:      VENDEUR_EMAIL,
-            subject: `Commande #${commandeId} — ${modeLivraison === "livraison" ? "LIVRAISON" : "Retrait boutique"}${modePaiement === "boutique" ? " | Paiement BOUTIQUE" : ""}`,
+            subject: `Commande #${commandeId ?? "N/A"} — ${modeLivraison === "livraison" ? "LIVRAISON" : "Retrait boutique"}${modePaiement === "boutique" ? " | Paiement BOUTIQUE" : ""}`,
             html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
                 <h2 style="color:#24586f;">Nouvelle commande #${commandeId}</h2>
 
@@ -557,8 +585,7 @@ export async function POST(req: Request) {
         }
 
         console.log(`✅ Commande #${commandeId} validée avec succès`);
-        return NextResponse.json({ success: true, commandeId });
-
+        return NextResponse.json({ success: true, commandeId: commandeId ?? "inconnu" });
     } catch (err) {
         console.error("❌ ERREUR validation commande :", err);
         return NextResponse.json({

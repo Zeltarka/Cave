@@ -35,7 +35,8 @@ export async function GET(
                     nom_produit,
                     quantite,
                     prix_unitaire,
-                    destinataire
+                    destinataire,
+                    carte_cadeau_id
                 )
             `)
             .eq("id", id)
@@ -89,6 +90,7 @@ export async function GET(
                 quantite: ligne.quantite,
                 prix: Number(ligne.prix_unitaire),
                 destinataire: ligne.destinataire || null,
+                carteCadeauId: ligne.carte_cadeau_id || null,
             })),
         };
 
@@ -151,7 +153,8 @@ export async function PATCH(
                     nom_produit,
                     quantite,
                     prix_unitaire,
-                    destinataire
+                    destinataire,
+                    carte_cadeau_id
                 )
             `)
             .single();
@@ -198,6 +201,7 @@ export async function PATCH(
                 quantite: ligne.quantite,
                 prix: Number(ligne.prix_unitaire),
                 destinataire: ligne.destinataire || null,
+                carteCadeauId: ligne.carte_cadeau_id || null, // ✅ Récupérer l'ID unique
             })),
         };
 
