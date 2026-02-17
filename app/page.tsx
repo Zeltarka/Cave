@@ -27,7 +27,7 @@ export default function Home() {
 
     if (loading) {
         return (
-            <div className="relative w-full h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[80vh] flex items-center justify-center">
+            <div className="relative w-full h-[60vh] lg:h-[80vh] flex items-center justify-center">
                 <div className="text-[#24586f] text-lg">Chargement...</div>
             </div>
         );
@@ -35,7 +35,7 @@ export default function Home() {
 
     if (!contenu) {
         return (
-            <div className="relative w-full h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[80vh] flex items-center justify-center">
+            <div className="relative w-full h-[60vh] lg:h-[80vh] flex items-center justify-center">
                 <div className="text-red-600">Contenu indisponible</div>
             </div>
         );
@@ -50,8 +50,8 @@ export default function Home() {
                 </div>
             )}
 
-            {/* Image principale - plus grande + cadrée vers le bas */}
-            <div className="relative w-full h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[80vh]">
+            {/* Image principale - cadrée vers le bas sur tous les écrans */}
+            <div className="relative w-full h-[60vh] lg:h-[80vh]">
                 <Image
                     src={`/${contenu.image_principale}`}
                     fill
