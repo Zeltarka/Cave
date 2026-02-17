@@ -1,4 +1,3 @@
-// app/page.tsx
 "use client";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -28,7 +27,7 @@ export default function Home() {
 
     if (loading) {
         return (
-            <div className="relative w-full h-[40vh] sm:h-[50vh] md:h-[60vh] lg:h-[70vh] mt-4 sm:mt-8 md:mt-12 flex items-center justify-center">
+            <div className="relative w-full h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[80vh] flex items-center justify-center">
                 <div className="text-[#24586f] text-lg">Chargement...</div>
             </div>
         );
@@ -36,7 +35,7 @@ export default function Home() {
 
     if (!contenu) {
         return (
-            <div className="relative w-full h-[40vh] sm:h-[50vh] md:h-[60vh] lg:h-[70vh] mt-4 sm:mt-8 md:mt-12 flex items-center justify-center">
+            <div className="relative w-full h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[80vh] flex items-center justify-center">
                 <div className="text-red-600">Contenu indisponible</div>
             </div>
         );
@@ -51,14 +50,14 @@ export default function Home() {
                 </div>
             )}
 
-            {/* Image principale */}
-            <div className="relative w-full h-[40vh] sm:h-[50vh] md:h-[60vh] lg:h-[70vh] mt-4 sm:mt-8 md:mt-12">
+            {/* Image principale - plus grande + cadrée vers le bas */}
+            <div className="relative w-full h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[80vh]">
                 <Image
                     src={`/${contenu.image_principale}`}
                     fill
                     priority
                     alt={contenu.alt}
-                    className="object-cover object-[center_top]"
+                    className="object-cover object-bottom"
                     sizes="100vw"
                 />
             </div>

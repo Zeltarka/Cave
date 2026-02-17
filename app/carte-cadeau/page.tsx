@@ -1,6 +1,5 @@
 // app/(pages)/carte-cadeau/page.tsx
 "use client";
-import Image from "next/image";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useMessages } from "@/hooks/useMessages";
@@ -29,6 +28,11 @@ export default function CarteCadeauPage() {
         fetch("/api/admin/contenu/carte-cadeau")
             .then(res => res.json())
             .then(data => {
+                if (!data.contenu) {
+                    console.error("Pas de contenu dans la réponse!", data);
+                    setLoading(false);
+                    return;
+                }
                 setContenu(data.contenu);
                 setLoading(false);
             })
@@ -48,7 +52,6 @@ export default function CarteCadeauPage() {
     const ajouterAuPanier = async () => {
         if (!contenu || !messages) return;
 
-        // Validation nom avec message dynamique
         if (!destinataire.trim()) {
             setMessage(messages.carte_cadeau.nom_requis);
             setMessageType("error");
@@ -56,7 +59,6 @@ export default function CarteCadeauPage() {
             return;
         }
 
-        // Validation montant minimum avec message dynamique + variable {montant}
         if (montantNum < contenu.montant_minimum) {
             const msg = messages.carte_cadeau.montant_minimum.replace("{montant}", contenu.montant_minimum.toString());
             setMessage(msg);
@@ -96,7 +98,6 @@ export default function CarteCadeauPage() {
 
             window.dispatchEvent(new Event('cartUpdated'));
 
-            // Message succès avec variables {montant} et {destinataire}
             const msg = messages.carte_cadeau.ajout_succes
                 .replace("{montant}", montantNum.toFixed(2))
                 .replace("{destinataire}", destinataire);
@@ -146,9 +147,15 @@ export default function CarteCadeauPage() {
                 <p className="text-center">{contenu.description}<br /><br /></p>
 
                 <div className="flex flex-col lg:flex-row justify-center items-center lg:items-start gap-8 lg:gap-16 xl:gap-24 max-w-6xl mx-auto">
-                    <div className="w-full max-w-[300px] sm:max-w-[400px] lg:w-[450px] xl:w-[500px] flex-shrink-0 space-y-6">
-                        <Image src={`/${contenu.image}`} alt="Carte cadeau La Cave" width={500} height={500} className="w-full h-auto" />
-                    </div>
+                    {contenu && (
+                        <div className="w-full max-w-[300px] sm:max-w-[400px] lg:w-[450px] xl:w-[500px] flex-shrink-0 space-y-6">
+                            <img
+                                src={contenu.image}
+                                alt="Carte cadeau La Cave"
+                                className="w-full h-auto max-w-[500px]"
+                            />
+                        </div>
+                    )}
 
                     <div className="flex flex-col gap-6 w-full max-w-md">
                         <div className="space-y-3">
@@ -190,7 +197,6 @@ export default function CarteCadeauPage() {
                 </div>
             </div>
 
-            {/* Modale de confirmation */}
             <ConfirmationModal
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}

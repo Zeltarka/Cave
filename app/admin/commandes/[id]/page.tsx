@@ -290,7 +290,7 @@ function CommandeDetailContent() {
 
     // 🔍 DEBUG: Afficher les IDs des cartes cadeaux
     if (cartesCadeaux.length > 0) {
-        console.log("🎁 Cartes cadeaux détectées:", cartesCadeaux.map(c => ({
+        console.log("Cartes cadeaux détectées:", cartesCadeaux.map(c => ({
             id: c.id,
             destinataire: c.destinataire,
             prix: c.prix
@@ -416,7 +416,7 @@ function CommandeDetailContent() {
                                                     <p className="text-sm text-gray-500 mt-1">
                                                         <span className="font-medium">Quantité :</span> {carte.quantite} {carte.quantite > 1 ? 'cartes' : 'carte'}
                                                     </p>
-                                                    <p className="text-xs text-gray-700 mt-2 font-mono bg-gray-50 p-2 rounded border border-gray-200 break-all">
+                                                    <p className="text-s text-black mt-2 font-mono bg-gray-50 p-2 rounded border border-gray-200 break-all">
                                                         <span className="font-semibold">ID :</span> {idUnique}
                                                     </p>
                                                 </div>

@@ -19,7 +19,6 @@ function CarteCadeauEditor() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
-    // States pour la modal
     const [modalOpen, setModalOpen] = useState(false);
     const [modalType, setModalType] = useState<"success" | "error" | "info">("success");
     const [modalTitle, setModalTitle] = useState("");
@@ -155,7 +154,25 @@ function CarteCadeauEditor() {
                     </div>
 
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <ImageUploader currentImage={contenu.image} onImageChange={(newImage) => mettreAJourChamp("image", newImage)} label="Image carte cadeau" />
+                        <ImageUploader
+                            currentImage={contenu.image}
+                            onImageChange={(newImage) => mettreAJourChamp("image", newImage)}
+                            label="Image carte cadeau"
+                        />
+                        {/* Aperçu de l'image actuelle */}
+                        {contenu.image && (
+                            <div className="mt-4">
+                                <p className="text-xs text-gray-500 mb-2">Image actuelle :</p>
+                                <img
+                                    src={contenu.image}
+                                    alt="Aperçu carte cadeau"
+                                    className="max-h-48 rounded-lg border border-gray-200"
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = "none";
+                                    }}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -181,7 +198,6 @@ function CarteCadeauEditor() {
                 </div>
             </main>
 
-            {/* Modal de confirmation */}
             <ConfirmationModal
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}

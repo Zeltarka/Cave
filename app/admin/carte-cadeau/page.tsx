@@ -26,7 +26,6 @@ function CarteCadeauAdminForm() {
         { id: 1, destinataire: "", montant: "", emailDestinataire: "" }
     ]);
 
-    // Infos acheteur
     const [nomAcheteur, setNomAcheteur]       = useState("");
     const [prenomAcheteur, setPrenomAcheteur] = useState("");
     const [emailAcheteur, setEmailAcheteur]   = useState("");
@@ -34,7 +33,6 @@ function CarteCadeauAdminForm() {
     const [commentaire, setCommentaire]       = useState("");
     const [envoyerEmailAcheteur, setEnvoyerEmailAcheteur] = useState(false);
 
-    // UI
     const [disabled, setDisabled]         = useState(false);
     const [contenu, setContenu]           = useState<CarteCadeauContenu | null>(null);
     const [showModal, setShowModal]       = useState(false);
@@ -94,7 +92,6 @@ function CarteCadeauAdminForm() {
     const creerCartes = async () => {
         if (!formValide || disabled) return;
 
-        // Si checkbox cochée, vérifier que l'email est valide
         if (envoyerEmailAcheteur && !emailAcheteurValide) {
             afficherModal("Veuillez saisir un email valide pour l'acheteur", "error");
             return;
@@ -131,14 +128,13 @@ function CarteCadeauAdminForm() {
             const nb = cartes.length;
             setCommandeCreee(data.commandeId);
 
-            let message = `${nb} carte${nb > 1 ? "s" : ""} cadeau créée${nb > 1 ? "s" : ""} avec succès ! Commande #${data.commandeId}`;
+            let message = `${nb} carte${nb > 1 ? "s" : ""} cadeau créée${nb > 1 ? "s" : ""} avec succès ! ID${nb > 1 ? "s" : ""} #${data.commandeId}`;
             if (envoyerEmailAcheteur && emailAcheteurValide) {
-                message += ` Email envoyé à ${emailAcheteur}`;
+                message += ` — Email envoyé à ${emailAcheteur}`;
             }
 
             afficherModal(message, "success");
 
-            // Réinitialiser le formulaire
             setTimeout(() => {
                 resetFormulaire();
             }, 2000);
@@ -164,7 +160,6 @@ function CarteCadeauAdminForm() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Header */}
             <header className="bg-white shadow-sm border-b sticky top-0 z-10">
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex justify-between items-center">
@@ -187,7 +182,6 @@ function CarteCadeauAdminForm() {
 
             <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-                {/* Bandeau post-création */}
                 {commandeCreee && (
                     <div className="mb-6 bg-green-50 border-2 border-green-400 rounded-xl p-5">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -212,91 +206,52 @@ function CarteCadeauAdminForm() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                    {/* Colonne gauche : image + acheteur */}
                     <div className="space-y-6">
                         {contenu?.image && (
                             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                                 <Image
-                                    src={`/${contenu.image}`}
+                                    src={contenu.image}
                                     alt="Carte cadeau"
                                     width={500}
                                     height={300}
                                     className="w-full h-auto rounded-lg"
+                                    unoptimized
                                 />
                             </div>
                         )}
 
-                        {/* Infos acheteur */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
                             <h2 className="text-base font-semibold text-[#24586f]">Informations acheteur</h2>
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-700 mb-1">Prénom</label>
-                                    <input
-                                        type="text"
-                                        value={prenomAcheteur}
-                                        onChange={e => setPrenomAcheteur(e.target.value)}
-
-                                        disabled={!!commandeCreee}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f] text-sm disabled:bg-gray-50"
-                                    />
+                                    <input type="text" value={prenomAcheteur} onChange={e => setPrenomAcheteur(e.target.value)} disabled={!!commandeCreee} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f] text-sm disabled:bg-gray-50" />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-700 mb-1">Nom</label>
-                                    <input
-                                        type="text"
-                                        value={nomAcheteur}
-                                        onChange={e => setNomAcheteur(e.target.value)}
-                                        disabled={!!commandeCreee}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f] text-sm disabled:bg-gray-50"
-                                    />
+                                    <input type="text" value={nomAcheteur} onChange={e => setNomAcheteur(e.target.value)} disabled={!!commandeCreee} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f] text-sm disabled:bg-gray-50" />
                                 </div>
                             </div>
 
                             <div>
                                 <label className="block text-xs font-semibold text-gray-700 mb-1">Email</label>
-                                <input
-                                    type="email"
-                                    value={emailAcheteur}
-                                    onChange={e => setEmailAcheteur(e.target.value)}
-                                    disabled={!!commandeCreee}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f] text-sm disabled:bg-gray-50"
-                                />
+                                <input type="email" value={emailAcheteur} onChange={e => setEmailAcheteur(e.target.value)} disabled={!!commandeCreee} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f] text-sm disabled:bg-gray-50" />
                             </div>
 
                             <div>
                                 <label className="block text-xs font-semibold text-gray-700 mb-1">Téléphone</label>
-                                <input
-                                    type="tel"
-                                    value={telephoneAcheteur}
-                                    onChange={e => setTelephoneAcheteur(e.target.value)}
-                                    disabled={!!commandeCreee}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f] text-sm disabled:bg-gray-50"
-                                />
+                                <input type="tel" value={telephoneAcheteur} onChange={e => setTelephoneAcheteur(e.target.value)} disabled={!!commandeCreee} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f] text-sm disabled:bg-gray-50" />
                             </div>
 
                             <div>
                                 <label className="block text-xs font-semibold text-gray-700 mb-1">Commentaire</label>
-                                <textarea
-                                    value={commentaire}
-                                    onChange={e => setCommentaire(e.target.value)}
-                                    rows={3}
-                                    disabled={!!commandeCreee}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f] text-sm resize-none disabled:bg-gray-50"
-                                />
+                                <textarea value={commentaire} onChange={e => setCommentaire(e.target.value)} rows={3} disabled={!!commandeCreee} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f] text-sm resize-none disabled:bg-gray-50" />
                             </div>
 
-                            {/* Checkbox envoi email */}
                             <div className="pt-3 border-t border-gray-200">
                                 <label className="flex items-start gap-3 cursor-pointer group">
-                                    <input
-                                        type="checkbox"
-                                        checked={envoyerEmailAcheteur}
-                                        onChange={e => setEnvoyerEmailAcheteur(e.target.checked)}
-                                        disabled={!!commandeCreee || !emailAcheteurValide}
-                                        className="mt-1 w-4 h-4 text-[#24586f] border-gray-300 rounded focus:ring-[#24586f] disabled:opacity-50"
-                                    />
+                                    <input type="checkbox" checked={envoyerEmailAcheteur} onChange={e => setEnvoyerEmailAcheteur(e.target.checked)} disabled={!!commandeCreee || !emailAcheteurValide} className="mt-1 w-4 h-4 text-[#24586f] border-gray-300 rounded focus:ring-[#24586f] disabled:opacity-50" />
                                     <div className="flex-1">
                                         <span className="text-sm font-medium text-gray-700 group-hover:text-[#24586f]">
                                             Envoyer les cartes par email à l'acheteur
@@ -311,16 +266,8 @@ function CarteCadeauAdminForm() {
                                 </label>
                             </div>
                         </div>
-
-                        <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                            <p className="text-xs text-blue-800">
-                                <strong>Rappel :</strong> Les commandes sont créées avec le statut <strong>Payée</strong>.
-                                Les PDFs sont toujours envoyés à la boutique.
-                            </p>
-                        </div>
                     </div>
 
-                    {/* Colonne droite : liste des cartes */}
                     <div className="lg:col-span-2 space-y-4">
 
                         {cartes.map((carte, index) => {
@@ -328,14 +275,7 @@ function CarteCadeauAdminForm() {
                             const carteValide = carte.destinataire.trim() && montantNum >= montantMin;
 
                             return (
-                                <div
-                                    key={carte.id}
-                                    className={`bg-white rounded-xl shadow-sm border-2 p-6 transition-colors ${
-                                        commandeCreee
-                                            ? "border-green-300 bg-green-50/30"
-                                            : carteValide ? "border-[#24586f]" : "border-gray-200"
-                                    }`}
-                                >
+                                <div key={carte.id} className={`bg-white rounded-xl shadow-sm border-2 p-6 transition-colors ${commandeCreee ? "border-green-300 bg-green-50/30" : carteValide ? "border-[#24586f]" : "border-gray-200"}`}>
                                     <div className="flex justify-between items-center mb-4">
                                         <h3 className="font-semibold text-[#24586f]">
                                             Carte {index + 1}
@@ -344,10 +284,7 @@ function CarteCadeauAdminForm() {
                                             )}
                                         </h3>
                                         {cartes.length > 1 && !commandeCreee && (
-                                            <button
-                                                onClick={() => supprimerCarte(carte.id)}
-                                                className="text-red-400 hover:text-red-600 text-sm px-2 py-1 hover:bg-red-50 rounded transition-colors"
-                                            >
+                                            <button onClick={() => supprimerCarte(carte.id)} className="text-red-400 hover:text-red-600 text-sm px-2 py-1 hover:bg-red-50 rounded transition-colors">
                                                 Supprimer
                                             </button>
                                         )}
@@ -355,96 +292,50 @@ function CarteCadeauAdminForm() {
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                                Destinataire <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={carte.destinataire}
-                                                onChange={e => updateCarte(carte.id, "destinataire", e.target.value)}
-                                                maxLength={50}
-                                                disabled={!!commandeCreee}
-                                                className="w-full px-4 py-2.5 border-2 border-[#8ba9b7] rounded-lg focus:outline-none focus:border-[#24586f] focus:ring-2 focus:ring-[#24586f] disabled:bg-gray-50"
-                                            />
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">Destinataire <span className="text-red-500">*</span></label>
+                                            <input type="text" value={carte.destinataire} onChange={e => updateCarte(carte.id, "destinataire", e.target.value)} maxLength={50} disabled={!!commandeCreee} className="w-full px-4 py-2.5 border-2 border-[#8ba9b7] rounded-lg focus:outline-none focus:border-[#24586f] focus:ring-2 focus:ring-[#24586f] disabled:bg-gray-50" />
                                             <p className="text-xs text-gray-400 mt-1">Apparaît sur la carte cadeau</p>
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                                Montant <span className="text-red-500">*</span>
-                                            </label>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">Montant <span className="text-red-500">*</span></label>
                                             <div className="relative">
-                                                <input
-                                                    type="text"
-                                                    inputMode="decimal"
-                                                    value={carte.montant}
-                                                    onChange={e => handleMontantChange(carte.id, e.target.value)}
-                                                    placeholder={`Min. ${montantMin}`}
-                                                    disabled={!!commandeCreee}
-                                                    className="w-full px-4 py-2.5 pr-10 border-2 border-[#8ba9b7] rounded-lg focus:outline-none focus:border-[#24586f] focus:ring-2 focus:ring-[#24586f] text-lg font-bold text-[#24586f] disabled:bg-gray-50"
-                                                />
+                                                <input type="text" inputMode="decimal" value={carte.montant} onChange={e => handleMontantChange(carte.id, e.target.value)} placeholder={`Min. ${montantMin}`} disabled={!!commandeCreee} className="w-full px-4 py-2.5 pr-10 border-2 border-[#8ba9b7] rounded-lg focus:outline-none focus:border-[#24586f] focus:ring-2 focus:ring-[#24586f] text-lg font-bold text-[#24586f] disabled:bg-gray-50" />
                                                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg font-bold text-[#24586f]">€</span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Suggestions */}
                                     {contenu?.suggestions && !commandeCreee && (
                                         <div className="mt-3 flex flex-wrap gap-2">
                                             {contenu.suggestions.map(prix => (
-                                                <button
-                                                    key={prix}
-                                                    onClick={() => setSuggestion(carte.id, prix)}
-                                                    className={`px-3 py-1 rounded-lg text-sm transition-colors ${
-                                                        parseFloat(carte.montant) === prix
-                                                            ? "bg-[#24586f] text-white"
-                                                            : "bg-[#f1f5ff] text-[#24586f] hover:bg-[#24586f] hover:text-white"
-                                                    }`}
-                                                >
+                                                <button key={prix} onClick={() => setSuggestion(carte.id, prix)} className={`px-3 py-1 rounded-lg text-sm transition-colors ${parseFloat(carte.montant) === prix ? "bg-[#24586f] text-white" : "bg-[#f1f5ff] text-[#24586f] hover:bg-[#24586f] hover:text-white"}`}>
                                                     {prix} EUR
                                                 </button>
                                             ))}
                                         </div>
                                     )}
 
-                                    {/* Email destinataire */}
                                     <div className="mt-4">
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            Email du destinataire <span className="font-normal text-gray-400">(optionnel)</span>
-                                        </label>
-                                        <input
-                                            type="email"
-                                            value={carte.emailDestinataire}
-                                            onChange={e => updateCarte(carte.id, "emailDestinataire", e.target.value)}
-                                            disabled={!!commandeCreee}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f] text-sm disabled:bg-gray-50"
-                                        />
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Email du destinataire <span className="font-normal text-gray-400">(optionnel)</span></label>
+                                        <input type="email" value={carte.emailDestinataire} onChange={e => updateCarte(carte.id, "emailDestinataire", e.target.value)} disabled={!!commandeCreee} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f] text-sm disabled:bg-gray-50" />
                                         <p className="text-xs text-gray-400 mt-1">Si renseigné, la carte lui sera envoyée directement</p>
                                     </div>
                                 </div>
                             );
                         })}
 
-                        {/* Ajouter une carte */}
                         {!commandeCreee && (
-                            <button
-                                onClick={ajouterCarte}
-                                className="w-full py-4 border-2 border-dashed border-[#24586f] text-[#24586f] rounded-xl hover:bg-[#24586f] hover:text-white transition-colors font-medium"
-                            >
+                            <button onClick={ajouterCarte} className="w-full py-4 border-2 border-dashed border-[#24586f] text-[#24586f] rounded-xl hover:bg-[#24586f] hover:text-white transition-colors font-medium">
                                 + Ajouter une carte cadeau
                             </button>
                         )}
 
-                        {/* Total */}
                         {totalGeneral > 0 && (
                             <div className={`rounded-xl p-5 border-2 ${commandeCreee ? "bg-green-50 border-green-400" : "bg-[#f1f5ff] border-[#24586f]"}`}>
                                 <div className="flex justify-between items-center">
-                                    <span className="text-[#24586f] font-semibold">
-                                        Total - {cartes.length} carte{cartes.length > 1 ? "s" : ""}
-                                    </span>
-                                    <span className="text-2xl font-bold text-[#24586f]">
-                                        {totalGeneral.toFixed(2)} EUR
-                                    </span>
+                                    <span className="text-[#24586f] font-semibold">Total - {cartes.length} carte{cartes.length > 1 ? "s" : ""}</span>
+                                    <span className="text-2xl font-bold text-[#24586f]">{totalGeneral.toFixed(2)} EUR</span>
                                 </div>
                                 {cartes.filter(c => c.destinataire.trim()).length > 0 && (
                                     <div className="mt-3 flex flex-wrap gap-2">
@@ -458,17 +349,9 @@ function CarteCadeauAdminForm() {
                             </div>
                         )}
 
-                        {/* Bouton créer */}
                         {!commandeCreee && (
-                            <button
-                                onClick={creerCartes}
-                                disabled={disabled || !formValide}
-                                className="w-full py-4 bg-[#24586f] text-white rounded-xl font-semibold text-lg hover:bg-[#1a4557] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                            >
-                                {disabled
-                                    ? "Création en cours..."
-                                    : `Créer ${cartes.length > 1 ? `${cartes.length} cartes` : "la carte"}${totalGeneral > 0 ? ` - ${totalGeneral.toFixed(2)} EUR` : ""}`
-                                }
+                            <button onClick={creerCartes} disabled={disabled || !formValide} className="w-full py-4 bg-[#24586f] text-white rounded-xl font-semibold text-lg hover:bg-[#1a4557] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
+                                {disabled ? "Création en cours..." : `Créer ${cartes.length > 1 ? `${cartes.length} cartes` : "la carte"}${totalGeneral > 0 ? ` - ${totalGeneral.toFixed(2)} EUR` : ""}`}
                             </button>
                         )}
                     </div>
