@@ -8,6 +8,7 @@ import ConfirmationModal from "@/components/ConfirmationModal";
 
 type HomeContenu = {
     image_principale: string;
+    image_mobile?: string;
     alt: string;
     texte_bandeau?: string;
 };
@@ -51,7 +52,6 @@ function HomeEditor() {
     const sauvegarder = async () => {
         if (!contenu) return;
         setSaving(true);
-        setMessage("");
 
         try {
             const res = await fetch("/api/admin/contenu/home", {
@@ -99,7 +99,11 @@ function HomeEditor() {
                             </Link>
                             <h1 className="text-2xl font-bold text-[#24586f]">Éditer Accueil</h1>
                         </div>
-                        <button onClick={sauvegarder} disabled={saving} className="px-6 py-2.5 bg-[#24586f] text-white rounded-lg hover:bg-[#1a4557] transition-colors disabled:opacity-50 font-medium shadow-sm">
+                        <button
+                            onClick={sauvegarder}
+                            disabled={saving}
+                            className="px-6 py-2.5 bg-[#24586f] text-white rounded-lg hover:bg-[#1a4557] transition-colors disabled:opacity-50 font-medium shadow-sm"
+                        >
                             {saving ? "Sauvegarde..." : "Sauvegarder"}
                         </button>
                     </div>
@@ -108,6 +112,8 @@ function HomeEditor() {
 
             <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="space-y-6">
+
+                    {/* Bandeau texte */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
                             Texte bandeau (optionnel)
@@ -117,23 +123,62 @@ function HomeEditor() {
                             value={contenu.texte_bandeau || ""}
                             onChange={(e) => mettreAJourChamp("texte_bandeau", e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f]"
+                            placeholder="Ex: Bienvenue à La Cave !"
                         />
                         <p className="text-sm text-gray-500 mt-2">
-                            Ce texte s'affichera en haut de la page, au-dessus de l'image. Laissez vide pour ne rien afficher.
+                            Affiché en haut de la page d'accueil. Laissez vide pour ne rien afficher.
                         </p>
                     </div>
 
+                    {/* Image principale - Desktop */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                         <ImageUploader
                             currentImage={contenu.image_principale}
                             onImageChange={(newImage) => mettreAJourChamp("image_principale", newImage)}
-                            label="Image principale de la page d'accueil"
+                            label="Image PC"
                         />
+                        {contenu.image_principale && (
+                            <div className="mt-4">
+                                <p className="text-xs text-gray-500 mb-2">Image actuelle :</p>
+                                <img
+                                    src={contenu.image_principale.startsWith("http") ? contenu.image_principale : `/${contenu.image_principale}`}
+                                    alt="Aperçu desktop"
+                                    className="max-h-48 rounded-lg border border-gray-200 object-cover"
+                                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                                />
+                                <p className="text-xs text-gray-400 mt-1 break-all">{contenu.image_principale}</p>
+                            </div>
+                        )}
                     </div>
 
+                    {/* Image mobile */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <ImageUploader
+                            currentImage={contenu.image_mobile || ""}
+                            onImageChange={(newImage) => mettreAJourChamp("image_mobile", newImage)}
+                            label="Image mobile"
+                        />
+                        <p className="text-sm text-gray-500 mt-2">
+                            Si non renseignée, l'image ordinateur sera utilisée sur mobile.
+                        </p>
+                        {contenu.image_mobile && (
+                            <div className="mt-4">
+                                <p className="text-xs text-gray-500 mb-2">Image actuelle :</p>
+                                <img
+                                    src={contenu.image_mobile.startsWith("http") ? contenu.image_mobile : `/${contenu.image_mobile}`}
+                                    alt="Aperçu mobile"
+                                    className="max-h-48 rounded-lg border border-gray-200 object-cover"
+                                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                                />
+                                <p className="text-xs text-gray-400 mt-1 break-all">{contenu.image_mobile}</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Texte alternatif */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Texte alternatif (pour l'accessibilité)
+                            Texte alternatif (accessibilité)
                         </label>
                         <input
                             type="text"
@@ -146,13 +191,16 @@ function HomeEditor() {
                 </div>
 
                 <div className="mt-8 pt-6 border-t border-gray-200">
-                    <button onClick={sauvegarder} disabled={saving} className="w-full px-6 py-3 bg-[#24586f] text-white rounded-lg hover:bg-[#1a4557] transition-colors disabled:opacity-50 font-medium shadow-sm">
+                    <button
+                        onClick={sauvegarder}
+                        disabled={saving}
+                        className="w-full px-6 py-3 bg-[#24586f] text-white rounded-lg hover:bg-[#1a4557] transition-colors disabled:opacity-50 font-medium shadow-sm"
+                    >
                         {saving ? "Sauvegarde en cours..." : "Sauvegarder les modifications"}
                     </button>
                 </div>
             </main>
 
-            {/* Modale de confirmation */}
             <ConfirmationModal
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
