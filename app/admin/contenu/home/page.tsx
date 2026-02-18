@@ -137,18 +137,7 @@ function HomeEditor() {
                             onImageChange={(newImage) => mettreAJourChamp("image_principale", newImage)}
                             label="Image PC"
                         />
-                        {contenu.image_principale && (
-                            <div className="mt-4">
-                                <p className="text-xs text-gray-500 mb-2">Image actuelle :</p>
-                                <img
-                                    src={contenu.image_principale.startsWith("http") ? contenu.image_principale : `/${contenu.image_principale}`}
-                                    alt="Aperçu desktop"
-                                    className="max-h-48 rounded-lg border border-gray-200 object-cover"
-                                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                                />
-                                <p className="text-xs text-gray-400 mt-1 break-all">{contenu.image_principale}</p>
-                            </div>
-                        )}
+
                     </div>
 
                     {/* Image mobile */}
@@ -161,18 +150,7 @@ function HomeEditor() {
                         <p className="text-sm text-gray-500 mt-2">
                             Si non renseignée, l'image ordinateur sera utilisée sur mobile.
                         </p>
-                        {contenu.image_mobile && (
-                            <div className="mt-4">
-                                <p className="text-xs text-gray-500 mb-2">Image actuelle :</p>
-                                <img
-                                    src={contenu.image_mobile.startsWith("http") ? contenu.image_mobile : `/${contenu.image_mobile}`}
-                                    alt="Aperçu mobile"
-                                    className="max-h-48 rounded-lg border border-gray-200 object-cover"
-                                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                                />
-                                <p className="text-xs text-gray-400 mt-1 break-all">{contenu.image_mobile}</p>
-                            </div>
-                        )}
+
                     </div>
 
                     {/* Texte alternatif */}

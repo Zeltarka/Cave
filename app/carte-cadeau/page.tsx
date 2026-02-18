@@ -45,7 +45,7 @@ export default function CarteCadeauPage() {
     const montantNum = parseFloat(montant) || 0;
 
     const handleMontantChange = (value: string) => {
-        const regex = /^\d*\.?\d{0,2}$/;
+        const regex = /^\d*$/;
         if (regex.test(value) || value === "") setMontant(value);
     };
 
@@ -60,7 +60,7 @@ export default function CarteCadeauPage() {
         }
 
         if (montantNum < contenu.montant_minimum) {
-            const msg = messages.carte_cadeau.montant_minimum.replace("{montant}", contenu.montant_minimum.toString());
+            const msg = messages.carte_cadeau.montant_minimum.replace(/{montant}/g, contenu.montant_minimum.toString());
             setMessage(msg);
             setMessageType("error");
             setShowModal(true);
@@ -78,7 +78,7 @@ export default function CarteCadeauPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     id: uniqueId,
-                    produit: `Carte cadeau ${montantNum.toFixed(2)}€`,
+                    produit: `Carte cadeau ${Math.round(montantNum)}€`,
                     quantite: 1,
                     prix: montantNum,
                     destinataire: destinataire.trim(),
@@ -99,8 +99,8 @@ export default function CarteCadeauPage() {
             window.dispatchEvent(new Event('cartUpdated'));
 
             const msg = messages.carte_cadeau.ajout_succes
-                .replace("{montant}", montantNum.toFixed(2))
-                .replace("{destinataire}", destinataire);
+                .replace(/{montant}/g, Math.round(montantNum).toString())
+                .replace(/{destinataire}/g, destinataire);
             setMessage(msg);
             setMessageType("success");
             setShowModal(true);

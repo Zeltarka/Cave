@@ -45,7 +45,6 @@ export default function PanierPage() {
     const [disabled, setDisabled] = useState(false);
     const [fraisPort, setFraisPort] = useState(0);
 
-    // States pour la modal de confirmation
     const [modalOpen, setModalOpen] = useState(false);
     const [modalType, setModalType] = useState<"success" | "error" | "info">("success");
     const [modalTitle, setModalTitle] = useState("");
@@ -68,12 +67,10 @@ export default function PanierPage() {
         fetchPanier();
     }, []);
 
-    // Calcul du nombre de bouteilles (exclut les cartes cadeaux)
     const nombreBouteilles = panier
         .filter(p => !p.id.includes("carte-cadeau"))
         .reduce((sum, p) => sum + p.quantite, 0);
 
-    // Récupération des frais de port
     useEffect(() => {
         const fetchFraisPort = async () => {
             if (commande.modeLivraison === "livraison" && nombreBouteilles > 0) {
@@ -99,7 +96,6 @@ export default function PanierPage() {
         return 999;
     };
 
-    // Fonction pour obtenir les quantités disponibles pour les bouteilles
     const getQuantitesDisponibles = (produit: Produit) => {
         if (produit.id.includes("carte-cadeau")) {
             return Array.from({ length: 10 }, (_, i) => i + 1);
@@ -149,10 +145,8 @@ export default function PanierPage() {
         }
     };
 
-    // Fonction pour vider tout le panier en BDD
     const viderPanierBDD = async () => {
         try {
-            // Supprimer chaque produit du panier en BDD
             await Promise.all(
                 panier.map(produit =>
                     fetch("/api/commandes", {
@@ -175,7 +169,6 @@ export default function PanierPage() {
     };
 
     const validerCommande = async () => {
-        // Validation des champs obligatoires selon le mode de livraison
         if (commande.modeLivraison === "livraison") {
             if (
                 !commande.nom ||
@@ -192,7 +185,6 @@ export default function PanierPage() {
                 return;
             }
         } else {
-            // Pour le retrait en boutique, l'adresse n'est pas obligatoire
             if (!commande.nom || !commande.prenom || !commande.email) {
                 setModalType("error");
                 setModalTitle("Erreur");
@@ -202,7 +194,6 @@ export default function PanierPage() {
             }
         }
 
-        // Validation de la date de passage si retrait en boutique OU paiement en boutique
         if ((commande.modeLivraison === "retrait" || commande.modePaiement === "boutique") && !commande.datePassage) {
             setModalType("error");
             setModalTitle("Erreur");
@@ -211,7 +202,6 @@ export default function PanierPage() {
             return;
         }
 
-        // Validation email simple
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(commande.email)) {
             setModalType("error");
@@ -230,21 +220,16 @@ export default function PanierPage() {
                 body: JSON.stringify({
                     client: commande,
                     panier,
-                    total: totalAvecPort, // Envoyer le total avec frais de port
-                    fraisPort // Envoyer les frais de port séparément
+                    total: totalAvecPort,
+                    fraisPort
                 }),
             });
 
             const data = await res.json();
 
             if (data.success) {
-                // Vider le panier en BDD
                 await viderPanierBDD();
-
-                // Vider le panier localement
                 setPanier([]);
-
-                // Réinitialiser le formulaire
                 setAfficherCommande(false);
                 setCommande({
                     nom: "",
@@ -260,16 +245,12 @@ export default function PanierPage() {
                     datePassage: "",
                 });
 
-                // Marquer la commande comme validée
                 setCommandeValidee(true);
-
-                // Afficher la modal de succès
                 setModalType("success");
                 setModalTitle("Commande validée !");
                 setModalMessage("Votre commande a été validée avec succès ! Vous allez recevoir un email de confirmation.");
                 setModalOpen(true);
             } else {
-                // Afficher la modal d'erreur
                 setModalType("error");
                 setModalTitle("Erreur");
                 setModalMessage(data.message || "Erreur lors de la validation de la commande.");
@@ -305,7 +286,7 @@ export default function PanierPage() {
                     </div>
                 ) : (
                     <>
-                        {/* === Desktop === */}
+                        {/* Desktop Table */}
                         <div className="hidden md:block overflow-x-auto">
                             <table className="w-full border-collapse">
                                 <thead>
@@ -336,18 +317,11 @@ export default function PanierPage() {
                                                 ) : (
                                                     <select
                                                         value={produit.quantite}
-                                                        onChange={(e) =>
-                                                            changerQuantite(
-                                                                produit.id,
-                                                                parseInt(e.target.value)
-                                                            )
-                                                        }
+                                                        onChange={(e) => changerQuantite(produit.id, parseInt(e.target.value))}
                                                         className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
                                                     >
                                                         {getQuantitesDisponibles(produit).map((qty) => (
-                                                            <option key={qty} value={qty}>
-                                                                {qty}
-                                                            </option>
+                                                            <option key={qty} value={qty}>{qty}</option>
                                                         ))}
                                                     </select>
                                                 )}
@@ -363,34 +337,22 @@ export default function PanierPage() {
                                                     value={produit.prix}
                                                     onChange={async (e) => {
                                                         const prix = parseFloat(e.target.value) || 0;
-
-                                                        setPanier(prev =>
-                                                            prev.map(p =>
-                                                                p.id === produit.id
-                                                                    ? { ...p, prix, quantite: 1 }
-                                                                    : p
-                                                            )
-                                                        );
-
+                                                        setPanier(prev => prev.map(p => p.id === produit.id ? { ...p, prix, quantite: 1 } : p));
                                                         await fetch("/api/commandes", {
                                                             method: "POST",
                                                             headers: { "Content-Type": "application/json" },
-                                                            body: JSON.stringify({
-                                                                ...produit,
-                                                                prix,
-                                                                quantite: 1,
-                                                            }),
+                                                            body: JSON.stringify({ ...produit, prix, quantite: 1 }),
                                                         });
                                                     }}
                                                     className="w-24 text-right border border-gray-300 rounded px-2 py-1"
                                                 />
                                             ) : (
-                                                <span>{produit.prix.toFixed(2)} €</span>
+                                                <span>{Math.round(produit.prix)} €</span>
                                             )}
                                         </td>
 
                                         <td className="p-3 text-right font-semibold">
-                                            {(produit.prix * produit.quantite).toFixed(2)} €
+                                            {Math.round(produit.prix * produit.quantite)} €
                                         </td>
 
                                         <td className="p-3 text-center">
@@ -407,13 +369,10 @@ export default function PanierPage() {
                             </table>
                         </div>
 
-                        {/* === Mobile === */}
+                        {/* Mobile Cards */}
                         <div className="md:hidden space-y-4">
                             {panier.map((produit) => (
-                                <div
-                                    key={produit.id}
-                                    className="border border-gray-300 rounded-lg p-4 bg-white shadow-sm"
-                                >
+                                <div key={produit.id} className="border border-gray-300 rounded-lg p-4 bg-white shadow-sm">
                                     <div className="font-semibold text-lg mb-3 text-[#24586f]">
                                         {produit.produit}
                                         {produit.destinataire && (
@@ -431,18 +390,11 @@ export default function PanierPage() {
                                             ) : (
                                                 <select
                                                     value={produit.quantite}
-                                                    onChange={(e) =>
-                                                        changerQuantite(
-                                                            produit.id,
-                                                            parseInt(e.target.value)
-                                                        )
-                                                    }
+                                                    onChange={(e) => changerQuantite(produit.id, parseInt(e.target.value))}
                                                     className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
                                                 >
                                                     {getQuantitesDisponibles(produit).map((qty) => (
-                                                        <option key={qty} value={qty}>
-                                                            {qty}
-                                                        </option>
+                                                        <option key={qty} value={qty}>{qty}</option>
                                                     ))}
                                                 </select>
                                             )}
@@ -459,37 +411,23 @@ export default function PanierPage() {
                                                 value={produit.prix}
                                                 onChange={async (e) => {
                                                     const prix = parseFloat(e.target.value) || 0;
-
-                                                    setPanier((prev) =>
-                                                        prev.map((p) =>
-                                                            p.id === produit.id
-                                                                ? { ...p, prix, quantite: 1 }
-                                                                : p
-                                                        )
-                                                    );
-
+                                                    setPanier(prev => prev.map(p => p.id === produit.id ? { ...p, prix, quantite: 1 } : p));
                                                     await fetch("/api/commandes", {
                                                         method: "POST",
                                                         headers: { "Content-Type": "application/json" },
-                                                        body: JSON.stringify({
-                                                            ...produit,
-                                                            prix,
-                                                            quantite: 1,
-                                                        }),
+                                                        body: JSON.stringify({ ...produit, prix, quantite: 1 }),
                                                     });
                                                 }}
                                                 className="w-24 text-right border border-gray-300 rounded px-2 py-1"
                                             />
                                         ) : (
-                                            <span>{produit.prix.toFixed(2)} €</span>
+                                            <span>{Math.round(produit.prix)} €</span>
                                         )}
                                     </div>
 
                                     <div className="flex justify-between items-center mb-3">
                                         <span className="text-gray-600 font-semibold">Total :</span>
-                                        <span className="font-bold text-lg">
-                                            {(produit.prix * produit.quantite).toFixed(2)} €
-                                        </span>
+                                        <span className="font-bold text-lg">{Math.round(produit.prix * produit.quantite)} €</span>
                                     </div>
 
                                     <button
@@ -504,7 +442,6 @@ export default function PanierPage() {
 
                         {!panierVide && (
                             <>
-                                {/* Récapitulatif avec frais de port */}
                                 <div className="mt-8 bg-[#f1f5ff] border-2 border-[#24586f] rounded-lg p-6">
                                     <div className="space-y-3">
                                         <div className="flex justify-between items-center">
@@ -523,9 +460,7 @@ export default function PanierPage() {
 
                                         <div className="flex justify-between items-center border-t-2 border-[#24586f] pt-3">
                                             <span className="text-2xl font-bold text-[#24586f]">Total</span>
-                                            <span className="text-3xl font-bold text-[#24586f]">
-                                                {totalAvecPort.toFixed(2)} €
-                                            </span>
+                                            <span className="text-3xl font-bold text-[#24586f]">{totalAvecPort.toFixed(2)} €</span>
                                         </div>
                                     </div>
                                 </div>
@@ -561,7 +496,6 @@ export default function PanierPage() {
                                     Informations de commande
                                 </h2>
 
-                                {/* Choix du mode de livraison */}
                                 <div className="mb-6">
                                     <label className="block text-gray-700 font-semibold mb-3">
                                         Mode de récupération *
@@ -606,7 +540,6 @@ export default function PanierPage() {
                                 <div className="space-y-4">
                                     <p className="block text-gray-700 font-semibold mb-3">Coordonnées de l'acheteur * </p>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
                                         <input
                                             name="nom"
                                             placeholder="Nom *"
@@ -677,7 +610,6 @@ export default function PanierPage() {
                                     />
                                 </div>
 
-                                {/* Choix du mode de paiement */}
                                 <div className="mt-6">
                                     <label className="block text-gray-700 font-semibold mb-3">
                                         Mode de paiement *
@@ -718,7 +650,6 @@ export default function PanierPage() {
                                     </div>
                                 </div>
 
-                                {/* Date de passage si retrait en boutique OU paiement en boutique */}
                                 {(commande.modeLivraison === "retrait" || commande.modePaiement === "boutique") && (
                                     <div className="mt-4">
                                         <label className="block text-gray-700 font-semibold mb-2">
@@ -728,13 +659,30 @@ export default function PanierPage() {
                                             type="date"
                                             name="datePassage"
                                             value={commande.datePassage}
-                                            onChange={handleChange}
+                                            onClick={(e) => {
+                                                e.currentTarget.showPicker?.();
+                                            }}
+                                            onChange={(e) => {
+                                                const selectedDate = new Date(e.target.value + 'T00:00:00');
+                                                const dayOfWeek = selectedDate.getDay();
+
+                                                if (dayOfWeek === 0) {
+                                                    setModalType("error");
+                                                    setModalTitle("Date invalide");
+                                                    setModalMessage("La boutique est fermée le dimanche. Veuillez choisir un autre jour.");
+                                                    setModalOpen(true);
+                                                    return;
+                                                }
+
+                                                handleChange(e);
+                                            }}
                                             min={(() => {
                                                 const afterTomorrow = new Date();
                                                 afterTomorrow.setDate(afterTomorrow.getDate() + 2);
                                                 return afterTomorrow.toISOString().split('T')[0];
                                             })()}
-                                            className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f]"
+                                            onKeyDown={(e) => e.preventDefault()}
+                                            className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f] cursor-pointer"
                                         />
                                         <p className="text-sm text-gray-600 mt-2">
                                             Indiquez la date à laquelle vous prévoyez de passer en boutique
@@ -743,10 +691,11 @@ export default function PanierPage() {
                                                 : commande.modeLivraison === "retrait"
                                                     ? " pour récupérer votre commande"
                                                     : " pour payer votre commande"}
-                                            {" "}(à partir d'après-demain).
+                                            {" "}(à partir d'après-demain, fermé le dimanche).
                                         </p>
                                     </div>
                                 )}
+
                                 <button
                                     onClick={() => {
                                         if (disabled) return;
@@ -767,7 +716,6 @@ export default function PanierPage() {
                 )}
             </div>
 
-            {/* Modal de confirmation */}
             <ConfirmationModal
                 isOpen={modalOpen}
                 onClose={() => {

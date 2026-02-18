@@ -8,13 +8,13 @@ import { generateCarteCadeauId } from "@/lib/carte-cadeau-utils";
 
 export const runtime = "nodejs";
 
-// ─── Supabase admin ─────────────────────────────
+// ═══ Supabase admin ═══════════════════════════
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// ─── Types ────────────────────────────────────────
+// ═══ Types ═════════════════════════════════════
 type ProduitPanier = {
     id: string;
     produit: string;
@@ -47,13 +47,13 @@ type LigneCommande = {
     carte_cadeau_id: string | null;
 };
 
-// ─── Fonction pour récupérer session_id ──────────
+// ═══ Fonction pour récupérer session_id ═══════
 async function getSessionId(): Promise<string | null> {
     const cookieStore = await cookies();
     return cookieStore.get("session_id")?.value || null;
 }
 
-// ─── Génération PDF carte cadeau ──────────────────
+// ═══ Génération PDF carte cadeau ═══════════════
 async function generateCarteCadeauPDF(
     destinataire: string,
     montant: number,
@@ -111,7 +111,7 @@ async function generateCarteCadeauPDF(
             color: rgb(0.55, 0.66, 0.72)
         });
 
-        const montantText = `${montant.toFixed(2)} €`;
+        const montantText = `${Math.round(montant)} €`;
         page.drawText(montantText, {
             x: (width - helveticaBold.widthOfTextAtSize(montantText, 60)) / 2,
             y: height - 300,
@@ -209,7 +209,7 @@ async function generateCarteCadeauPDF(
     return Buffer.from(await pdfDoc.save());
 }
 
-// ─── POST /api/commandes/valider ──────────────────
+// ═══ POST /api/commandes/valider ══════════════
 export async function POST(req: Request) {
     try {
         console.log("📦 Début validation commande");
@@ -227,7 +227,7 @@ export async function POST(req: Request) {
             fraisPort: number;
         } = body;
 
-        // ── Validations basiques ──
+        // ══ Validations basiques ══
         if (!client?.email) {
             console.error("❌ Client invalide");
             return NextResponse.json({ success: false, message: "Informations client invalides" }, { status: 400 });
@@ -237,22 +237,19 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, message: "Le panier est vide" }, { status: 400 });
         }
 
-        // ── Vérification ENV Supabase ──
+        // ══ Vérification ENV Supabase ══
         if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
             console.error("❌ ENV Supabase manquante");
         }
 
-        // ── Nettoyage des valeurs ──
+        // ══ Nettoyage des valeurs ══
         const totalNumber = Number(total);
         const fraisPortNumber = Number(fraisPort) || 0;
         const datePassageProp = client.datePassage && client.datePassage.trim() !== ""
             ? client.datePassage
             : null;
 
-        // Calculer le sous-total (total - frais de port)
         const sousTotal = totalNumber - fraisPortNumber;
-
-        // Calculer le nombre de bouteilles pour l'affichage
         const nombreBouteilles = panier
             .filter(p => !p.id.includes("carte-cadeau"))
             .reduce((sum, p) => sum + p.quantite, 0);
@@ -260,10 +257,10 @@ export async function POST(req: Request) {
         let commandeId: number | null = null;
         let lignes: LigneCommande[] = [];
 
-        // ── 1. Tentative d'insertion dans Supabase (optionnelle) ──
+        // ══ 1. Tentative d'insertion dans Supabase (optionnelle) ══
         if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
             try {
-                console.log("🗄️  Tentative insertion commande dans Supabase…");
+                console.log("🔄️  Tentative insertion commande dans Supabase…");
 
                 const { data: commande, error: errCommande } = await supabaseAdmin
                     .from("commandes")
@@ -288,10 +285,10 @@ export async function POST(req: Request) {
 
                 if (errCommande) {
                     console.error("⚠️  Erreur insertion commande Supabase:", errCommande.message);
-                    console.log("   → On continue avec l'email uniquement");
+                    console.log("   ➔ On continue avec l'email uniquement");
                 } else if (commande) {
                     commandeId = commande.id;
-                    const idCommande = commande.id; // ← variable locale, TypeScript sait que c'est number
+                    const idCommande = commande.id;
                     console.log(`✅ Commande #${commandeId} insérée dans Supabase`);
 
                     lignes = panier.map((p) => {
@@ -302,7 +299,7 @@ export async function POST(req: Request) {
                             : null;
 
                         return {
-                            commande_id:     idCommande,  // ← utiliser la variable locale
+                            commande_id:     idCommande,
                             produit_id:      p.id,
                             nom_produit:     p.produit,
                             quantite:        p.quantite,
@@ -324,7 +321,7 @@ export async function POST(req: Request) {
             }
         }
 
-        // ── 2. Vérification ENV SMTP ──
+        // ══ 2. Vérification ENV SMTP ══
         const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, VENDEUR_EMAIL } = process.env;
         if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS || !VENDEUR_EMAIL) {
             console.error("❌ Configuration SMTP manquante");
@@ -334,7 +331,7 @@ export async function POST(req: Request) {
             }, { status: 500 });
         }
 
-        // ── 3. Configuration transporteur email ──
+        // ══ 3. Configuration transporteur email ══
         const transporter = nodemailer.createTransport({
             host:   SMTP_HOST,
             port:   Number(SMTP_PORT),
@@ -342,11 +339,14 @@ export async function POST(req: Request) {
             auth:   { user: SMTP_USER, pass: SMTP_PASS },
         });
 
-        // ── HTML des lignes du panier ──
+        // ══ HTML des lignes du panier ══
         const lignesPanierHtml = panier
             .map((p) => {
                 const destInfo = p.destinataire ? ` — Pour: ${p.destinataire}` : '';
-                return `<li>${p.produit}${destInfo} x ${p.quantite} — ${(p.prix * p.quantite).toFixed(2)} €</li>`;
+                const prixAffiche = p.id.includes("carte-cadeau")
+                    ? `${Math.round(p.prix * p.quantite)} €`
+                    : `${(p.prix * p.quantite).toFixed(2)} €`;
+                return `<li>${p.produit}${destInfo} x ${p.quantite} — ${prixAffiche}</li>`;
             })
             .join("");
 
@@ -354,7 +354,7 @@ export async function POST(req: Request) {
         const modePaiement  = client.modePaiement;
         const datePassage   = client.datePassage;
 
-        // ── 4. Cartes cadeaux + génération PDFs ──
+        // ══ 4. Cartes cadeaux + génération PDFs (pour l'admin uniquement) ══
         const cartesCadeaux = panier.filter(p => p.id.includes("carte-cadeau") || p.produit.toLowerCase().includes("carte cadeau"));
         const attachments: { filename: string; content: Buffer; contentType: string }[] = [];
 
@@ -362,17 +362,17 @@ export async function POST(req: Request) {
             const carte = cartesCadeaux[i];
             const destinataire = carte.destinataire || `${client.prenom} ${client.nom}`;
 
-            // ✅ Trouver la ligne de commande correspondante pour récupérer l'ID unique
+            // Trouver la ligne de commande correspondante pour récupérer l'ID unique
             const ligneCorrespondante = lignes.find(l =>
                 l.produit_id === carte.id &&
                 (l.destinataire || null) === (carte.destinataire || null)
             );
 
-            // ✅ Récupérer l'ID unique depuis la ligne de commande (ou générer si pas trouvé)
+            // Récupérer l'ID unique depuis la ligne de commande
             const idUnique = ligneCorrespondante?.carte_cadeau_id || generateCarteCadeauId(destinataire, carte.prix);
 
             try {
-                console.log(`  📄 Génération PDF pour ${destinataire} avec ID ${idUnique}…`);
+                console.log(`  📄 Génération PDF pour ${destinataire} avec ID ${idUnique}...`);
                 const pdfBuffer = await generateCarteCadeauPDF(destinataire, carte.prix, carte.quantite, idUnique);
 
                 attachments.push({
@@ -386,7 +386,7 @@ export async function POST(req: Request) {
             }
         }
 
-        // ── 5. Logo pour l'email ──
+        // ══ 5. Logo pour l'email ══
         const fs   = require("fs");
         const path = require("path");
         let logoAttachment: any = null;
@@ -400,7 +400,7 @@ export async function POST(req: Request) {
             console.log("  ℹ️  Logo non trouvé (optionnel)");
         }
 
-        // ── Blocs HTML réutilisables ──
+        // ══ Blocs HTML réutilisables ══
         const livraisonHtml = modeLivraison === "livraison"
             ? `<p style="margin:5px 0;color:#333;"><strong>Récupération :</strong> Livraison à domicile</p>
                <p style="margin:10px 0 0;color:#333;"><strong>Adresse :</strong><br/>${client.adresse}<br/>${client.codepostal} ${client.ville}</p>`
@@ -408,13 +408,13 @@ export async function POST(req: Request) {
 
         const paiementHtml = modePaiement === "boutique"
             ? `<div style="background:#e3f2fd;padding:20px;border-radius:12px;margin:20px 0;border:2px solid #2196f3;border-left:6px solid #1976d2;">
-                   <p style="margin:0;font-weight:bold;color:#1565c0;font-size:16px;">💳 Paiement en boutique</p>
+                   <p style="margin:0;font-weight:bold;color:#1565c0;font-size:16px;">🏪 Paiement en boutique</p>
                    <p style="margin:10px 0 0;color:#333;">Vous paierez directement en boutique lors de la récupération de votre commande.</p>
                    ${datePassage ? `<p style="margin:10px 0 0;color:#333;"><strong>Date de passage prévue :</strong> ${new Date(datePassage + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>` : ""}
                    <p style="margin:10px 0 0;font-size:13px;color:#0d47a1;">Nous vous attendons en boutique pour finaliser votre achat.</p>
                </div>`
             : `<div style="background:#fff8e1;padding:20px;border-radius:12px;margin:20px 0;border:2px solid #ffc107;border-left:6px solid #ff9800;">
-                   <p style="margin:0;font-weight:bold;color:#f57c00;font-size:16px;">🏦 Paiement par virement bancaire</p>
+                   <p style="margin:0;font-weight:bold;color:#f57c00;font-size:16px;">💳 Paiement par virement bancaire</p>
                    <div style="background:#fff;padding:15px;border-radius:8px;margin-top:15px;">
                        <p style="margin:5px 0;color:#333;"><strong>IBAN :</strong> FR76 XXXX XXXX XXXX XXXX XXXX XXX</p>
                        <p style="margin:5px 0;color:#333;"><strong>Titulaire :</strong> La Cave La Garenne</p>
@@ -430,19 +430,20 @@ export async function POST(req: Request) {
             : "";
 
         const cartesHtml = cartesCadeaux.length > 0
-            ? `<div style="background:#e8f5e9;padding:20px;border-radius:12px;margin:20px 0;border:2px solid #4caf50;border-left:6px solid #4caf50;">
-                   <p style="margin:0;color:#2e7d32;font-size:16px;"><strong>${cartesCadeaux.length > 1 ? "Vos cartes cadeaux sont" : "Votre carte cadeau est"} en pièce jointe de cet email !</strong></p>
+            ? `<div style="background:#fff8e1;padding:20px;border-radius:12px;margin:20px 0;border:2px solid #ffc107;border-left:6px solid #ff9800;">
+                   <p style="margin:0;color:#f57c00;font-size:16px;"><strong>${cartesCadeaux.length > 1 ? "Vos cartes cadeaux seront envoyées" : "Votre carte cadeau sera envoyée"} après réception du paiement</strong></p>
+                   <p style="margin:10px 0 0;color:#e65100;font-size:14px;">Vous recevrez un email séparé avec ${cartesCadeaux.length > 1 ? "vos cartes" : "votre carte"} cadeaux une fois le paiement confirmé.</p>
                </div>`
             : "";
 
-        // ── 6. Email CLIENT ──
+        // ══ 6. Email CLIENT ══
         console.log("📧 Envoi email client…");
         const mailClient: any = {
             from:    `"La Cave La Garenne" <${SMTP_USER}>`,
             to:      client.email,
             subject: `Confirmation de votre commande — La Cave La Garenne`,
             html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8f9fa;padding:30px;border-radius:15px;">
-                ${logoAttachment ? `<div style="text-align:center;margin-bottom:20px;"><img src="cid:logo@boutique" alt="La Cave La Garenne" style="max-width:250px;"/></div>` : ""}
+                ${logoAttachment ? `<div style="text-align:center;margin-bottom:20px;"><img src="cid:logo@boutique" alt="La Cave La Garenne" style="max-width:120px;height:auto;"/></div>` : ""}
 
                 <div style="background:#24586f;padding:25px;border-radius:12px;margin-bottom:25px;text-align:center;">
                     <h2 style="color:#fff;margin:0;">Merci pour votre commande !</h2>
@@ -486,13 +487,12 @@ export async function POST(req: Request) {
         };
 
         mailClient.attachments = [];
-        if (logoAttachment)    mailClient.attachments.push(logoAttachment);
-        if (attachments.length) mailClient.attachments.push(...attachments);
+        if (logoAttachment) mailClient.attachments.push(logoAttachment);
 
         await transporter.sendMail(mailClient);
         console.log("  ✅ Email client envoyé");
 
-        // ── 7. Email VENDEUR ──
+        // ══ 7. Email VENDEUR ══
         console.log("📧 Envoi email vendeur…");
 
         const livraisonVendeurHtml = modeLivraison === "livraison"
@@ -504,7 +504,7 @@ export async function POST(req: Request) {
 
         const paiementVendeurHtml = modePaiement === "boutique"
             ? `<div style="background:#e3f2fd;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid #2196f3;">
-                   <p style="margin:0;color:#1565c0;font-weight:bold;">💳 Paiement en boutique</p>
+                   <p style="margin:0;color:#1565c0;font-weight:bold;">🏪 Paiement en boutique</p>
                    ${datePassage ? `<p style="margin:10px 0 0;color:#333;"><strong>Date de passage prévue :</strong> ${new Date(datePassage + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>` : ""}
                    <p style="margin:10px 0 0;color:#0d47a1;font-size:14px;">Le client paiera directement en boutique lors de la récupération.</p>
                </div>`
@@ -541,19 +541,25 @@ export async function POST(req: Request) {
                 `}
 
                 ${cartesCadeaux.length
-                ? `<div style="background:#d4edda;padding:15px;border-radius:8px;margin:15px 0;">
-                           <p style="margin:0;color:#155724;"><strong>${cartesCadeaux.length} carte(s) cadeau — PDFs en pièce jointe.</strong></p>
+                ? `<div style="background:#d4edda;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid #4caf50;">
+                           <p style="margin:0;color:#155724;"><strong>✅ ${cartesCadeaux.length} carte(s) cadeau — PDFs en pièce jointe</strong></p>
+                           <p style="margin:5px 0 0;color:#2e7d32;font-size:13px;">Les PDFs sont joints à cet email pour archivage ou réimpression.</p>
                        </div>`
                 : ""}
             </div>`,
         };
 
-        if (attachments.length) mailVendeur.attachments = attachments;
+        // Envoyer les PDFs de cartes cadeaux AU VENDEUR uniquement
+        mailVendeur.attachments = [];
+        if (attachments.length) {
+            mailVendeur.attachments = attachments;
+            console.log(`  📎 ${attachments.length} PDF(s) ajouté(s) à l'email vendeur`);
+        }
 
         await transporter.sendMail(mailVendeur);
         console.log("  ✅ Email vendeur envoyé");
 
-        // ── 8. Vider le panier dans la BDD (optionnel) ──
+        // ══ 8. Vider le panier dans la BDD (optionnel) ══
         if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
             const sessionId = await getSessionId();
             if (sessionId) {
@@ -575,7 +581,7 @@ export async function POST(req: Request) {
             }
         }
 
-        // ── 9. Vider le cookie panier (ancien système) ──
+        // ══ 9. Vider le cookie panier (ancien système) ══
         try {
             const cookieStore = await cookies();
             cookieStore.delete("panier");

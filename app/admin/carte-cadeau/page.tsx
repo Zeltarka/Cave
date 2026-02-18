@@ -50,7 +50,7 @@ function CarteCadeauAdminForm() {
     const montantMin = contenu?.montant_minimum ?? 10;
 
     const handleMontantChange = (id: number, value: string) => {
-        const regex = /^\d*\.?\d{0,2}$/;
+        const regex = /^\d*$/;
         if (regex.test(value) || value === "") {
             setCartes(prev => prev.map(c => c.id === id ? { ...c, montant: value } : c));
         }
@@ -310,7 +310,7 @@ function CarteCadeauAdminForm() {
                                         <div className="mt-3 flex flex-wrap gap-2">
                                             {contenu.suggestions.map(prix => (
                                                 <button key={prix} onClick={() => setSuggestion(carte.id, prix)} className={`px-3 py-1 rounded-lg text-sm transition-colors ${parseFloat(carte.montant) === prix ? "bg-[#24586f] text-white" : "bg-[#f1f5ff] text-[#24586f] hover:bg-[#24586f] hover:text-white"}`}>
-                                                    {prix} EUR
+                                                    {prix} €
                                                 </button>
                                             ))}
                                         </div>
@@ -335,13 +335,13 @@ function CarteCadeauAdminForm() {
                             <div className={`rounded-xl p-5 border-2 ${commandeCreee ? "bg-green-50 border-green-400" : "bg-[#f1f5ff] border-[#24586f]"}`}>
                                 <div className="flex justify-between items-center">
                                     <span className="text-[#24586f] font-semibold">Total - {cartes.length} carte{cartes.length > 1 ? "s" : ""}</span>
-                                    <span className="text-2xl font-bold text-[#24586f]">{totalGeneral.toFixed(2)} EUR</span>
+                                    <span className="text-2xl font-bold text-[#24586f]">{Math.round(totalGeneral)} €</span>
                                 </div>
                                 {cartes.filter(c => c.destinataire.trim()).length > 0 && (
                                     <div className="mt-3 flex flex-wrap gap-2">
                                         {cartes.filter(c => c.destinataire.trim()).map(c => (
                                             <span key={c.id} className="px-2 py-1 bg-white text-[#24586f] text-xs rounded-full border border-[#8ba9b7]">
-                                                {c.destinataire} - {parseFloat(c.montant) > 0 ? `${parseFloat(c.montant).toFixed(2)} EUR` : "-"}
+                                                {c.destinataire} - {parseFloat(c.montant) > 0 ? `${Math.round(parseFloat(c.montant))} €` : "-"}
                                             </span>
                                         ))}
                                     </div>
@@ -351,7 +351,7 @@ function CarteCadeauAdminForm() {
 
                         {!commandeCreee && (
                             <button onClick={creerCartes} disabled={disabled || !formValide} className="w-full py-4 bg-[#24586f] text-white rounded-xl font-semibold text-lg hover:bg-[#1a4557] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
-                                {disabled ? "Création en cours..." : `Créer ${cartes.length > 1 ? `${cartes.length} cartes` : "la carte"}${totalGeneral > 0 ? ` - ${totalGeneral.toFixed(2)} EUR` : ""}`}
+                                {disabled ? "Création en cours..." : `Créer ${cartes.length > 1 ? `${cartes.length} cartes` : "la carte"}${totalGeneral > 0 ? ` - ${Math.round(totalGeneral)} €` : ""}`}
                             </button>
                         )}
                     </div>

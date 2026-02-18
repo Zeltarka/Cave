@@ -20,9 +20,10 @@ export async function GET(
 ) {
     const auth = await checkAdminAuth();
     if (!auth.authorized) return auth.response;
+
     try {
         const { id } = await params;
-        console.log("🔍 Récupération commande ID:", id);
+        console.log("🔎 Récupération commande ID:", id);
 
         // Récupérer la commande avec ses lignes
         const { data: commande, error: commandeError } = await supabaseAdmin
@@ -36,7 +37,8 @@ export async function GET(
                     quantite,
                     prix_unitaire,
                     destinataire,
-                    carte_cadeau_id
+                    carte_cadeau_id,
+                    carte_envoyee
                 )
             `)
             .eq("id", id)
@@ -55,14 +57,6 @@ export async function GET(
                 { status: 500 }
             );
         }
-
-        console.log("📦 Données brutes Supabase:", {
-            nom: commande.nom,
-            prenom: commande.prenom,
-            email: commande.email,
-            statut: commande.statut,
-            frais_port: commande.frais_port,
-        });
 
         // Formater les données
         const commandeFormatted = {
@@ -84,6 +78,7 @@ export async function GET(
             noteAdmin: commande.note_admin || "",
             createdAt: commande.created_at,
             updatedAt: commande.updated_at,
+            source: commande.source || null,
             panier: (commande.lignes_commande || []).map((ligne: any) => ({
                 id: ligne.produit_id,
                 produit: ligne.nom_produit,
@@ -91,14 +86,15 @@ export async function GET(
                 prix: Number(ligne.prix_unitaire),
                 destinataire: ligne.destinataire || null,
                 carteCadeauId: ligne.carte_cadeau_id || null,
+                ligneId: ligne.id,
+                carteEnvoyee: ligne.carte_envoyee || false,
             })),
         };
 
         console.log("✅ Commande formatée:", {
             id: commandeFormatted.id,
             statut: commandeFormatted.statut,
-            total: commandeFormatted.total,
-            fraisPort: commandeFormatted.fraisPort,
+            nbCartes: commandeFormatted.panier.filter((p: any) => p.carteCadeauId).length,
         });
 
         return NextResponse.json(commandeFormatted);
@@ -117,21 +113,21 @@ export async function PATCH(
 ) {
     const auth = await checkAdminAuth();
     if (!auth.authorized) return auth.response;
+
     try {
         const { id } = await params;
-        console.log("✏️ Mise à jour commande ID:", id);
+        console.log("🔄 Mise à jour commande ID:", id);
 
         const body: CommandeBody = await req.json();
-        console.log("📝 Body reçu:", body);
+        console.log("📦 Body reçu:", body);
 
         const updateData: any = {
             updated_at: new Date().toISOString(),
         };
 
         if (body.statut) {
-            // ✅ Mise à jour du statut uniquement
             updateData.statut = body.statut;
-            console.log("📊 Statut à mettre à jour:", body.statut);
+            console.log("📝 Statut à mettre à jour:", body.statut);
         }
 
         if (body.noteAdmin !== undefined) {
@@ -154,7 +150,8 @@ export async function PATCH(
                     quantite,
                     prix_unitaire,
                     destinataire,
-                    carte_cadeau_id
+                    carte_cadeau_id,
+                    carte_envoyee
                 )
             `)
             .single();
@@ -195,13 +192,16 @@ export async function PATCH(
             noteAdmin: commande.note_admin || "",
             createdAt: commande.created_at,
             updatedAt: commande.updated_at,
+            source: commande.source || null,
             panier: (commande.lignes_commande || []).map((ligne: any) => ({
                 id: ligne.produit_id,
                 produit: ligne.nom_produit,
                 quantite: ligne.quantite,
                 prix: Number(ligne.prix_unitaire),
                 destinataire: ligne.destinataire || null,
-                carteCadeauId: ligne.carte_cadeau_id || null, // ✅ Récupérer l'ID unique
+                carteCadeauId: ligne.carte_cadeau_id || null,
+                ligneId: ligne.id,
+                carteEnvoyee: ligne.carte_envoyee || false,
             })),
         };
 

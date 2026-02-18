@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import AdminGuard from "@/components/AdminGuard";
+import ConfirmationModal from "@/components/ConfirmationModal";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { generateCarteCadeauId } from "@/lib/carte-cadeau-utils";
 
@@ -14,6 +15,8 @@ type ProduitPanier = {
     prix: number;
     destinataire?: string;
     carteCadeauId?: string;
+    ligneId?: number;
+    carteEnvoyee?: boolean;
 };
 
 type Commande = {
@@ -37,12 +40,12 @@ type Commande = {
     source?: string;
 };
 
-// ─── Génération PDF carte cadeau ───
+// Génération PDF carte cadeau (pour affichage uniquement)
 async function generateCarteCadeauPDF(
     destinataire: string,
     montant: number,
     quantite: number,
-    idUnique: string  // ✅ Prendre l'ID en paramètre
+    idUnique: string
 ): Promise<Uint8Array> {
     const pdfDoc = await PDFDocument.create();
     const helveticaBold  = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -70,7 +73,6 @@ async function generateCarteCadeauPDF(
         const benefText = `Offerte à : ${destinataire}`;
         page.drawText(benefText, { x: (width - helvetica.widthOfTextAtSize(benefText, 18)) / 2, y: height - 400, size: 18, font: helvetica, color: rgb(0, 0, 0) });
 
-        // ✅ Utiliser l'ID unique passé en paramètre
         const codeText = `Code : ${idUnique}`;
         page.drawText(codeText, { x: (width - helvetica.widthOfTextAtSize(codeText, 10)) / 2, y: height - 470, size: 10, font: helvetica, color: grisClaire });
 
@@ -120,7 +122,12 @@ function CommandeDetailContent() {
     const [changingStatus, setChangingStatus] = useState(false);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [pdfModalOpen, setPdfModalOpen] = useState(false);
-    const [sendingEmail, setSendingEmail] = useState(false);
+    const [sendingEmail, setSendingEmail] = useState<number | null>(null);
+
+    // Modal de confirmation
+    const [showModal, setShowModal] = useState(false);
+    const [modalType, setModalType] = useState<"success" | "error">("success");
+    const [modalMessage, setModalMessage] = useState("");
 
     useEffect(() => {
         if (params.id) {
@@ -171,13 +178,56 @@ function CommandeDetailContent() {
             } else {
                 const errorData = await res.json();
                 console.error("❌ Erreur:", errorData);
-                alert(`Erreur lors du changement de statut: ${errorData.error}`);
+                setModalMessage(`Erreur lors du changement de statut: ${errorData.error}`);
+                setModalType("error");
+                setShowModal(true);
             }
         } catch (err) {
             console.error("❌ Erreur changement statut:", err);
-            alert("Erreur de connexion au serveur");
+            setModalMessage("Erreur de connexion au serveur");
+            setModalType("error");
+            setShowModal(true);
         } finally {
             setChangingStatus(false);
+        }
+    };
+
+    const envoyerCarte = async (ligneId: number, email: string) => {
+        if (!commande || sendingEmail) return;
+
+        if (!confirm(`Envoyer cette carte cadeau à ${email} ?`)) return;
+
+        setSendingEmail(ligneId);
+
+        try {
+            const res = await fetch(`/api/admin/commandes/${commande.id}/send-email`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    ligneId,
+                    emailDestinataire: email,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setModalMessage(data.message || `Carte envoyée à ${email}`);
+                setModalType("success");
+                setShowModal(true);
+                fetchCommande(); // Recharger pour mettre à jour l'état
+            } else {
+                setModalMessage(data.error || "Erreur lors de l'envoi de la carte");
+                setModalType("error");
+                setShowModal(true);
+            }
+        } catch (err) {
+            console.error("Erreur envoi carte:", err);
+            setModalMessage("Erreur lors de l'envoi de la carte");
+            setModalType("error");
+            setShowModal(true);
+        } finally {
+            setSendingEmail(null);
         }
     };
 
@@ -189,16 +239,12 @@ function CommandeDetailContent() {
 
         try {
             const destinataire = produit.destinataire || `${commande.prenom} ${commande.nom}`;
-
-            // ✅ Utiliser l'ID unique stocké en BDD
             const idUnique = produit.carteCadeauId || generateCarteCadeauId(destinataire, produit.prix);
 
-            console.log(`📄 Génération PDF pour: ${destinataire}, montant: ${produit.prix}€, quantité: ${produit.quantite}, ID de la carte: ${idUnique}`);
+            console.log(`🔄 Génération PDF pour: ${destinataire}, montant: ${produit.prix}€, quantité: ${produit.quantite}, ID de la carte: ${idUnique}`);
 
-            // ✅ Passer l'ID unique au PDF (celui de la BDD avec le hash)
             const pdfBytes = await generateCarteCadeauPDF(destinataire, produit.prix, produit.quantite, idUnique);
 
-            // Créer un Blob à partir des Uint8Array
             const pdfBlob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
             const url = URL.createObjectURL(pdfBlob);
 
@@ -208,7 +254,9 @@ function CommandeDetailContent() {
             console.log("✅ PDF généré et affiché");
         } catch (err) {
             console.error("❌ Erreur génération PDF:", err);
-            alert("Erreur lors de la génération du PDF");
+            setModalMessage("Erreur lors de la génération du PDF");
+            setModalType("error");
+            setShowModal(true);
         } finally {
             setGeneratingPDF(null);
         }
@@ -288,16 +336,6 @@ function CommandeDetailContent() {
         p.produit.toLowerCase().includes("carte cadeau")
     );
 
-    // 🔍 DEBUG: Afficher les IDs des cartes cadeaux
-    if (cartesCadeaux.length > 0) {
-        console.log("Cartes cadeaux détectées:", cartesCadeaux.map(c => ({
-            id: c.id,
-            destinataire: c.destinataire,
-            prix: c.prix
-        })));
-    }
-
-    // Calculer le total avec frais de port
     const totalAvecPort = commande.total + commande.fraisPort;
 
     return (
@@ -327,6 +365,14 @@ function CommandeDetailContent() {
                     </div>
                 </div>
             )}
+
+            {/* Modal de confirmation */}
+            <ConfirmationModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                type={modalType}
+                message={modalMessage}
+            />
 
             {/* Header */}
             <header className="bg-white shadow-sm border-b">
@@ -396,53 +442,93 @@ function CommandeDetailContent() {
                                     {cartesCadeaux.map((carte, index) => {
                                         const carteId = `${carte.id}-${carte.destinataire || 'default'}`;
                                         const isGenerating = generatingPDF === carteId;
+                                        const isSending = sendingEmail === carte.ligneId;
                                         const destinataire = carte.destinataire || `${commande.prenom} ${commande.nom}`;
                                         const idUnique = carte.carteCadeauId || "ID non disponible";
+                                        const carteEnvoyee = carte.carteEnvoyee || false;
 
                                         return (
                                             <div
                                                 key={index}
-                                                className="flex justify-between items-center p-4 bg-white rounded-lg border border-green-200"
+                                                className={`p-4 rounded-lg border-2 ${carteEnvoyee ? 'bg-green-50 border-green-300' : 'bg-white border-green-200'}`}
                                             >
-                                                <div className="flex-1">
-                                                    <p className="font-medium text-gray-900 text-lg">
-                                                        Carte cadeau de {carte.prix.toFixed(2)} €
-                                                    </p>
-                                                    {carte.destinataire && (
-                                                        <p className="text-sm text-gray-600 mt-1">
-                                                            <span className="font-medium">Pour :</span> {carte.destinataire}
+                                                <div className="flex justify-between items-start gap-4">
+                                                    <div className="flex-1">
+                                                        <p className="font-medium text-gray-900 text-lg">
+                                                            Carte cadeau de {Math.round(carte.prix)} €
                                                         </p>
-                                                    )}
-                                                    <p className="text-sm text-gray-500 mt-1">
-                                                        <span className="font-medium">Quantité :</span> {carte.quantite} {carte.quantite > 1 ? 'cartes' : 'carte'}
-                                                    </p>
-                                                    <p className="text-s text-black mt-2 font-mono bg-gray-50 p-2 rounded border border-gray-200 break-all">
-                                                        <span className="font-semibold">ID :</span> {idUnique}
-                                                    </p>
+                                                        {carte.destinataire && (
+                                                            <p className="text-sm text-gray-600 mt-1">
+                                                                <span className="font-medium">Pour :</span> {carte.destinataire}
+                                                            </p>
+                                                        )}
+                                                        <p className="text-sm text-gray-500 mt-1">
+                                                            <span className="font-medium">Quantité :</span> {carte.quantite} {carte.quantite > 1 ? 'cartes' : 'carte'}
+                                                        </p>
+                                                        <p className="text-xs text-black mt-2 font-mono bg-gray-50 p-2 rounded border border-gray-200 break-all">
+                                                            <span className="font-semibold">ID :</span> {idUnique}
+                                                        </p>
+                                                        {carteEnvoyee && (
+                                                            <div className="mt-2 flex items-center gap-2 text-green-700 text-sm font-medium">
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                                </svg>
+                                                                Carte envoyée à {commande.email}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex flex-col gap-2">
+                                                        <button
+                                                            onClick={() => afficherCarteCadeau(carte)}
+                                                            disabled={isGenerating}
+                                                            className="px-4 py-2 bg-[#24586f] text-white rounded-lg hover:bg-[#1a4557] transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+                                                        >
+                                                            {isGenerating ? (
+                                                                <>
+                                                                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                    </svg>
+                                                                    Génération...
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                    </svg>
+                                                                    Afficher PDF
+                                                                </>
+                                                            )}
+                                                        </button>
+
+                                                        {carte.ligneId && (
+                                                            <button
+                                                                onClick={() => envoyerCarte(carte.ligneId!, commande.email)}
+                                                                disabled={isSending}
+                                                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+                                                                title={carteEnvoyee ? "Renvoyer la carte par email" : "Envoyer la carte par email"}
+                                                            >
+                                                                {isSending ? (
+                                                                    <>
+                                                                        <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                        </svg>
+                                                                        Envoi...
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                                        </svg>
+                                                                        {carteEnvoyee ? "Renvoyer" : "Envoyer carte"}
+                                                                    </>
+                                                                )}
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                <button
-                                                    onClick={() => afficherCarteCadeau(carte)}
-                                                    disabled={isGenerating}
-                                                    className="ml-4 px-4 py-2 bg-[#24586f] text-white rounded-lg hover:bg-[#1a4557] transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
-                                                >
-                                                    {isGenerating ? (
-                                                        <>
-                                                            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                            </svg>
-                                                            Génération...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                            </svg>
-                                                            Afficher PDF
-                                                        </>
-                                                    )}
-                                                </button>
                                             </div>
                                         );
                                     })}
@@ -450,14 +536,11 @@ function CommandeDetailContent() {
                             </div>
                         )}
 
-                        {/* Détails du client */}
+                        {/* Informations client */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                            <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-lg font-semibold text-gray-900">
-                                    Informations client
-                                </h2>
-
-                            </div>
+                            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                                Informations client
+                            </h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <p className="text-sm text-gray-500">Nom complet</p>
@@ -477,6 +560,7 @@ function CommandeDetailContent() {
                                 )}
                             </div>
                         </div>
+
                         {commande.source === "boutique_admin" && (
                             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
                                 <svg className="w-5 h-5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -586,7 +670,7 @@ function CommandeDetailContent() {
                                 {commande.panier.map((produit, index) => {
                                     const isCarteCadeau = produit.id.toLowerCase().includes("carte-cadeau");
                                     const nomAffiche = isCarteCadeau && produit.destinataire
-                                        ? `Carte cadeau ${produit.prix.toFixed(2)}€ - ${produit.destinataire}`
+                                        ? `Carte cadeau ${Math.round(produit.prix)}€ - ${produit.destinataire}`
                                         : produit.produit;
 
                                     return (
