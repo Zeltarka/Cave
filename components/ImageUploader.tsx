@@ -1,4 +1,3 @@
-// components/ImageUploader.tsx
 "use client";
 import React, { useState, useRef } from "react";
 
@@ -18,7 +17,6 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Vérifications côté client
         if (!file.type.startsWith("image/")) {
             setError("Le fichier doit être une image");
             return;
@@ -33,22 +31,29 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
         setUploading(true);
 
         try {
-            // Créer une preview locale immédiate
+            // Preview locale immédiate
             const reader = new FileReader();
             reader.onloadend = () => {
                 setPreview(reader.result as string);
             };
             reader.readAsDataURL(file);
 
-            // Upload vers l'API
             const formData = new FormData();
             formData.append("file", file);
-            formData.append("oldFileName", currentImage); // Pour supprimer l'ancienne image
+            formData.append("oldFileName", currentImage);
 
             const res = await fetch("/api/admin/images/upload", {
                 method: "POST",
                 body: formData,
             });
+
+            // ✅ FIX : vérifier le Content-Type avant de parser en JSON
+            const contentType = res.headers.get("content-type");
+            if (!contentType?.includes("application/json")) {
+                const text = await res.text();
+                console.error("Réponse non-JSON reçue:", text);
+                throw new Error(`Erreur serveur (${res.status}) : réponse inattendue du serveur`);
+            }
 
             const data = await res.json();
 
@@ -56,9 +61,8 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
                 throw new Error(data.error || "Erreur lors de l'upload");
             }
 
-            // Mettre à jour avec l'URL complète de Supabase
             onImageChange(data.fileName);
-            setPreview(null); // Retirer la preview locale, utiliser l'URL de Supabase
+            setPreview(null);
             setError("");
 
             console.log("✅ Image uploadée:", data.fileName);
@@ -69,20 +73,15 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
             setPreview(null);
         } finally {
             setUploading(false);
+            // Reset input pour permettre de re-sélectionner le même fichier
+            if (fileInputRef.current) fileInputRef.current.value = "";
         }
     };
 
-    // Gérer l'affichage : preview locale OU URL Supabase OU chemin local (rétrocompatibilité)
     const getDisplayImage = () => {
-        if (preview) return preview; // Preview locale en cours d'upload
+        if (preview) return preview;
         if (!currentImage) return null;
-
-        // Si c'est déjà une URL complète (Supabase)
-        if (currentImage.startsWith("http")) {
-            return currentImage;
-        }
-
-        // Sinon, chemin local (anciens fichiers)
+        if (currentImage.startsWith("http")) return currentImage;
         return `/${currentImage}`;
     };
 
@@ -94,17 +93,13 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
                 {label}
             </label>
 
-            {/* Prévisualisation */}
             <div className="relative w-full h-48 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden bg-gray-50">
                 {displayImage ? (
                     <img
                         src={displayImage}
                         alt="Preview"
                         className="w-full h-full object-contain"
-                        onError={(e) => {
-                            console.error("Erreur chargement image:", displayImage);
-                            setError("Impossible de charger l'image");
-                        }}
+                        onError={() => setError("Impossible de charger l'image")}
                     />
                 ) : (
                     <div className="flex items-center justify-center h-full text-gray-400">
@@ -112,7 +107,6 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
                     </div>
                 )}
 
-                {/* Indicateur de chargement */}
                 {uploading && (
                     <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                         <div className="text-white text-center">
@@ -123,7 +117,6 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
                 )}
             </div>
 
-            {/* Boutons */}
             <div className="flex gap-2">
                 <button
                     type="button"
@@ -143,19 +136,16 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
                 />
             </div>
 
-            {/* Erreur */}
             {error && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                     <p className="text-sm text-red-600">{error}</p>
                 </div>
             )}
 
-            {/* Info */}
             <p className="text-xs text-gray-500">
                 Formats acceptés : JPG, PNG, WebP, SVG, GIF • Max 20 MB
             </p>
 
-            {/* Debug info (à retirer en production) */}
             {process.env.NODE_ENV === "development" && currentImage && (
                 <details className="text-xs text-gray-400">
                     <summary className="cursor-pointer">Debug info</summary>

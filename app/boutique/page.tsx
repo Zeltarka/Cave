@@ -76,7 +76,7 @@ export default function Boutique() {
                                 onMouseLeave={() => setHoverIndex(null)}
                             >
                                 <Image
-                                    src={`/${produit.image}`}
+                                    src={produit.image}
                                     alt={produit.nom}
                                     fill
                                     className="object-cover"

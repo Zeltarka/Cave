@@ -115,7 +115,7 @@ export default function Page() {
                 <div className="w-full lg:w-auto flex justify-center lg:justify-start">
                     <div className="relative w-full max-w-[300px] sm:max-w-[350px] lg:w-[400px] h-[400px] sm:h-[470px] lg:h-[540px] border border-[#24586f] rounded-[20px] overflow-hidden flex-shrink-0">
                         <Image
-                            src={`/${contenu.image}`}
+                            src={contenu.image}
                             alt={contenu.titre}
                             fill
                             className="object-cover"

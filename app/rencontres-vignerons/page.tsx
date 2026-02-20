@@ -51,7 +51,7 @@ export default function Page() {
                     return (
                         <h1
                             key={index}
-                            className="text-3xl sm:text-4xl lg:text-5xl text-[#24586f] font-semibold mb-6 sm:mb-8 text-center lg:text-left"
+                            className="text-3xl sm:text-4xl lg:text-5xl text-[#24586f] font-semibold mb-6 sm:mb-8 text-center lg:text-center"
                             dangerouslySetInnerHTML={{ __html: bloc.contenu }}
                         />
                     );
