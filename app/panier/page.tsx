@@ -126,6 +126,7 @@ export default function PanierPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ ...produit, quantite }),
             });
+            window.dispatchEvent(new Event('cartUpdated')); // ✅ AJOUT
         } catch (err) {
             console.error("Erreur mise à jour quantité :", err);
         }
@@ -485,7 +486,7 @@ export default function PanierPage() {
                                         }}
                                         className="inline-block px-6 py-3 bg-[#24586f] text-white rounded-lg hover:bg-[#1a4557] transition-colors font-medium cursor-pointer"
                                     >
-                                        Valider ma commande
+                                        Poursuivre ma commande
                                     </button>
                                 </div>
                             </>

@@ -23,7 +23,7 @@ export function Navbar() {
             try {
                 const res = await fetch("/api/commandes");
                 const data = await res.json();
-                const count = data.filter((item: any) => item.quantite > 0).length;
+                const count = data.filter((item: any) => item.quantite > 0).reduce((sum: number, item: any) => sum + item.quantite, 0);
                 setCartItemCount(count);
             } catch (error) {
                 console.error("Erreur récupération panier:", error);
