@@ -140,6 +140,7 @@ export default function PanierPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id }),
             });
+            window.dispatchEvent(new Event('cartUpdated'));
         } catch (err) {
             console.error("Erreur suppression produit :", err);
         }

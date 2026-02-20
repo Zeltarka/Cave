@@ -68,18 +68,14 @@ export default function Page() {
             setMessageType("success");
             setShowModal(true);
 
-            setTimeout(() => {
-                setDisabled(false);
-            }, 3000);
+
         } catch {
             // Afficher la modale d'erreur
             setMessage(messages.panier.ajout_erreur);
             setMessageType("error");
             setShowModal(true);
 
-            setTimeout(() => {
-                setDisabled(false);
-            }, 3000);
+
         }
     };
 
@@ -189,27 +185,17 @@ export default function Page() {
                                 <button
                                     onClick={ajouterAuPanier}
                                     disabled={disabled}
-                                    className="w-full h-16 sm:h-[70px] bg-[#8ba9b7] border border-[#24586f] rounded-[20px] text-white font-medium text-base sm:text-lg hover:bg-[#24586f] transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                                    className="w-full h-16 sm:h-[70px] bg-[#24586f] border border-[#24586f] rounded-[20px] text-white font-medium text-base sm:text-lg hover:bg-[#24586f] transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
                                 >
                                     Ajouter au panier
                                 </button>
 
-                                {/* Message de confirmation */}
-                                {message && (
-                                    <p className="text-[#24586f] text-sm sm:text-base text-center font-semibold">
-                                        {message}
-                                    </p>
-                                )}
+
                             </>
                         )}
                     </div>
 
-                    {/* Message de confirmation */}
-                    {message && (
-                        <p className="text-[#24586f] text-sm sm:text-base text-center font-semibold">
-                            {message}
-                        </p>
-                    )}
+
                 </div>
             </div>
 
@@ -217,7 +203,10 @@ export default function Page() {
             {/* Modale de confirmation */}
             <ConfirmationModal
                 isOpen={showModal}
-                onClose={() => setShowModal(false)}
+                onClose={() => {
+                    setShowModal(false);
+                    setDisabled(false);
+                }}
                 type={messageType}
                 message={message}
                 autoClose={true}

@@ -443,7 +443,7 @@ export async function POST(req: Request) {
             to:      client.email,
             subject: `Confirmation de votre commande — La Cave La Garenne`,
             html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8f9fa;padding:30px;border-radius:15px;">
-                ${logoAttachment ? `<div style="text-align:center;margin-bottom:20px;"><img src="cid:logo@boutique" alt="La Cave La Garenne" style="max-width:120px;height:auto;"/></div>` : ""}
+                ${logoAttachment ? `<div style="text-align:center;margin-bottom:20px;"><img src="cid:logo@boutique" alt="La Cave La Garenne" style="width:80px;height:auto;"/></div>` : ""}
 
                 <div style="background:#24586f;padding:25px;border-radius:12px;margin-bottom:25px;text-align:center;">
                     <h2 style="color:#fff;margin:0;">Merci pour votre commande !</h2>
