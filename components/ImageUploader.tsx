@@ -1,5 +1,11 @@
 "use client";
 import React, { useState, useRef } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 type ImageUploaderProps = {
     currentImage: string;
@@ -30,42 +36,58 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
         setError("");
         setUploading(true);
 
+        // Preview locale immédiate
+        const reader = new FileReader();
+        reader.onloadend = () => setPreview(reader.result as string);
+        reader.readAsDataURL(file);
+
         try {
-            // Preview locale immédiate
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setPreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
+            const timestamp = Date.now();
+            const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+            const fileName = `${timestamp}.${ext}`;
 
-            const formData = new FormData();
-            formData.append("file", file);
-            formData.append("oldFileName", currentImage);
-
-            const res = await fetch("/api/admin/images/upload", {
+            // Étape 1 : demander une URL signée à notre API (requête légère, pas de fichier)
+            const tokenRes = await fetch("/api/admin/images/upload-url", {
                 method: "POST",
-                body: formData,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ fileName, contentType: file.type }),
             });
 
-            // ✅ FIX : vérifier le Content-Type avant de parser en JSON
-            const contentType = res.headers.get("content-type");
-            if (!contentType?.includes("application/json")) {
-                const text = await res.text();
-                console.error("Réponse non-JSON reçue:", text);
-                throw new Error(`Erreur serveur (${res.status}) : réponse inattendue du serveur`);
+            if (!tokenRes.ok) {
+                const errData = await tokenRes.json().catch(() => ({}));
+                console.error("Status:", tokenRes.status, "Body:", errData);
+                throw new Error(`Impossible d'obtenir l'URL d'upload (${tokenRes.status})`);
             }
 
-            const data = await res.json();
+            if (!tokenRes.ok) throw new Error("Impossible d'obtenir l'URL d'upload");
+            const { signedUrl } = await tokenRes.json();
 
-            if (!res.ok) {
-                throw new Error(data.error || "Erreur lors de l'upload");
+            // Étape 2 : upload direct vers Supabase via l'URL signée (bypass limite Vercel)
+            const uploadRes = await fetch(signedUrl, {
+                method: "PUT",
+                headers: { "Content-Type": file.type },
+                body: file,
+            });
+
+            if (!uploadRes.ok) throw new Error("Erreur lors de l'upload");
+
+            // Étape 3 : récupérer l'URL publique
+            const { data } = supabaseClient.storage.from("images").getPublicUrl(fileName);
+
+            // Supprimer l'ancienne image si elle existe
+            if (currentImage?.startsWith("http")) {
+                const oldFileName = currentImage.split("/").pop();
+                if (oldFileName) {
+                    await fetch(`/api/admin/images/delete?fileName=${oldFileName}`, {
+                        method: "DELETE",
+                    });
+                }
             }
 
-            onImageChange(data.fileName);
+            onImageChange(data.publicUrl);
             setPreview(null);
             setError("");
-
-            console.log("✅ Image uploadée:", data.fileName);
+            console.log("✅ Image uploadée:", data.publicUrl);
 
         } catch (err) {
             console.error("Erreur upload:", err);
@@ -73,7 +95,6 @@ export default function ImageUploader({ currentImage, onImageChange, label }: Im
             setPreview(null);
         } finally {
             setUploading(false);
-            // Reset input pour permettre de re-sélectionner le même fichier
             if (fileInputRef.current) fileInputRef.current.value = "";
         }
     };
