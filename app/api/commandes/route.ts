@@ -20,7 +20,6 @@ type Messages = {
     };
 };
 
-// Fonction pour récupérer les messages système
 async function getMessages(): Promise<Messages | null> {
     try {
         const { data, error } = await supabase
@@ -104,14 +103,10 @@ export async function POST(req: Request) {
         const sessionId = await getSessionId();
         console.log("🔑 Session:", sessionId);
 
-        // Vérification des données
         if (!produit.id || !produit.produit || produit.quantite === undefined || produit.prix === undefined) {
             console.error("❌ Données invalides:", produit);
-
-            // Récupérer message d'erreur personnalisé
             const messages = await getMessages();
             const errorMessage = messages?.panier.ajout_erreur || "Données invalides";
-
             return NextResponse.json({ error: errorMessage }, { status: 400 });
         }
 
@@ -125,11 +120,8 @@ export async function POST(req: Request) {
 
             if (error) {
                 console.error("❌ Erreur suppression:", error);
-
-                // Récupérer message d'erreur personnalisé
                 const messages = await getMessages();
                 const errorMessage = messages?.panier.ajout_erreur || error.message;
-
                 return NextResponse.json({ error: errorMessage }, { status: 500 });
             }
 
@@ -137,29 +129,35 @@ export async function POST(req: Request) {
             return NextResponse.json({ ok: true });
         }
 
-        // Vérifier si le produit existe déjà dans le panier
-        const { data: existingData } = await supabase
-            .from("panier")
-            .select("*")
-            .eq("session_id", sessionId)
-            .eq("produit_id", produit.id)
-            .single();
-
+        // ✅ Vérification du total combiné champagne + rosé (max 24)
         let nouvelleQuantite = produit.quantite;
 
-        // Si le produit existe déjà et que c'est une bouteille (champagne ou rosé), additionner les quantités
-        if (existingData && (produit.id === "champagne" || produit.id === "rose")) {
-            nouvelleQuantite = existingData.quantite + produit.quantite;
+        if (produit.id === "champagne" || produit.id === "rose") {
+            const autreId = produit.id === "champagne" ? "rose" : "champagne";
 
-            // Limiter à 24 bouteilles maximum
-            if (nouvelleQuantite > 24) {
-                nouvelleQuantite = 24;
+            const { data: autreData } = await supabase
+                .from("panier")
+                .select("quantite")
+                .eq("session_id", sessionId)
+                .eq("produit_id", autreId)
+                .single();
+
+            const quantiteAutre = autreData?.quantite || 0;
+            const totalCombine = quantiteAutre + nouvelleQuantite;
+
+            if (totalCombine > 24) {
+                nouvelleQuantite = Math.max(0, 24 - quantiteAutre);
+                console.log(`⚠️ Cap 24 bouteilles: ${quantiteAutre} (${autreId}) + ${produit.quantite} > 24, ajusté à ${nouvelleQuantite}`);
             }
 
-            console.log(`📊 Addition: ${existingData.quantite} + ${produit.quantite} = ${nouvelleQuantite}`);
+            if (nouvelleQuantite <= 0) {
+                return NextResponse.json({
+                    error: "Maximum 24 bouteilles combinées (champagne + rosé)",
+                    maxAtteint: true
+                }, { status: 400 });
+            }
         }
 
-        // Préparer les données
         const dataToInsert = {
             session_id: sessionId,
             produit_id: produit.id,
@@ -180,11 +178,8 @@ export async function POST(req: Request) {
 
         if (error) {
             console.error("❌ Erreur Supabase UPSERT:", JSON.stringify(error, null, 2));
-
-            // Récupérer message d'erreur personnalisé
             const messages = await getMessages();
             const errorMessage = messages?.panier.ajout_erreur || error.message;
-
             return NextResponse.json({
                 error: errorMessage,
                 details: error.details,
@@ -194,15 +189,12 @@ export async function POST(req: Request) {
         }
 
         console.log("✅ UPSERT réussi:", data);
-        return NextResponse.json({ ok: true, data });
+        return NextResponse.json({ ok: true, data, quantiteFinale: nouvelleQuantite });
 
     } catch (error: any) {
         console.error("💥 Erreur POST:", error);
-
-        // Récupérer message d'erreur personnalisé
         const messages = await getMessages();
         const errorMessage = messages?.panier.ajout_erreur || "Erreur serveur";
-
         return NextResponse.json({
             error: errorMessage,
             message: error.message,
@@ -227,11 +219,8 @@ export async function DELETE(req: Request) {
 
         if (error) {
             console.error("❌ Erreur Supabase DELETE:", error);
-
-            // Récupérer message d'erreur personnalisé
             const messages = await getMessages();
             const errorMessage = messages?.panier.ajout_erreur || error.message;
-
             return NextResponse.json({ error: errorMessage }, { status: 500 });
         }
 
@@ -240,11 +229,8 @@ export async function DELETE(req: Request) {
 
     } catch (error) {
         console.error("💥 Erreur DELETE:", error);
-
-        // Récupérer message d'erreur personnalisé
         const messages = await getMessages();
         const errorMessage = messages?.panier.ajout_erreur || "Erreur serveur";
-
         return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }

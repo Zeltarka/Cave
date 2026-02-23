@@ -85,6 +85,36 @@ function BoutiqueEditor() {
                 throw new Error(errorData.error || "Erreur lors de la sauvegarde");
             }
 
+            // ✅ Propagation de la disponibilité vers les pages produits individuelles
+            const PAGES_PRODUITS = ["champagne", "rose"];
+
+            await Promise.all(
+                contenu.produits.map(async (produit) => {
+                    const pageId = PAGES_PRODUITS.find(id =>
+                        produit.lien?.toLowerCase().includes(id) ||
+                        produit.nom?.toLowerCase().includes(id)
+                    );
+                    if (!pageId) return;
+
+                    // Récupérer le contenu actuel de la page produit pour ne pas l'écraser
+                    const pageRes = await fetch(`/api/admin/contenu/${pageId}`);
+                    if (!pageRes.ok) return;
+                    const pageData = await pageRes.json();
+
+                    // Mettre à jour uniquement le champ disponible
+                    await fetch(`/api/admin/contenu/${pageId}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            contenu: {
+                                ...pageData.contenu,
+                                disponible: produit.disponible ?? true,
+                            }
+                        }),
+                    });
+                })
+            );
+
             afficherMessage("Modifications sauvegardées avec succès !", "success");
             fetchContenu();
         } catch (err) {

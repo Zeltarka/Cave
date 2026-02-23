@@ -105,7 +105,6 @@ function RoseEditor() {
 
     const sauvegarder = async () => {
         if (!contenu) return;
-
         setSaving(true);
         setMessage("");
 
@@ -119,6 +118,24 @@ function RoseEditor() {
             if (!res.ok) {
                 const errorData = await res.json();
                 throw new Error(errorData.error || "Erreur lors de la sauvegarde");
+            }
+
+            // ✅ Propagation de la disponibilité vers la page boutique
+            const boutiqueRes = await fetch("/api/admin/contenu/boutique");
+            if (boutiqueRes.ok) {
+                const boutiqueData = await boutiqueRes.json();
+                const updatedProduits = boutiqueData.contenu.produits.map((p: any) =>
+                    p.lien?.toLowerCase().includes("rose") || p.nom?.toLowerCase().includes("rose")
+                        ? { ...p, disponible: contenu.disponible ?? true }
+                        : p
+                );
+                await fetch("/api/admin/contenu/boutique", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contenu: { ...boutiqueData.contenu, produits: updatedProduits }
+                    }),
+                });
             }
 
             afficherMessage("Modifications sauvegardées avec succès", "success");
