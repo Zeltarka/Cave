@@ -50,8 +50,8 @@ export default function Home() {
             </div>
 
             {/* Image mobile */}
-            <div className="relative w-full h-[40vh] mt-4 block sm:hidden">
-                <Image
+            <div className="relative w-full mt-4 block sm:hidden" style={{ height: 'calc(100dvh - 80px)' }}>
+            <Image
                     src={srcMobile}
                     fill
                     priority
