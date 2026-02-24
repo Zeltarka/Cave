@@ -244,7 +244,7 @@ export async function GET(req: NextRequest) {
 
         // 7. Rencontres
         if (prochaines.length === 0) {
-            page.drawText("Aucune rencontre programmee.", {
+            page.drawText("Aucune rencontre programmée.", {
                 x: marginLeft, y, size: 11, font: helvetica, color: GRIS,
             });
         }

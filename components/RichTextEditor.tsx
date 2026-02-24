@@ -9,7 +9,7 @@ type RichTextEditorProps = {
 };
 
 const COLORS = {
-    noir: "#000000",
+    noir: "var(--color-noir)",
     gris: "#6B7280",
     "bleu-clair": "#8BA9B7",
     "bleu-fonce": "#24586f",
@@ -92,13 +92,12 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
     return (
         <div className="border border-gray-300 rounded-lg overflow-hidden">
             {/* Barre d'outils */}
-            <div className="bg-gray-50 border-b border-gray-300 p-2 flex flex-wrap gap-1">
+            <div className="bg-gray-50 dark:bg-[#0f1117] border-b border-gray-300 dark:border-gray-700 p-2 flex flex-wrap gap-1">
                 {/* Gras */}
                 <button
                     type="button"
                     onClick={() => applyFormat("bold")}
-                    className="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-100 font-bold"
-                    title="Gras"
+                    className="px-3 py-1 bg-white dark:bg-[#1a1d27] dark:text-white border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700 font-bold"                    title="Gras"
                 >
                     B
                 </button>
@@ -191,7 +190,7 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
                 contentEditable
                 onInput={handleInput}
                 suppressContentEditableWarning
-                className="p-4 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-[#24586f] focus:ring-inset"
+                className="p-4 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-[#24586f] focus:ring-inset bg-white dark:bg-[#1a1d27] text-black dark:text-[#faf5f1]"
                 style={{ wordWrap: "break-word" }}
                 data-placeholder={placeholder}
             />

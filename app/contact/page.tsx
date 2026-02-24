@@ -1,4 +1,3 @@
-// app/(pages)/contact/page.tsx
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
@@ -56,12 +55,12 @@ export default function Page() {
     return (
         <div className="flex flex-col w-full px-4 sm:px-6 lg:px-8 py-3 sm:py-0">
             <div className="flex justify-center mb-8 sm:mb-12">
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl text-[#24586f] font-semibold">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl text-[#24586f] dark:text-[#3a8fa8] font-semibold">
                     {contenu.titre}
                 </h1>
             </div>
 
-            <div className="text-black flex flex-col gap-6 sm:gap-8 max-w-3xl mx-auto w-full lg:ml-[15%] lg:mr-auto text-base sm:text-lg">
+            <div className="text-black dark:text-[#faf5f1] flex flex-col gap-6 sm:gap-8 max-w-3xl mx-auto w-full lg:ml-[15%] lg:mr-auto text-base sm:text-lg">
                 <div className="space-y-3 sm:space-y-4">
                     <p>
                         <span className="font-semibold">Adresse</span> - {contenu.adresse}
@@ -105,7 +104,7 @@ export default function Page() {
                                 href={contenu.google_maps_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="underline text-[#24586f] hover:opacity-80 transition-opacity"
+                                className="underline text-[#24586f] dark:text-[#3a8fa8] hover:opacity-80 transition-opacity"
                             >
                                 Itinéraire
                             </Link>
@@ -118,7 +117,7 @@ export default function Page() {
                                 href={contenu.google_review_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="underline text-[#24586f] hover:opacity-80 transition-opacity"
+                                className="underline text-[#24586f] dark:text-[#3a8fa8] hover:opacity-80 transition-opacity"
                             >
                                 Laissez votre avis sur Google
                             </Link>
@@ -130,7 +129,7 @@ export default function Page() {
                 {(contenu.linkedin_url || contenu.instagram_url) && (
                     <div className="flex flex-wrap items-baseline gap-3 sm:gap-4">
                         <p>Nos réseaux :</p>
-                        <div className="flex gap-3 sm:gap-4 underline text-[#24586f]">
+                        <div className="flex gap-3 sm:gap-4 underline text-[#24586f] dark:text-[#3a8fa8]">
                             {contenu.linkedin_url && (
                                 <Link
                                     href={contenu.linkedin_url}

@@ -2,7 +2,6 @@
 import type { Config } from "tailwindcss";
 
 export default {
-    // ⭐ Activer le mode sombre avec la classe 'dark'
     darkMode: 'class',
 
     content: [

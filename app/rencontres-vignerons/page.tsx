@@ -1,4 +1,3 @@
-// app/(pages)/rencontres-vignerons/page.tsx
 "use client";
 import { useEffect, useState } from "react";
 
@@ -34,31 +33,30 @@ function RencontreCard({ rencontre }: { rencontre: Rencontre }) {
     const paragraphes = rencontre.blocs.filter(b => b.type === "paragraphe");
 
     return (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
+        <div className="bg-white dark:bg-[#1a1d27] rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 sm:p-8">
             <p className="text-sm font-semibold text-[#8ba9b7] uppercase tracking-widest mb-3">
                 {formatDate(rencontre.date)}
             </p>
 
-            {/* Image flottante à droite sur desktop, pleine largeur en bas sur mobile */}
             {hasImage && (
                 <img
                     src={rencontre.image!.startsWith("http") ? rencontre.image! : `/${rencontre.image}`}
                     alt={titre?.contenu.replace(/<[^>]*>/g, "") || "Rencontre vigneron"}
                     style={{ float: "right", width: "240px", height: "240px", objectFit: "contain", margin: "0 0 4px 12px", borderRadius: "8px" }}
-            />
+                />
             )}
 
             {titre && (
                 <h2
-                    className="text-2xl sm:text-3xl font-semibold text-[#24586f] mb-4"
+                    className="text-2xl sm:text-3xl font-semibold text-[#24586f] dark:text-[#3a8fa8] mb-4"
                     dangerouslySetInnerHTML={{ __html: titre.contenu }}
                 />
             )}
-            <div className="space-y-3">
+            <div className="bloc-contenu space-y-3">
                 {paragraphes.map((bloc, i) => (
                     <div
                         key={i}
-                        className="text-base sm:text-lg text-gray-700 leading-relaxed"
+                        className="text-base sm:text-lg text-gray-700 dark:text-[#faf5f1] leading-relaxed"
                         dangerouslySetInnerHTML={{ __html: bloc.contenu }}
                     />
                 ))}
@@ -111,14 +109,14 @@ export default function Page() {
     return (
         <div className="px-4 sm:px-8 md:px-16 lg:px-24 xl:px-32 py-8 sm:py-12 lg:py-16 max-w-6xl mx-auto">
 
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl text-[#24586f] font-semibold mb-10 sm:mb-14 text-center">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl text-[#24586f] dark:text-[#3a8fa8] font-semibold mb-10 sm:mb-14 text-center">
                 {contenu.titre || "Rencontres Vignerons"}
             </h1>
 
             {/* À venir */}
             {aVenir.length > 0 && (
                 <section className="mb-16">
-                    <h2 className="text-xl font-semibold text-[#24586f] border-b-2 border-[#24586f] pb-2 mb-6">
+                    <h2 className="text-xl font-semibold text-[#24586f] dark:text-[#3a8fa8] border-b-2 border-[#24586f] dark:border-[#3a8fa8] pb-2 mb-6">
                         À venir
                     </h2>
                     <div className="space-y-6">
@@ -128,7 +126,7 @@ export default function Page() {
             )}
 
             {aVenir.length === 0 && passees.length === 0 && (
-                <p className="text-center text-gray-500 text-lg mt-12">
+                <p className="text-center text-gray-500 dark:text-gray-400 text-lg mt-12">
                     Aucune rencontre programmée pour le moment.
                 </p>
             )}
@@ -136,7 +134,7 @@ export default function Page() {
             {/* Passées */}
             {passees.length > 0 && (
                 <section>
-                    <h2 className="text-xl font-semibold text-gray-400 border-b border-gray-200 pb-2 mb-6">
+                    <h2 className="text-xl font-semibold text-gray-400 dark:text-gray-500 border-b border-gray-200 dark:border-gray-700 pb-2 mb-6">
                         Rencontres passées
                     </h2>
                     <div className="space-y-6 opacity-75">

@@ -1,4 +1,3 @@
-// app/(pages)/boutique/rose/page.tsx
 "use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -75,10 +74,7 @@ export default function Page() {
             });
             await res.json();
             window.dispatchEvent(new Event('cartUpdated'));
-
-            // ✅ Rafraîchir le panier pour mettre à jour le max
             fetchPanier();
-
             setMessage(messages.panier.ajout_succes.replace("{quantite}", quantitec.toString()));
             setMessageType("success");
             setShowModal(true);
@@ -94,7 +90,7 @@ export default function Page() {
 
     return (
         <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
-            <Link href="/boutique" className="inline-flex items-center gap-2 text-black text-base sm:text-lg hover:underline mb-6 sm:mb-8">
+            <Link href="/boutique" className="inline-flex items-center gap-2 text-black dark:text-[#faf5f1] text-base sm:text-lg hover:underline mb-6 sm:mb-8">
                 ← Nos Produits
             </Link>
 
@@ -107,34 +103,33 @@ export default function Page() {
 
                 <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 w-full lg:max-w-[1000px]">
                     <div className="flex flex-col gap-4 sm:gap-5 flex-1">
-                        <h1 className="text-2xl sm:text-3xl lg:text-[30px] text-[#24586f] font-semibold">{contenu.titre}</h1>
-                        <div className="text-base sm:text-lg text-black space-y-4">
+                        <h1 className="text-2xl sm:text-3xl lg:text-[30px] text-[#24586f] dark:text-[#3a8fa8] font-semibold">{contenu.titre}</h1>
+                        <div className="bloc-contenu text-base sm:text-lg text-black dark:text-[#faf5f1] space-y-4">
                             {contenu.blocs_description.length > 0
                                 ? contenu.blocs_description.map((bloc, index) => (
                                     <div key={index} dangerouslySetInnerHTML={{ __html: bloc.contenu }} />
                                 ))
                                 : null}
-                            <p className="text-xl sm:text-2xl font-semibold text-[#24586f]">{contenu.prix.toFixed(2)}€</p>
+                            <p className="text-xl sm:text-2xl font-semibold text-[#24586f] dark:text-[#3a8fa8]">{contenu.prix.toFixed(2)}€</p>
                         </div>
                     </div>
 
-                    <div className="border border-[#24586f] rounded-[20px] p-6 sm:p-8 flex flex-col justify-center items-center gap-6 w-full lg:w-auto lg:min-w-[320px] bg-[#faf5f1] self-start">
+                    <div className="border border-[#24586f] rounded-[20px] p-6 sm:p-8 flex flex-col justify-center items-center gap-6 w-full lg:w-auto lg:min-w-[320px] bg-[#faf5f1] dark:bg-[#1a1d27] self-start">
                         {contenu.disponible === false ? (
                             <div className="text-center py-8">
                                 <div className="text-3xl sm:text-4xl font-bold text-red-600 mb-3">INDISPONIBLE</div>
-                                <p className="text-base text-gray-700">Ce produit est temporairement indisponible</p>
+                                <p className="text-base text-gray-700 dark:text-gray-400">Ce produit est temporairement indisponible</p>
                             </div>
                         ) : (
                             <>
                                 <div className="flex flex-col items-center gap-3 w-full">
-                                    <label htmlFor="quantite" className="text-[#24586f] font-semibold">Quantité</label>
-
+                                    <label htmlFor="quantite" className="text-[#24586f] dark:text-[#3a8fa8] font-semibold">Quantité</label>
                                     <select
                                         id="quantite"
                                         value={quantitec}
                                         onChange={(e) => setQuantitec(parseInt(e.target.value))}
                                         disabled={maxAtteint}
-                                        className="h-12 sm:h-14 px-4 text-lg font-semibold text-[#24586f] border border-[#24586f] rounded-xl bg-transparent focus:outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="h-12 sm:h-14 px-4 text-lg font-semibold text-[#24586f] dark:text-[#3a8fa8] border border-[#24586f] rounded-xl bg-transparent dark:bg-transparent focus:outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {QUANTITES_DISPONIBLES.map((qty) => {
                                             const grise = qty > maxDispo;
@@ -144,7 +139,6 @@ export default function Page() {
                                                 </option>
                                             );
                                         })}
-                                        {/* ✅ Message dans le menu déroulant, même taille que les autres options */}
                                         <option disabled value="">──────────────────</option>
                                         <option disabled value="">+ de 24 ? Contactez-nous</option>
                                     </select>

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
@@ -9,11 +11,13 @@
     --background: #faf5f1;
     --foreground: #000000;
     --font-montserrat: 'Montserrat', sans-serif;
+    --color-noir: #000000;
 }
 
 .dark {
-    --background: #000000;
-    --foreground: #f9fafb;
+    --background: #0f1117;
+    --foreground: #f3f4f6;
+    --color-noir: #faf5f1;
 }
 
 html, body {
@@ -24,6 +28,7 @@ html, body {
     font-family: var(--font-montserrat);
     background-color: var(--background);
     color: var(--foreground);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 @layer base {
@@ -32,11 +37,17 @@ html, body {
     }
 }
 
-:root {
-    --color-noir: #000000; /* mode clair */
+/* ✅ Fix texte dans les blocs dangerouslySetInnerHTML en mode sombre */
+.dark .bloc-contenu {
+    color: #faf5f1;
 }
 
-.dark {
-    --color-noir: #ffffff; /* mode sombre */
+.dark .bloc-contenu * {
+    color: inherit;
 }
 
+/* ✅ Sélecteur transparent en mode sombre */
+.dark select {
+    background-color: transparent;
+    color-scheme: dark;
+}

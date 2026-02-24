@@ -1,4 +1,3 @@
-// app/(pages)/histoire/page.tsx
 "use client";
 import { useEffect, useState } from "react";
 
@@ -50,13 +49,13 @@ export default function Page() {
     }
 
     return (
-        <div className="flex flex-col justify-start px-4 sm:px-8 md:px-16 lg:px-24 xl:px-32 py-8 sm:py-12 lg:py-16 text-black max-w-6xl mx-auto">
+        <div className="flex flex-col justify-start px-4 sm:px-8 md:px-16 lg:px-24 xl:px-32 py-8 sm:py-12 lg:py-16 text-black dark:text-[#faf5f1] max-w-6xl mx-auto">
             {contenu.blocs.map((bloc, index) => {
                 if (bloc.type === "titre") {
                     return (
                         <h1
                             key={index}
-                            className="text-3xl sm:text-4xl lg:text-5xl text-[#24586f] font-semibold mb-6 sm:mb-8 text-center lg:text-left"
+                            className="text-3xl sm:text-4xl lg:text-5xl text-[#24586f] dark:text-[#3a8fa8] font-semibold mb-6 sm:mb-8 text-center lg:text-left"
                             dangerouslySetInnerHTML={{ __html: bloc.contenu }}
                             style={bloc.style}
                         />
@@ -66,7 +65,7 @@ export default function Page() {
                 return (
                     <div
                         key={index}
-                        className="text-base sm:text-lg leading-relaxed mb-4 sm:mb-5"
+                        className="text-base sm:text-lg leading-relaxed mb-4 sm:mb-5 dark:text-[#faf5f1]"
                         dangerouslySetInnerHTML={{ __html: bloc.contenu }}
                         style={bloc.style}
                     />

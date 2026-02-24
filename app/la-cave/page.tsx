@@ -1,4 +1,3 @@
-// app/(pages)/la-cave/page.tsx
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -52,7 +51,7 @@ export default function Page() {
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
                 {contenu.blocs[0]?.type === "titre" && (
                     <h1
-                        className="text-3xl sm:text-4xl lg:text-5xl text-[#24586f] font-semibold text-center lg:text-left"
+                        className="text-3xl sm:text-4xl lg:text-5xl text-[#24586f] dark:text-[#3a8fa8] font-semibold text-center lg:text-left"
                         dangerouslySetInnerHTML={{ __html: contenu.blocs[0].contenu || "" }}
                     />
                 )}
@@ -60,14 +59,14 @@ export default function Page() {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Link
                         href="/carte-cadeau"
-                        className="px-6 py-3 border-2 border-[#24586f] text-[#24586f] font-semibold text-center hover:bg-[#24586f] hover:text-white transition-colors"
+                        className="px-6 py-3 border-2 border-[#24586f] text-[#24586f] dark:text-[#3a8fa8] dark:border-[#3a8fa8] font-semibold text-center hover:bg-[#24586f] hover:text-white dark:hover:bg-[#3a8fa8] transition-colors"
                     >
                         Carte Cadeau
                     </Link>
 
                     <Link
                         href="/boutique"
-                        className="px-6 py-3 border-2 border-[#24586f] text-[#24586f] font-semibold text-center hover:bg-[#24586f] hover:text-white transition-colors"
+                        className="px-6 py-3 border-2 border-[#24586f] text-[#24586f] dark:text-[#3a8fa8] dark:border-[#3a8fa8] font-semibold text-center hover:bg-[#24586f] hover:text-white dark:hover:bg-[#3a8fa8] transition-colors"
                     >
                         Boutique en ligne
                     </Link>
@@ -75,13 +74,13 @@ export default function Page() {
             </div>
 
             {/* Contenu */}
-            <div className="text-black text-base sm:text-lg leading-relaxed space-y-4">
+            <div className="bloc-contenu text-black dark:text-[#faf5f1] text-base sm:text-lg leading-relaxed space-y-4">
                 {contenu.blocs.slice(1).map((bloc, index) => {
                     if (bloc.type === "titre") {
                         return (
                             <h2
                                 key={index}
-                                className="text-2xl font-semibold text-[#24586f] mt-6 mb-4"
+                                className="text-2xl font-semibold text-[#24586f] dark:text-[#3a8fa8] mt-6 mb-4"
                                 dangerouslySetInnerHTML={{ __html: bloc.contenu || "" }}
                             />
                         );

@@ -14,11 +14,19 @@ export const metadata: Metadata = {
     description: "Caviste indépendant à La Garenne-Colombes - Vins, Champagnes et Spiritueux",
 };
 
-export default function RootLayout({
-                                       children,
-                                   }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     return (
-        <html lang="fr" className="h-full">
+        <html lang="fr" className="h-full" suppressHydrationWarning>
+        <head>
+            <script dangerouslySetInnerHTML={{
+                __html: `
+                    try {
+                        const t = localStorage.getItem('theme');
+                        if (t === 'dark') document.documentElement.classList.add('dark');
+                    } catch(e) {}
+                `
+            }} />
+        </head>
         <body className={`${montserrat.variable} antialiased flex flex-col min-h-full m-0`}>
         <Navbar />
         <main className="flex-1 w-full relative">

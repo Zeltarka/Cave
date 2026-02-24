@@ -1,4 +1,3 @@
-// app/(pages)/boutique/page.tsx
 "use client";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
@@ -54,16 +53,16 @@ export default function Boutique() {
 
     return (
         <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
-            <Link href="/la-cave" className="absolute top-0 left-15 inline-flex items-center gap-2 text-black text-base sm:text-lg hover:underline mb-6 sm:mb-8">
+            <Link href="/la-cave" className="absolute top-0 left-15 inline-flex items-center gap-2 text-black dark:text-[#faf5f1] text-base sm:text-lg hover:underline mb-6 sm:mb-8">
                 ← La Cave
             </Link>
 
-            <div className="flex flex-col items-center justify-start text-center text-[#24586f] px-4 sm:px-6 lg:px-8 py-0 sm:py-0">
+            <div className="flex flex-col items-center justify-start text-center text-[#24586f] dark:text-[#3a8fa8] px-4 sm:px-6 lg:px-8 py-0 sm:py-0">
                 <h1 className="mt-0 text-3xl sm:text-4xl lg:text-[40px] mb-2 sm:mb-3 font-semibold">
                     {contenu.titre}
                 </h1>
 
-                <p className="text-base sm:text-lg text-black mb-8 sm:mb-12 max-w-3xl">
+                <p className="bloc-contenu text-base sm:text-lg text-black dark:text-[#faf5f1] mb-8 sm:mb-12 max-w-3xl">
                     {contenu.description}
                 </p>
 
@@ -83,16 +82,14 @@ export default function Boutique() {
                                     sizes="(max-width: 640px) 280px, (max-width: 1024px) 320px, (max-width: 1280px) 350px, 400px"
                                 />
 
-
-
-                                {/* Overlay hover - texte AU MILIEU */}
-                                <div className={`absolute inset-0 flex flex-col justify-center items-center bg-white/90 transition-opacity duration-700 ${hoverIndex === index ? "opacity-90" : "opacity-0"}`}>
+                                {/* Overlay hover */}
+                                <div className={`absolute inset-0 flex flex-col justify-center items-center bg-white/90 dark:bg-[#0f1117]/90 transition-opacity duration-700 ${hoverIndex === index ? "opacity-90" : "opacity-0"}`}>
                                     {produit.disponible === false && (
                                         <div className="absolute top-4 right-4 bg-red-600 text-white font-bold text-base sm:text-lg px-4 py-2 rounded-lg mb-4">
                                             INDISPONIBLE
                                         </div>
                                     )}
-                                    <span className="font-bold text-lg sm:text-xl text-black text-center px-4">
+                                    <span className="font-bold text-lg sm:text-xl text-black dark:text-[#faf5f1] text-center px-4">
                                         {produit.nom} <br /> {produit.prix.toFixed(2)}€
                                     </span>
                                 </div>
