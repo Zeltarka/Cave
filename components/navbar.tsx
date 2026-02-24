@@ -135,16 +135,12 @@ export function Navbar() {
 
                         {/* Liens visibles sur page d'accueil sous la navbar */}
                         {isHomePage && (
-                            <div className="mt-5 flex flex-col items-center gap-4 text-base sm:text-lg font-medium">
-                                <div className="flex justify-center gap-8 sm:gap-14">
-                                    <Link href="/histoire" className="hover:underline transition-all">Histoire</Link>
-                                    <Link href="/la-cave" className="hover:underline transition-all">La Cave</Link>
-                                </div>
-                                <div className="flex justify-center gap-6 sm:gap-10 flex-wrap">
-                                    <Link href="/rencontres-vignerons" className="hover:underline transition-all">Rencontres Vignerons</Link>
-                                    <Link href="/galerie" className="hover:underline transition-all">Galerie Photos</Link>
-                                    <Link href="/contact" className="hover:underline transition-all">Contact</Link>
-                                </div>
+                            <div className="mt-5 grid grid-cols-3 gap-x-4 gap-y-3 text-center text-base sm:text-lg font-medium px-2">
+                                <Link href="/histoire" className="hover:underline transition-all">Histoire</Link>
+                                <Link href="/la-cave" className="hover:underline transition-all">La Cave</Link>
+                                <Link href="/rencontres-vignerons" className="hover:underline transition-all text-sm sm:text-base">Rencontres Vignerons</Link>
+                                <Link href="/galerie" className="hover:underline transition-all">Galerie Photos</Link>
+                                <Link href="/contact" className="hover:underline transition-all col-start-2">Contact</Link>
                             </div>
                         )}
                     </div>
