@@ -35,7 +35,7 @@ Le site web est totalement administrable depuis une page admin. On peut ainsi :
 + Gérer les commandes (Changer le statut de la commande, consulter les commandes etc. )
 + Créer des cartes cadeaux depuis l'admin.
 + Modifier le contenu de toutes les pages. Le texte et les images sont stockées en base de données, et chargé à chaque fois.
-Chaque page et api de l'administration sont sécurisées par token.
++ Chaque page et api de l'administration sont sécurisées par token.
 
 ## Information concernant la deadline
 Depuis le push du 17 décembre, j'ai eu de nombreuses demandes de modifications de la part du client, ce qui explique des pushs plus récents.
