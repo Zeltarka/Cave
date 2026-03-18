@@ -122,37 +122,39 @@ export default function Page() {
                                 Laissez votre avis sur Google
                             </Link>
                         )}
+                        <p>||</p>
+                        {/* Réseaux sociaux */}
+                        {(contenu.linkedin_url || contenu.instagram_url) && (
+                            <div className="flex flex-wrap items-baseline gap-3 sm:gap-4">
+                                <p>Nos réseaux :</p>
+                                <div className="flex gap-3 sm:gap-4 underline text-[#24586f] dark:text-[#3a8fa8]">
+                                    {contenu.linkedin_url && (
+                                        <Link
+                                            href={contenu.linkedin_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="hover:opacity-80 transition-opacity"
+                                        >
+                                            Linkedin
+                                        </Link>
+                                    )}
+                                    {contenu.instagram_url && (
+                                        <Link
+                                            href={contenu.instagram_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="hover:opacity-80 transition-opacity"
+                                        >
+                                            Instagram
+                                        </Link>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
-                {/* Réseaux sociaux */}
-                {(contenu.linkedin_url || contenu.instagram_url) && (
-                    <div className="flex flex-wrap items-baseline gap-3 sm:gap-4">
-                        <p>Nos réseaux :</p>
-                        <div className="flex gap-3 sm:gap-4 underline text-[#24586f] dark:text-[#3a8fa8]">
-                            {contenu.linkedin_url && (
-                                <Link
-                                    href={contenu.linkedin_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="hover:opacity-80 transition-opacity"
-                                >
-                                    Linkedin
-                                </Link>
-                            )}
-                            {contenu.instagram_url && (
-                                <Link
-                                    href={contenu.instagram_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="hover:opacity-80 transition-opacity"
-                                >
-                                    Instagram
-                                </Link>
-                            )}
-                        </div>
-                    </div>
-                )}
+
             </div>
         </div>
     );
