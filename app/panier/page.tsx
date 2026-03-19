@@ -1,8 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMessages } from "@/hooks/useMessages";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import Link from "next/link";
+import flatpickr from "flatpickr";
+import { French } from "flatpickr/dist/l10n/fr";
+import "flatpickr/dist/flatpickr.min.css";
 
 type Produit = {
     id: string;
@@ -26,7 +29,19 @@ type Commande = {
     datePassage: string;
 };
 
+// Date min : aujourd'hui + 2 jours
+function getDateMin(joursAvant = 2): string {
+    const d = new Date();
+    d.setDate(d.getDate() + joursAvant);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const j = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${j}`;
+}
+
 export default function PanierPage() {
+    const datePickerRef = useRef<HTMLInputElement>(null);
+    const fpInstanceRef = useRef<flatpickr.Instance | null>(null);
     const [panier, setPanier] = useState<Produit[]>([]);
     const [afficherCommande, setAfficherCommande] = useState(false);
     const [commande, setCommande] = useState<Commande>({
@@ -54,14 +69,60 @@ export default function PanierPage() {
 
     useEffect(() => { fetchPanier(); }, []);
 
+    // Panier uniquement composé de cartes cadeaux
+    const seulementCartesCadeaux = panier.length > 0 && panier.every(p => p.id.includes("carte-cadeau"));
+
+    // Indique si le sélecteur de date doit être affiché :
+    // - cartes cadeaux seules + virement → pas de boutique nécessaire
+    // - tous les autres cas avec retrait ou paiement boutique → affiché
+    const afficherDate = !(seulementCartesCadeaux && commande.modePaiement === "virement") &&
+        (commande.modeLivraison === "retrait" || commande.modePaiement === "boutique");
+
+    // Init / destroy flatpickr — dépend de afficherCommande pour que l'input soit dans le DOM
+    useEffect(() => {
+        if (!afficherCommande || !afficherDate || !datePickerRef.current) return;
+
+        fpInstanceRef.current = flatpickr(datePickerRef.current, {
+            locale: French,
+            dateFormat: "Y-m-d",   // format interne stocké
+            altInput: true,
+            altInputClass: "w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f] bg-white text-black placeholder:text-gray-400 cursor-pointer pr-12",
+            altFormat: "d/m/Y",
+            minDate: getDateMin(2),
+            disable: [(date) => date.getDay() === 0], // bloque les dimanches
+            disableMobile: true,
+            defaultDate: commande.datePassage || undefined,
+            onChange: ([selected]) => {
+                if (!selected) return;
+                // Construire la date ISO en heure locale (évite le décalage UTC)
+                const y = selected.getFullYear();
+                const m = String(selected.getMonth() + 1).padStart(2, "0");
+                const j = String(selected.getDate()).padStart(2, "0");
+                setCommande(prev => ({ ...prev, datePassage: `${y}-${m}-${j}` }));
+            },
+        }) as flatpickr.Instance;
+
+        return () => {
+            fpInstanceRef.current?.destroy();
+            fpInstanceRef.current = null;
+        };
+    }, [afficherCommande, afficherDate]);
+
     const nombreBouteilles = panier.filter(p => !p.id.includes("carte-cadeau")).reduce((sum, p) => sum + p.quantite, 0);
-    const totalBouteilles = panier.filter(p => p.id === "champagne" || p.id === "rose").reduce((sum, p) => sum + p.quantite, 0);
+    const totalBouteilles  = panier.filter(p => p.id === "champagne" || p.id === "rose").reduce((sum, p) => sum + p.quantite, 0);
+
+    // Si panier = cartes cadeaux uniquement, forcer retrait et ne jamais afficher livraison
+    useEffect(() => {
+        if (seulementCartesCadeaux && commande.modeLivraison === "livraison") {
+            setCommande(prev => ({ ...prev, modeLivraison: "retrait" }));
+        }
+    }, [seulementCartesCadeaux]);
 
     useEffect(() => {
         const fetchFraisPort = async () => {
             if (commande.modeLivraison === "livraison" && nombreBouteilles > 0) {
                 try {
-                    const res = await fetch(`/api/frais-port?nombre=${nombreBouteilles}`);
+                    const res  = await fetch(`/api/frais-port?nombre=${nombreBouteilles}`);
                     const data = await res.json();
                     setFraisPort(data.frais || 0);
                 } catch (err) {
@@ -90,9 +151,9 @@ export default function PanierPage() {
         return [6, 12, 18, 24];
     };
 
-    const total = panier.reduce((sum, p) => sum + p.prix * p.quantite, 0);
-    const totalAvecPort = total + fraisPort;
-    const panierVide = panier.length === 0 || panier.every((p) => p.quantite === 0);
+    const total          = panier.reduce((sum, p) => sum + p.prix * p.quantite, 0);
+    const totalAvecPort  = total + fraisPort;
+    const panierVide     = panier.length === 0 || panier.every((p) => p.quantite === 0);
 
     const changerQuantite = async (id: string, nouvelleQuantite: number) => {
         const produit = panier.find((p) => p.id === id);
@@ -106,7 +167,7 @@ export default function PanierPage() {
         setPanier((prev) => prev.map((p) => (p.id === id ? { ...p, quantite } : p)));
         try {
             await fetch("/api/commandes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...produit, quantite }) });
-            window.dispatchEvent(new Event('cartUpdated'));
+            window.dispatchEvent(new Event("cartUpdated"));
         } catch (err) { console.error("Erreur mise à jour quantité :", err); }
     };
 
@@ -114,13 +175,15 @@ export default function PanierPage() {
         setPanier((prev) => prev.filter((p) => p.id !== id));
         try {
             await fetch("/api/commandes", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
-            window.dispatchEvent(new Event('cartUpdated'));
+            window.dispatchEvent(new Event("cartUpdated"));
         } catch (err) { console.error("Erreur suppression produit :", err); }
     };
 
     const viderPanierBDD = async () => {
         try {
-            await Promise.all(panier.map(produit => fetch("/api/commandes", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: produit.id }) })));
+            await Promise.all(panier.map(produit =>
+                fetch("/api/commandes", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: produit.id }) })
+            ));
         } catch (err) { console.error("Erreur vidage panier en BDD :", err); }
     };
 
@@ -156,7 +219,7 @@ export default function PanierPage() {
         }
         setDisabled(true);
         try {
-            const res = await fetch("/api/commandes/valider", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ client: commande, panier, total: totalAvecPort, fraisPort }) });
+            const res  = await fetch("/api/commandes/valider", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ client: commande, panier, total: totalAvecPort, fraisPort }) });
             const data = await res.json();
             if (data.success) {
                 await viderPanierBDD();
@@ -180,8 +243,7 @@ export default function PanierPage() {
         } finally { setDisabled(false); }
     };
 
-    // Classes communes pour les inputs du formulaire
-    const inputClass = "w-full p-3 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f] bg-white dark:bg-[#1a1d27] text-black dark:text-[#faf5f1] placeholder:text-gray-400 dark:placeholder:text-gray-500";
+    const inputClass      = "w-full p-3 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f] bg-white dark:bg-[#1a1d27] text-black dark:text-[#faf5f1] placeholder:text-gray-400 dark:placeholder:text-gray-500";
     const radioLabelClass = "flex items-start p-3 border border-gray-300 dark:border-gray-600 rounded cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1a1d27] transition-colors";
 
     return (
@@ -348,7 +410,7 @@ export default function PanierPage() {
                                         </div>
                                         {commande.modeLivraison === "livraison" && nombreBouteilles > 0 && (
                                             <div className="flex justify-between items-center border-t dark:border-gray-600 pt-3">
-                                                <span className="text-lg text-gray-700 dark:text-[#faf5f1]">Frais de port ({nombreBouteilles} bouteille{nombreBouteilles > 1 ? 's' : ''})</span>
+                                                <span className="text-lg text-gray-700 dark:text-[#faf5f1]">Frais de port ({nombreBouteilles} bouteille{nombreBouteilles > 1 ? "s" : ""})</span>
                                                 <span className="text-xl font-semibold text-[#24586f] dark:text-[#3a8fa8]">{fraisPort.toFixed(2)} €</span>
                                             </div>
                                         )}
@@ -366,7 +428,7 @@ export default function PanierPage() {
                                     <button
                                         onClick={() => {
                                             setAfficherCommande(true);
-                                            setTimeout(() => { document.getElementById('formulaire-commande')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+                                            setTimeout(() => { document.getElementById("formulaire-commande")?.scrollIntoView({ behavior: "smooth", block: "start" }); }, 100);
                                         }}
                                         className="inline-block px-6 py-3 bg-[#24586f] text-white rounded-lg hover:bg-[#1a4557] transition-colors font-medium cursor-pointer"
                                     >
@@ -380,29 +442,31 @@ export default function PanierPage() {
                             <div id="formulaire-commande" className="mt-8 p-4 sm:p-6 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#1a1d27] shadow-md">
                                 <h2 className="mb-6 text-xl sm:text-2xl font-semibold text-[#24586f] dark:text-[#3a8fa8]">Informations de commande</h2>
 
-                                {/* Mode de récupération */}
-                                <div className="mb-6">
-                                    <label className="block text-gray-700 dark:text-[#faf5f1] font-semibold mb-3">Mode de récupération *</label>
-                                    <div className="space-y-3">
-                                        <label className={radioLabelClass}>
-                                            <input type="radio" name="modeLivraison" value="retrait" checked={commande.modeLivraison === "retrait"} onChange={handleChange} className="w-4 h-4 mt-1 text-[#24586f] focus:ring-[#24586f]" />
-                                            <span className="ml-3">
-                                                <span className="font-semibold dark:text-[#faf5f1]">Retrait en boutique</span>
-                                                <span className="text-sm text-gray-600 dark:text-gray-400 block">3 rue Voltaire, 92250 La Garenne-Colombes</span>
-                                            </span>
-                                        </label>
-                                        <label className={radioLabelClass}>
-                                            <input type="radio" name="modeLivraison" value="livraison" checked={commande.modeLivraison === "livraison"} onChange={handleChange} className="w-4 h-4 mt-1 text-[#24586f] focus:ring-[#24586f]" />
-                                            <span className="ml-3">
-                                                <span className="font-semibold dark:text-[#faf5f1]">Livraison à domicile</span>
-                                                <span className="text-sm text-gray-600 dark:text-gray-400 block">Les frais de port sont ajustés automatiquement</span>
-                                                {nombreBouteilles > 0 && fraisPort > 0 && (
-                                                    <span className="text-sm text-gray-600 dark:text-gray-400 block">Frais de port : {fraisPort.toFixed(2)} € pour {nombreBouteilles} bouteille{nombreBouteilles > 1 ? 's' : ''}</span>
-                                                )}
-                                            </span>
-                                        </label>
+                                {/* Mode de récupération — masqué si panier = cartes cadeaux uniquement */}
+                                {!seulementCartesCadeaux && (
+                                    <div className="mb-6">
+                                        <label className="block text-gray-700 dark:text-[#faf5f1] font-semibold mb-3">Mode de récupération *</label>
+                                        <div className="space-y-3">
+                                            <label className={radioLabelClass}>
+                                                <input type="radio" name="modeLivraison" value="retrait" checked={commande.modeLivraison === "retrait"} onChange={handleChange} className="w-4 h-4 mt-1 text-[#24586f] focus:ring-[#24586f]" />
+                                                <span className="ml-3">
+                                                    <span className="font-semibold dark:text-[#faf5f1]">Retrait en boutique</span>
+                                                    <span className="text-sm text-gray-600 dark:text-gray-400 block">3 rue Voltaire, 92250 La Garenne-Colombes</span>
+                                                </span>
+                                            </label>
+                                            <label className={radioLabelClass}>
+                                                <input type="radio" name="modeLivraison" value="livraison" checked={commande.modeLivraison === "livraison"} onChange={handleChange} className="w-4 h-4 mt-1 text-[#24586f] focus:ring-[#24586f]" />
+                                                <span className="ml-3">
+                                                    <span className="font-semibold dark:text-[#faf5f1]">Livraison à domicile</span>
+                                                    <span className="text-sm text-gray-600 dark:text-gray-400 block">Les frais de port sont ajustés automatiquement</span>
+                                                    {nombreBouteilles > 0 && fraisPort > 0 && (
+                                                        <span className="text-sm text-gray-600 dark:text-gray-400 block">Frais de port : {fraisPort.toFixed(2)} € pour {nombreBouteilles} bouteille{nombreBouteilles > 1 ? "s" : ""}</span>
+                                                    )}
+                                                </span>
+                                            </label>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
                                 {/* Coordonnées */}
                                 <div className="space-y-4">
@@ -447,29 +511,38 @@ export default function PanierPage() {
                                 </div>
 
                                 {/* Date de passage */}
-                                {(commande.modeLivraison === "retrait" || commande.modePaiement === "boutique") && (
+                                {afficherDate && (
                                     <div className="mt-4">
-                                        <label className="block text-gray-700 dark:text-[#faf5f1] font-semibold mb-2">Date de passage en boutique souhaitée *</label>
-                                        <input
-                                            type="date" name="datePassage" value={commande.datePassage}
-                                            onClick={(e) => e.currentTarget.showPicker?.()}
-                                            onChange={(e) => {
-                                                const selectedDate = new Date(e.target.value + 'T00:00:00');
-                                                if (selectedDate.getDay() === 0) {
-                                                    setModalType("error"); setModalTitle("Date invalide");
-                                                    setModalMessage("La boutique est fermée le dimanche. Veuillez choisir un autre jour.");
-                                                    setModalOpen(true); return;
-                                                }
-                                                handleChange(e);
-                                            }}
-                                            min={(() => { const d = new Date(); d.setDate(d.getDate() + 2); return d.toISOString().split('T')[0]; })()}
-                                            onKeyDown={(e) => e.preventDefault()}
-                                            className={inputClass + " cursor-pointer"}
-                                        />
+                                        <label className="block text-gray-700 dark:text-[#faf5f1] font-semibold mb-2">
+                                            Date de passage en boutique souhaitée *
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                ref={datePickerRef}
+                                                type="hidden"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => fpInstanceRef.current?.open()}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#24586f] hover:text-[#1a4557] transition-colors"
+                                                aria-label="Ouvrir le calendrier"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                            </button>
+                                        </div>
                                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                                            Indiquez la date à laquelle vous prévoyez de passer en boutique
-                                            {commande.modeLivraison === "retrait" && commande.modePaiement === "boutique" ? " pour récupérer et payer votre commande" : commande.modeLivraison === "retrait" ? " pour récupérer votre commande" : " pour payer votre commande"}
-                                            {" "}(à partir d'après-demain, fermé le dimanche).
+                                            {seulementCartesCadeaux
+                                                ? "Indiquez la date à laquelle vous prévoyez de passer en boutique récupérer votre carte cadeau (à partir d'après-demain, fermé le dimanche)."
+                                                : `Indiquez la date à laquelle vous prévoyez de passer en boutique${
+                                                    commande.modeLivraison === "retrait" && commande.modePaiement === "boutique"
+                                                        ? " pour récupérer et payer votre commande"
+                                                        : commande.modeLivraison === "retrait"
+                                                            ? " pour récupérer votre commande"
+                                                            : " pour payer votre commande"
+                                                } (à partir d'après-demain, fermé le dimanche).`
+                                            }
                                         </p>
                                     </div>
                                 )}

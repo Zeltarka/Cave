@@ -8,13 +8,11 @@ import { generateCarteCadeauId } from "@/lib/carte-cadeau-utils";
 
 export const runtime = "nodejs";
 
-// ═══ Supabase admin ═══════════════════════════
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// ═══ Types ═════════════════════════════════════
 type ProduitPanier = {
     id: string;
     produit: string;
@@ -47,18 +45,38 @@ type LigneCommande = {
     carte_cadeau_id: string | null;
 };
 
-// ═══ Fonction pour récupérer session_id ═══════
 async function getSessionId(): Promise<string | null> {
     const cookieStore = await cookies();
     return cookieStore.get("session_id")?.value || null;
 }
 
-// ═══ Génération PDF carte cadeau ═══════════════
+// Récupère les messages configurés en admin
+async function getMessages(): Promise<any> {
+    try {
+        const { data } = await supabaseAdmin
+            .from("contenu")
+            .select("contenu")
+            .eq("page", "messages")
+            .single();
+        return data?.contenu || {};
+    } catch {
+        return {};
+    }
+}
+
+function m(msg: any, path: string, fallback: string): string {
+    const keys = path.split(".");
+    let val: any = msg;
+    for (const k of keys) val = val?.[k];
+    return typeof val === "string" && val ? val : fallback;
+}
+
 async function generateCarteCadeauPDF(
     destinataire: string,
     montant: number,
     quantite: number,
-    idUnique: string
+    idUnique: string,
+    conditions: string
 ): Promise<Buffer> {
     const pdfDoc = await PDFDocument.create();
     const helveticaBold  = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -73,7 +91,7 @@ async function generateCarteCadeauPDF(
         logoImage = await pdfDoc.embedPng(logoBytes);
     } catch {}
 
-    const now = new Date();
+    const now           = new Date();
     const bleuPrincipal = rgb(0.14, 0.35, 0.44);
     const bleuClair     = rgb(0.95, 0.96, 1);
     const grisClaire    = rgb(0.6, 0.6, 0.6);
@@ -86,7 +104,7 @@ async function generateCarteCadeauPDF(
         page.drawRectangle({ x: 50, y: 50, width: width - 100, height: height - 100, borderColor: bleuPrincipal, borderWidth: 3 });
 
         if (logoImage) {
-            const logoWidth = 200;
+            const logoWidth = 160;
             page.drawImage(logoImage, {
                 x: (width - logoWidth) / 2,
                 y: height - 140,
@@ -94,101 +112,42 @@ async function generateCarteCadeauPDF(
                 height: (logoImage.height / logoImage.width) * logoWidth,
             });
         } else {
-            page.drawText("La Cave La Garenne", {
-                x: width / 2 - 160,
-                y: height - 120,
-                size: 32,
-                font: helveticaBold,
-                color: bleuPrincipal
-            });
+            page.drawText("La Cave La Garenne", { x: width / 2 - 160, y: height - 120, size: 32, font: helveticaBold, color: bleuPrincipal });
         }
 
-        page.drawText("Carte Cadeau", {
-            x: width / 2 - 100,
-            y: height - 200,
-            size: 28,
-            font: timesRomanBold,
-            color: rgb(0.55, 0.66, 0.72)
-        });
+        page.drawText("Carte Cadeau", { x: width / 2 - 100, y: height - 200, size: 28, font: timesRomanBold, color: rgb(0.55, 0.66, 0.72) });
 
         const montantText = `${Math.round(montant)} €`;
-        page.drawText(montantText, {
-            x: (width - helveticaBold.widthOfTextAtSize(montantText, 60)) / 2,
-            y: height - 300,
-            size: 60,
-            font: helveticaBold,
-            color: bleuPrincipal
-        });
+        page.drawText(montantText, { x: (width - helveticaBold.widthOfTextAtSize(montantText, 60)) / 2, y: height - 300, size: 60, font: helveticaBold, color: bleuPrincipal });
 
         const benefText = `Offerte à : ${destinataire}`;
-        page.drawText(benefText, {
-            x: (width - helvetica.widthOfTextAtSize(benefText, 18)) / 2,
-            y: height - 400,
-            size: 18,
-            font: helvetica,
-            color: rgb(0, 0, 0)
-        });
+        page.drawText(benefText, { x: (width - helvetica.widthOfTextAtSize(benefText, 18)) / 2, y: height - 400, size: 18, font: helvetica, color: rgb(0, 0, 0) });
 
         const codeText = `Code : ${idUnique}`;
-        page.drawText(codeText, {
-            x: (width - helvetica.widthOfTextAtSize(codeText, 10)) / 2,
-            y: height - 470,
-            size: 10,
-            font: helvetica,
-            color: grisClaire
-        });
+        page.drawText(codeText, { x: (width - helvetica.widthOfTextAtSize(codeText, 10)) / 2, y: height - 470, size: 10, font: helvetica, color: grisClaire });
 
         const dateText = `Émise le : ${now.toLocaleDateString("fr-FR")} à ${now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`;
-        page.drawText(dateText, {
-            x: (width - helvetica.widthOfTextAtSize(dateText, 12)) / 2,
-            y: height - 500,
-            size: 12,
-            font: helvetica,
-            color: grisClaire
-        });
+        page.drawText(dateText, { x: (width - helvetica.widthOfTextAtSize(dateText, 12)) / 2, y: height - 500, size: 12, font: helvetica, color: grisClaire });
 
         if (quantite > 1) {
             const numText = `Carte ${i} / ${quantite}`;
-            page.drawText(numText, {
-                x: (width - helveticaBold.widthOfTextAtSize(numText, 14)) / 2,
-                y: height - 530,
-                size: 14,
-                font: helveticaBold,
-                color: bleuPrincipal
-            });
+            page.drawText(numText, { x: (width - helveticaBold.widthOfTextAtSize(numText, 14)) / 2, y: height - 530, size: 14, font: helveticaBold, color: bleuPrincipal });
         }
 
-        const infos = [
-            "La Cave La Garenne",
-            "3 rue Voltaire, 92250 La Garenne-Colombes",
-            "Tél : 01 47 84 57 63",
-            "boutique@lacavelagarenne.fr"
-        ];
+        const infos = ["La Cave La Garenne", "3 rue Voltaire, 92250 La Garenne-Colombes", "Tél : 01 47 84 57 63", "boutique@lacavelagarenne.fr"];
         let yPos = 200;
         infos.forEach(info => {
-            page.drawText(info, {
-                x: (width - helvetica.widthOfTextAtSize(info, 10)) / 2,
-                y: yPos,
-                size: 10,
-                font: helvetica,
-                color: grisClaire
-            });
+            page.drawText(info, { x: (width - helvetica.widthOfTextAtSize(info, 10)) / 2, y: yPos, size: 10, font: helvetica, color: grisClaire });
             yPos -= 20;
         });
 
-        const conditions = "Cette carte cadeau est valable en boutique. Non remboursable, non échangeable contre des espèces.";
+        // Conditions éditables
         let condY = 90;
         let currentLine = "";
         conditions.split(" ").forEach(word => {
             const test = currentLine + (currentLine ? " " : "") + word;
             if (helvetica.widthOfTextAtSize(test, 8) > width - 200) {
-                page.drawText(currentLine, {
-                    x: (width - helvetica.widthOfTextAtSize(currentLine, 8)) / 2,
-                    y: condY,
-                    size: 8,
-                    font: helvetica,
-                    color: grisClaire
-                });
+                page.drawText(currentLine, { x: (width - helvetica.widthOfTextAtSize(currentLine, 8)) / 2, y: condY, size: 8, font: helvetica, color: grisClaire });
                 condY -= 12;
                 currentLine = word;
             } else {
@@ -196,197 +155,96 @@ async function generateCarteCadeauPDF(
             }
         });
         if (currentLine) {
-            page.drawText(currentLine, {
-                x: (width - helvetica.widthOfTextAtSize(currentLine, 8)) / 2,
-                y: condY,
-                size: 8,
-                font: helvetica,
-                color: grisClaire
-            });
+            page.drawText(currentLine, { x: (width - helvetica.widthOfTextAtSize(currentLine, 8)) / 2, y: condY, size: 8, font: helvetica, color: grisClaire });
         }
     }
 
     return Buffer.from(await pdfDoc.save());
 }
 
-// ═══ POST /api/commandes/valider ══════════════
 export async function POST(req: Request) {
     try {
-        console.log("📦 Début validation commande");
+        console.log("Début validation commande");
 
         const body = await req.json();
-        const {
-            client,
-            panier,
-            total,
-            fraisPort
-        }: {
+        const { client, panier, total, fraisPort }: {
             client: ClientCommande;
             panier: ProduitPanier[];
             total: number;
             fraisPort: number;
         } = body;
 
-        // ══ Validations basiques ══
-        if (!client?.email) {
-            console.error("❌ Client invalide");
-            return NextResponse.json({ success: false, message: "Informations client invalides" }, { status: 400 });
-        }
-        if (!Array.isArray(panier) || panier.length === 0) {
-            console.error("❌ Panier vide");
-            return NextResponse.json({ success: false, message: "Le panier est vide" }, { status: 400 });
-        }
+        if (!client?.email) return NextResponse.json({ success: false, message: "Informations client invalides" }, { status: 400 });
+        if (!Array.isArray(panier) || panier.length === 0) return NextResponse.json({ success: false, message: "Le panier est vide" }, { status: 400 });
 
-        // ══ Vérification ENV Supabase ══
-        if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-            console.error("❌ ENV Supabase manquante");
-        }
+        // Récupérer les messages configurés
+        const msg = await getMessages();
 
-        // ══ Nettoyage des valeurs ══
-        const totalNumber = Number(total);
-        const fraisPortNumber = Number(fraisPort) || 0;
-        const datePassageProp = client.datePassage && client.datePassage.trim() !== ""
-            ? client.datePassage
-            : null;
+        const conditions = m(msg, "email.carte_cadeau_conditions", "Cette carte cadeau est valable en boutique. Non remboursable, non échangeable contre des espèces.");
 
-        const sousTotal = totalNumber - fraisPortNumber;
-        const nombreBouteilles = panier
-            .filter(p => !p.id.includes("carte-cadeau"))
-            .reduce((sum, p) => sum + p.quantite, 0);
+        const totalNumber      = Number(total);
+        const fraisPortNumber  = Number(fraisPort) || 0;
+        const sousTotal        = totalNumber - fraisPortNumber;
+        const datePassageProp  = client.datePassage?.trim() || null;
+        const nombreBouteilles = panier.filter(p => !p.id.includes("carte-cadeau")).reduce((s, p) => s + p.quantite, 0);
 
         let commandeId: number | null = null;
-        let lignes: LigneCommande[] = [];
+        let lignes: LigneCommande[]   = [];
 
-        // ══ 1. Tentative d'insertion dans Supabase (optionnelle) ══
+        // ── 1. Supabase ──────────────────────────────────────────────────────
         if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
             try {
-                console.log("🔄️  Tentative insertion commande dans Supabase…");
-
                 const { data: commande, error: errCommande } = await supabaseAdmin
                     .from("commandes")
                     .insert({
-                        nom:            client.nom,
-                        prenom:         client.prenom,
-                        email:          client.email,
-                        telephone:      client.telephone || null,
-                        adresse:        client.adresse   || null,
-                        ville:          client.ville     || null,
-                        codepostal:     client.codepostal || null,
-                        mode_livraison: client.modeLivraison,
-                        mode_paiement:  client.modePaiement,
-                        date_passage:   datePassageProp,
-                        commentaires:   client.commentaires || null,
-                        total:          totalNumber,
-                        frais_port:     fraisPortNumber,
-                        statut:         "en_attente",
+                        nom: client.nom, prenom: client.prenom, email: client.email,
+                        telephone: client.telephone || null, adresse: client.adresse || null,
+                        ville: client.ville || null, codepostal: client.codepostal || null,
+                        mode_livraison: client.modeLivraison, mode_paiement: client.modePaiement,
+                        date_passage: datePassageProp, commentaires: client.commentaires || null,
+                        total: totalNumber, frais_port: fraisPortNumber, statut: "en_attente",
                     })
                     .select("id")
                     .single();
 
                 if (errCommande) {
-                    console.error("⚠️  Erreur insertion commande Supabase:", errCommande.message);
-                    console.log("   ➔ On continue avec l'email uniquement");
+                    console.error("Erreur insertion commande Supabase:", errCommande.message);
                 } else if (commande) {
                     commandeId = commande.id;
-                    const idCommande = commande.id;
-                    console.log(`✅ Commande #${commandeId} insérée dans Supabase`);
-
-                    lignes = panier.map((p) => {
+                    lignes = panier.map(p => {
                         const isCarteCadeau = p.id.includes("carte-cadeau") || p.produit.toLowerCase().includes("carte cadeau");
-                        const destinataire = p.destinataire || `${client.prenom} ${client.nom}`;
-                        const carteCadeauId = isCarteCadeau
-                            ? generateCarteCadeauId(destinataire, p.prix)
-                            : null;
-
+                        const dest          = p.destinataire || `${client.prenom} ${client.nom}`;
                         return {
-                            commande_id:     idCommande,
+                            commande_id:     commande.id,
                             produit_id:      p.id,
                             nom_produit:     p.produit,
                             quantite:        p.quantite,
                             prix_unitaire:   p.prix,
                             destinataire:    p.destinataire || null,
-                            carte_cadeau_id: carteCadeauId,
+                            carte_cadeau_id: isCarteCadeau ? generateCarteCadeauId(dest, p.prix) : null,
                         };
                     });
-
                     const { error: errLignes } = await supabaseAdmin.from("lignes_commande").insert(lignes);
-                    if (errLignes) {
-                        console.error("⚠️  Erreur insertion lignes:", errLignes.message);
-                    } else {
-                        console.log("✅ Lignes de commande insérées");
-                    }
+                    if (errLignes) console.error("Erreur insertion lignes:", errLignes.message);
                 }
             } catch (dbErr) {
-                console.error("⚠️  Erreur base de données (on continue):", dbErr);
+                console.error("Erreur base de données (on continue):", dbErr);
             }
         }
 
-        // ══ 2. Vérification ENV SMTP ══
+        // ── 2. SMTP ──────────────────────────────────────────────────────────
         const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, VENDEUR_EMAIL } = process.env;
         if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS || !VENDEUR_EMAIL) {
-            console.error("❌ Configuration SMTP manquante");
-            return NextResponse.json({
-                success: false,
-                message: "Configuration email manquante. Contactez le support."
-            }, { status: 500 });
+            return NextResponse.json({ success: false, message: "Configuration email manquante." }, { status: 500 });
         }
 
-        // ══ 3. Configuration transporteur email ══
         const transporter = nodemailer.createTransport({
-            host:   SMTP_HOST,
-            port:   Number(SMTP_PORT),
+            host: SMTP_HOST, port: Number(SMTP_PORT),
             secure: Number(SMTP_PORT) === 465,
-            auth:   { user: SMTP_USER, pass: SMTP_PASS },
+            auth: { user: SMTP_USER, pass: SMTP_PASS },
         });
 
-        // ══ HTML des lignes du panier ══
-        const lignesPanierHtml = panier
-            .map((p) => {
-                const destInfo = p.destinataire ? ` — Pour: ${p.destinataire}` : '';
-                const prixAffiche = p.id.includes("carte-cadeau")
-                    ? `${Math.round(p.prix * p.quantite)} €`
-                    : `${(p.prix * p.quantite).toFixed(2)} €`;
-                return `<li>${p.produit}${destInfo} x ${p.quantite} — ${prixAffiche}</li>`;
-            })
-            .join("");
-
-        const modeLivraison = client.modeLivraison;
-        const modePaiement  = client.modePaiement;
-        const datePassage   = client.datePassage;
-
-        // ══ 4. Cartes cadeaux + génération PDFs (pour l'admin uniquement) ══
-        const cartesCadeaux = panier.filter(p => p.id.includes("carte-cadeau") || p.produit.toLowerCase().includes("carte cadeau"));
-        const attachments: { filename: string; content: Buffer; contentType: string }[] = [];
-
-        for (let i = 0; i < cartesCadeaux.length; i++) {
-            const carte = cartesCadeaux[i];
-            const destinataire = carte.destinataire || `${client.prenom} ${client.nom}`;
-
-            // Trouver la ligne de commande correspondante pour récupérer l'ID unique
-            const ligneCorrespondante = lignes.find(l =>
-                l.produit_id === carte.id &&
-                (l.destinataire || null) === (carte.destinataire || null)
-            );
-
-            // Récupérer l'ID unique depuis la ligne de commande
-            const idUnique = ligneCorrespondante?.carte_cadeau_id || generateCarteCadeauId(destinataire, carte.prix);
-
-            try {
-                console.log(`  📄 Génération PDF pour ${destinataire} avec ID ${idUnique}...`);
-                const pdfBuffer = await generateCarteCadeauPDF(destinataire, carte.prix, carte.quantite, idUnique);
-
-                attachments.push({
-                    filename:    `${idUnique}.pdf`,
-                    content:     pdfBuffer,
-                    contentType: "application/pdf",
-                });
-                console.log(`  ✅ PDF généré: ${idUnique}.pdf`);
-            } catch (pdfErr) {
-                console.error("  ⚠️  Erreur génération PDF:", pdfErr);
-            }
-        }
-
-        // ══ 5. Logo pour l'email ══
+        // ── 3. Logo ──────────────────────────────────────────────────────────
         const fs   = require("fs");
         const path = require("path");
         let logoAttachment: any = null;
@@ -396,204 +254,229 @@ export async function POST(req: Request) {
                 content:  fs.readFileSync(path.join(process.cwd(), "public", "boutique.png")),
                 cid:      "logo@boutique",
             };
-        } catch (logoErr) {
-            console.log("  ℹ️  Logo non trouvé (optionnel)");
+        } catch {}
+
+        const logoHtml = logoAttachment
+            ? `<div style="text-align:center;margin-bottom:24px;"><img src="cid:logo@boutique" alt="La Cave La Garenne" style="width:120px;height:auto;"/></div>`
+            : "";
+
+        // ── 4. PDFs cartes cadeaux ───────────────────────────────────────────
+        const cartesCadeaux = panier.filter(p => p.id.includes("carte-cadeau") || p.produit.toLowerCase().includes("carte cadeau"));
+        const pdfAttachments: { filename: string; content: Buffer; contentType: string }[] = [];
+
+        for (const carte of cartesCadeaux) {
+            const dest   = carte.destinataire || `${client.prenom} ${client.nom}`;
+            const ligne  = lignes.find(l => l.produit_id === carte.id && (l.destinataire || null) === (carte.destinataire || null));
+            const idUniq = ligne?.carte_cadeau_id || generateCarteCadeauId(dest, carte.prix);
+            try {
+                const pdfBuffer = await generateCarteCadeauPDF(dest, carte.prix, carte.quantite, idUniq, conditions);
+                pdfAttachments.push({ filename: `${idUniq}.pdf`, content: pdfBuffer, contentType: "application/pdf" });
+            } catch (pdfErr) {
+                console.error("Erreur génération PDF:", pdfErr);
+            }
         }
 
-        // ══ Blocs HTML réutilisables ══
-        const livraisonHtml = modeLivraison === "livraison"
-            ? `<p style="margin:5px 0;color:#333;"><strong>Récupération :</strong> Livraison à domicile</p>
-               <p style="margin:10px 0 0;color:#333;"><strong>Adresse :</strong><br/>${client.adresse}<br/>${client.codepostal} ${client.ville}</p>`
-            : `<p style="margin:5px 0;color:#333;"><strong>Récupération :</strong> Retrait en boutique — 3 rue Voltaire, 92250 La Garenne-Colombes</p>`;
+        // ── 5. Helpers HTML ──────────────────────────────────────────────────
+        const lignesPanierHtml = panier.map(p => {
+            const destInfo   = p.destinataire ? ` — Pour : ${p.destinataire}` : "";
+            const prixAff    = p.id.includes("carte-cadeau") ? `${Math.round(p.prix * p.quantite)} €` : `${(p.prix * p.quantite).toFixed(2)} €`;
+            return `<li style="padding:4px 0;">${p.produit}${destInfo} x ${p.quantite} — ${prixAff}</li>`;
+        }).join("");
 
-        const paiementHtml = modePaiement === "boutique"
-            ? `<div style="background:#e3f2fd;padding:20px;border-radius:12px;margin:20px 0;border:2px solid #2196f3;border-left:6px solid #1976d2;">
-                   <p style="margin:0;font-weight:bold;color:#1565c0;font-size:16px;">🏪 Paiement en boutique</p>
-                   <p style="margin:10px 0 0;color:#333;">Vous paierez directement en boutique lors de la récupération de votre commande.</p>
-                   ${datePassage ? `<p style="margin:10px 0 0;color:#333;"><strong>Date de passage prévue :</strong> ${new Date(datePassage + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>` : ""}
-                   <p style="margin:10px 0 0;font-size:13px;color:#0d47a1;">Nous vous attendons en boutique pour finaliser votre achat.</p>
+        const totalHtml = client.modeLivraison === "livraison" && fraisPortNumber > 0
+            ? `<p style="margin:5px 0;color:#555;">Sous-total produits : ${sousTotal.toFixed(2)} €</p>
+               <p style="margin:5px 0;color:#555;">Frais de port (${nombreBouteilles} bouteille${nombreBouteilles > 1 ? "s" : ""}) : ${fraisPortNumber.toFixed(2)} €</p>
+               <hr style="border:none;border-top:1px solid #e5e7eb;margin:10px 0;">
+               <p style="font-size:18px;font-weight:bold;color:#24586f;margin:4px 0;">Total TTC : ${totalNumber.toFixed(2)} €</p>`
+            : `<p style="font-size:18px;font-weight:bold;color:#24586f;margin:4px 0;">Total : ${totalNumber.toFixed(2)} €</p>`;
+
+        const livraisonHtml = client.modeLivraison === "livraison"
+            ? `<p style="margin:5px 0;color:#333;"><strong>${m(msg, "email.recuperation_livraison", "Livraison à domicile")}</strong></p>
+               <p style="margin:8px 0 0;color:#333;">${client.adresse}<br/>${client.codepostal} ${client.ville}</p>`
+            : `<p style="margin:5px 0;color:#333;">${m(msg, "email.recuperation_retrait", "Retrait en boutique — 3 rue Voltaire, 92250 La Garenne-Colombes")}</p>`;
+
+        // Bloc paiement virement avec RIB
+        const iban       = m(msg, "email.virement_iban", "FR76 XXXX XXXX XXXX XXXX XXXX XXX");
+        const bic        = m(msg, "email.virement_bic", "");
+        const titulaire  = m(msg, "email.virement_titulaire", "La Cave La Garenne");
+        const bicLigne   = bic ? `<p style="margin:5px 0;color:#333;"><strong>BIC :</strong> ${bic}</p>` : "";
+
+        const paiementHtml = client.modePaiement === "boutique"
+            ? `<div style="border-left:4px solid #24586f;padding:14px 18px;margin:20px 0;">
+                   <p style="margin:0;font-weight:600;color:#333;font-size:15px;">${m(msg, "email.paiement_boutique_titre", "Paiement en boutique")}</p>
+                   <p style="margin:8px 0 0;color:#555;">${m(msg, "email.paiement_boutique_texte", "Vous paierez directement en boutique lors de la récupération de votre commande.")}</p>
+                   ${datePassageProp ? `<p style="margin:8px 0 0;color:#555;"><strong>Date de passage prévue :</strong> ${new Date(datePassageProp + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>` : ""}
+                   <p style="margin:8px 0 0;color:#555;font-size:13px;">${m(msg, "email.paiement_boutique_attente", "Nous vous attendons en boutique pour finaliser votre achat.")}</p>
                </div>`
-            : `<div style="background:#fff8e1;padding:20px;border-radius:12px;margin:20px 0;border:2px solid #ffc107;border-left:6px solid #ff9800;">
-                   <p style="margin:0;font-weight:bold;color:#f57c00;font-size:16px;">💳 Paiement par virement bancaire</p>
-                   <div style="background:#fff;padding:15px;border-radius:8px;margin-top:15px;">
-                       <p style="margin:5px 0;color:#333;"><strong>IBAN :</strong> FR76 XXXX XXXX XXXX XXXX XXXX XXX</p>
-                       <p style="margin:5px 0;color:#333;"><strong>Titulaire :</strong> La Cave La Garenne</p>
+            : `<div style="border-left:4px solid #24586f;padding:14px 18px;margin:20px 0;">
+                   <p style="margin:0;font-weight:600;color:#333;font-size:15px;">${m(msg, "email.paiement_virement_titre", "Paiement par virement bancaire")}</p>
+                   <div style="margin-top:12px;">
+                       <p style="margin:5px 0;color:#333;"><strong>IBAN :</strong> ${iban}</p>
+                       <p style="margin:5px 0;color:#333;"><strong>Titulaire :</strong> ${titulaire}</p>
+                       ${bicLigne}
                    </div>
-                   <p style="margin:15px 0 0;font-size:13px;color:#e65100;">Merci d'indiquer votre nom dans le libellé du virement.<br/>La commande sera traitée après réception du paiement.</p>
+                   <p style="margin:12px 0 0;color:#555;font-size:13px;">${m(msg, "email.paiement_virement_texte", "Merci d'indiquer votre nom dans le libellé du virement. La commande sera traitée après réception du paiement.")}</p>
                </div>`;
 
         const commentairesHtml = client.commentaires
-            ? `<div style="background:#f1f5ff;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid #24586f;">
-                   <p style="margin:0;color:#24586f;font-weight:bold;">Commentaires</p>
-                   <p style="margin:10px 0 0;color:#333;white-space:pre-wrap;">${client.commentaires}</p>
+            ? `<div style="border-left:4px solid #24586f;padding:14px 18px;margin:16px 0;">
+                   <p style="margin:0;color:#24586f;font-weight:600;">${m(msg, "email.commentaires_titre", "Commentaires")}</p>
+                   <p style="margin:8px 0 0;color:#333;white-space:pre-wrap;">${client.commentaires}</p>
+               </div>`
+            : "";
+
+        const notePortHtml = client.modeLivraison === "livraison" && fraisPortNumber === 0
+            ? `<div style="border-left:4px solid #24586f;padding:14px 18px;margin:16px 0;">
+                   <p style="margin:0;color:#555;font-size:13px;">${m(msg, "email.note_frais_port", "Note : Les frais de port seront calculés et ajoutés au montant total.")}</p>
                </div>`
             : "";
 
         const cartesHtml = cartesCadeaux.length > 0
-            ? `<div style="background:#fff8e1;padding:20px;border-radius:12px;margin:20px 0;border:2px solid #ffc107;border-left:6px solid #ff9800;">
-                   <p style="margin:0;color:#f57c00;font-size:16px;"><strong>${cartesCadeaux.length > 1 ? "Vos cartes cadeaux seront envoyées" : "Votre carte cadeau sera envoyée"} après réception du paiement</strong></p>
-                   <p style="margin:10px 0 0;color:#e65100;font-size:14px;">Vous recevrez un email séparé avec ${cartesCadeaux.length > 1 ? "vos cartes" : "votre carte"} cadeaux une fois le paiement confirmé.</p>
+            ? `<div style="border-left:4px solid #24586f;padding:14px 18px;margin:20px 0;">
+                   <p style="margin:0;color:#333;font-size:15px;font-weight:600;">${cartesCadeaux.length > 1
+                ? m(msg, "email.cartes_cadeaux_pj", "Vos cartes cadeaux sont en pièce jointe de cet email.")
+                : m(msg, "email.carte_cadeau_pj", "Votre carte cadeau est en pièce jointe de cet email.")
+            }</p>
                </div>`
             : "";
 
-        // ══ 6. Email CLIENT ══
-        console.log("📧 Envoi email client…");
+        const sousLigneClient = m(msg, "email.client_sous_titre", "{prenom} {nom} — Commande #{commande_id}")
+            .replace("{prenom}", client.prenom)
+            .replace("{nom}", client.nom)
+            .replace("{commande_id}", String(commandeId ?? ""));
+
+        // ── 6. Email CLIENT ──────────────────────────────────────────────────
         const mailClient: any = {
             from:    `"La Cave La Garenne" <${SMTP_USER}>`,
             to:      client.email,
             subject: `Confirmation de votre commande — La Cave La Garenne`,
-            html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8f9fa;padding:30px;border-radius:15px;">
-                ${logoAttachment ? `<div style="text-align:center;margin-bottom:20px;"><img src="cid:logo@boutique" alt="La Cave La Garenne" style="width:80px;height:auto;"/></div>` : ""}
+            html: `
+<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:30px;">
 
-                <div style="background:#24586f;padding:25px;border-radius:12px;margin-bottom:25px;text-align:center;">
-                    <h2 style="color:#fff;margin:0;">Merci pour votre commande !</h2>
-                    <p style="color:#f1f5ff;margin:10px 0 0;font-size:16px;">${client.prenom} ${client.nom}</p>
-                </div>
+    ${logoHtml}
 
-                <div style="background:#fff;padding:20px;border-radius:12px;border:2px solid #8ba9b7;margin-bottom:20px;">
-                    <h3 style="color:#24586f;margin-top:0;">Détails de votre commande</h3>
-                    <ul style="line-height:1.8;color:#333;">${lignesPanierHtml}</ul>
-                    <div style="background:#f1f5ff;padding:15px;border-radius:8px;margin-top:15px;border-left:4px solid #24586f;">
-                        ${modeLivraison === "livraison" && fraisPortNumber > 0 ? `
-                            <p style="margin:5px 0;color:#24586f;">Sous-total produits : ${sousTotal.toFixed(2)} €</p>
-                            <p style="margin:5px 0;color:#24586f;">Frais de port (${nombreBouteilles} bouteille${nombreBouteilles > 1 ? 's' : ''}) : ${fraisPortNumber.toFixed(2)} €</p>
-                            <hr style="border:none;border-top:1px solid #8ba9b7;margin:10px 0;">
-                            <p style="font-size:20px;font-weight:bold;color:#24586f;margin:5px 0 0;">Total TTC : ${totalNumber.toFixed(2)} €</p>
-                        ` : `
-                            <p style="font-size:20px;font-weight:bold;color:#24586f;margin:0;">Total : ${totalNumber.toFixed(2)} €</p>
-                        `}
-                    </div>
-                </div>
+    <div style="background:#24586f;padding:24px;border-radius:8px;margin-bottom:24px;text-align:center;">
+        <h2 style="color:#fff;margin:0;font-size:20px;">${m(msg, "email.client_titre", "Merci pour votre commande !")}</h2>
+        <p style="color:#d4e6ed;margin:8px 0 0;font-size:14px;">${sousLigneClient}</p>
+    </div>
 
-                <div style="background:#fff;padding:20px;border-radius:12px;border:2px solid #8ba9b7;margin-bottom:20px;">
-                    <h3 style="color:#24586f;margin-top:0;">Récupération de votre commande</h3>
-                    ${livraisonHtml}
-                    ${client.telephone ? `<p style="margin:10px 0 0;color:#333;"><strong>Téléphone :</strong> ${client.telephone}</p>` : ""}
-                </div>
+    <div style="padding:20px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:20px;">
+        <h3 style="color:#24586f;margin:0 0 14px;">${m(msg, "email.details_commande", "Détails de votre commande")}</h3>
+        <ul style="line-height:1.8;color:#333;padding-left:20px;margin:0 0 16px;">${lignesPanierHtml}</ul>
+        <div style="border-left:4px solid #24586f;padding:12px 16px;">
+            ${totalHtml}
+        </div>
+        ${notePortHtml}
+    </div>
 
-                ${commentairesHtml}
-                ${cartesHtml}
-                ${paiementHtml}
+    <div style="padding:20px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:20px;">
+        <h3 style="color:#24586f;margin:0 0 12px;">${m(msg, "email.recuperation_titre", "Récupération de votre commande")}</h3>
+        ${livraisonHtml}
+        ${client.telephone ? `<p style="margin:8px 0 0;color:#333;"><strong>Téléphone :</strong> ${client.telephone}</p>` : ""}
+    </div>
 
-                <hr style="border:none;border-top:2px solid #8ba9b7;margin:30px 0;">
+    ${commentairesHtml}
+    ${cartesHtml}
+    ${paiementHtml}
 
-                <div style="background:#fff;padding:20px;border-radius:12px;text-align:center;border:2px solid #24586f;">
-                    <h3 style="color:#24586f;margin:0 0 15px;">La Cave La Garenne</h3>
-                    <p style="margin:5px 0;color:#666;">3 rue Voltaire, 92250 La Garenne-Colombes</p>
-                    <p style="margin:5px 0;color:#666;">Tél : 01 47 84 57 63</p>
-                    <p style="margin:5px 0;color:#666;">boutique@lacavelagarenne.fr</p>
-                </div>
-            </div>`,
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:28px 0;">
+
+    <div style="text-align:center;">
+        <p style="font-weight:600;color:#24586f;margin:0 0 6px;">La Cave La Garenne</p>
+        <p style="margin:3px 0;color:#666;font-size:13px;">3 rue Voltaire, 92250 La Garenne-Colombes</p>
+        <p style="margin:3px 0;color:#666;font-size:13px;">Tél : 01 47 84 57 63</p>
+        <p style="margin:3px 0;color:#666;font-size:13px;">boutique@lacavelagarenne.fr</p>
+    </div>
+
+</div>`,
+            attachments: [] as any[],
         };
 
-        mailClient.attachments = [];
         if (logoAttachment) mailClient.attachments.push(logoAttachment);
+        // Cartes cadeaux en PJ au client
+        if (pdfAttachments.length) mailClient.attachments.push(...pdfAttachments);
 
         await transporter.sendMail(mailClient);
-        console.log("  ✅ Email client envoyé");
+        console.log("Email client envoyé");
 
-        // ══ 7. Email VENDEUR ══
-        console.log("📧 Envoi email vendeur…");
-
-        const livraisonVendeurHtml = modeLivraison === "livraison"
-            ? `<div style="background:#fff8e1;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid #ff9800;">
-                   <p style="margin:0;color:#f57c00;font-weight:bold;">⚠️ Commande avec livraison</p>
-                   <p style="margin:10px 0 0;color:#333;"><strong>Adresse :</strong><br/>${client.adresse}<br/>${client.codepostal} ${client.ville}</p>
+        // ── 7. Email VENDEUR ─────────────────────────────────────────────────
+        const livraisonVendeurHtml = client.modeLivraison === "livraison"
+            ? `<div style="border-left:4px solid #e6a817;padding:12px 16px;margin:12px 0;">
+                   <p style="margin:0;color:#333;font-weight:600;">Commande avec livraison</p>
+                   <p style="margin:8px 0 0;color:#333;">${client.adresse}<br/>${client.codepostal} ${client.ville}</p>
                </div>`
-            : `<p style="margin:5px 0;"><strong>Récupération :</strong> <span style="color:#4caf50;">Retrait en boutique</span></p>`;
+            : `<p style="margin:5px 0;color:#333;"><strong>Récupération :</strong> Retrait en boutique</p>`;
 
-        const paiementVendeurHtml = modePaiement === "boutique"
-            ? `<div style="background:#e3f2fd;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid #2196f3;">
-                   <p style="margin:0;color:#1565c0;font-weight:bold;">🏪 Paiement en boutique</p>
-                   ${datePassage ? `<p style="margin:10px 0 0;color:#333;"><strong>Date de passage prévue :</strong> ${new Date(datePassage + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>` : ""}
-                   <p style="margin:10px 0 0;color:#0d47a1;font-size:14px;">Le client paiera directement en boutique lors de la récupération.</p>
+        const paiementVendeurHtml = client.modePaiement === "boutique"
+            ? `<div style="border-left:4px solid #24586f;padding:12px 16px;margin:12px 0;">
+                   <p style="margin:0;color:#333;font-weight:600;">Paiement en boutique</p>
+                   ${datePassageProp ? `<p style="margin:8px 0 0;color:#333;"><strong>Date de passage :</strong> ${new Date(datePassageProp + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>` : ""}
+                   <p style="margin:8px 0 0;color:#555;font-size:13px;">Le client paiera directement en boutique.</p>
                </div>`
-            : `<p style="margin:5px 0;"><strong>Paiement :</strong> <span style="color:#ff9800;">Virement bancaire</span> — attendre réception avant de préparer.</p>`;
+            : `<p style="margin:5px 0;color:#333;"><strong>Paiement :</strong> Virement bancaire — attendre réception avant de préparer.</p>`;
 
         const mailVendeur: any = {
             from:    `"La Cave La Garenne" <${SMTP_USER}>`,
             to:      VENDEUR_EMAIL,
-            subject: `Commande #${commandeId ?? "N/A"} — ${modeLivraison === "livraison" ? "LIVRAISON" : "Retrait boutique"}${modePaiement === "boutique" ? " | Paiement BOUTIQUE" : ""}`,
-            html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-                <h2 style="color:#24586f;">Nouvelle commande #${commandeId}</h2>
+            subject: `Commande #${commandeId ?? "N/A"} — ${client.modeLivraison === "livraison" ? "LIVRAISON" : "Retrait boutique"}${client.modePaiement === "boutique" ? " | Paiement BOUTIQUE" : ""}`,
+            html: `
+<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;">
+    <h2 style="color:#24586f;margin:0 0 16px;">Nouvelle commande #${commandeId}</h2>
 
-                <div style="background:#f8f9fa;padding:15px;border-radius:8px;margin:15px 0;">
-                    <p style="margin:5px 0;"><strong>Client :</strong> ${client.prenom} ${client.nom}</p>
-                    <p style="margin:5px 0;"><strong>Email :</strong> ${client.email}</p>
-                    ${client.telephone ? `<p style="margin:5px 0;"><strong>Téléphone :</strong> ${client.telephone}</p>` : ""}
-                    ${livraisonVendeurHtml}
-                    ${paiementVendeurHtml}
-                </div>
+    <div style="padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
+        <p style="margin:5px 0;color:#333;"><strong>Client :</strong> ${client.prenom} ${client.nom}</p>
+        <p style="margin:5px 0;color:#333;"><strong>Email :</strong> ${client.email}</p>
+        ${client.telephone ? `<p style="margin:5px 0;color:#333;"><strong>Téléphone :</strong> ${client.telephone}</p>` : ""}
+        ${livraisonVendeurHtml}
+        ${paiementVendeurHtml}
+    </div>
 
-                ${commentairesHtml}
+    ${commentairesHtml}
 
-                <h3 style="color:#24586f;">Détails de la commande :</h3>
-                <ul style="line-height:1.8;">${lignesPanierHtml}</ul>
+    <h3 style="color:#24586f;margin:16px 0 8px;">Détails de la commande</h3>
+    <ul style="line-height:1.8;color:#333;padding-left:20px;">${lignesPanierHtml}</ul>
 
-                ${modeLivraison === "livraison" && fraisPortNumber > 0 ? `
-                    <p style="margin:10px 0;font-size:16px;color:#333;">
-                        <strong>Sous-total produits :</strong> ${sousTotal.toFixed(2)} €<br/>
-                        <strong>Frais de port (${nombreBouteilles} bouteille${nombreBouteilles > 1 ? 's' : ''}) :</strong> ${fraisPortNumber.toFixed(2)} €
-                    </p>
-                    <p style="font-size:18px;font-weight:bold;color:#24586f;">Total TTC : ${totalNumber.toFixed(2)} €</p>
-                ` : `
-                    <p style="font-size:18px;font-weight:bold;color:#24586f;">Total : ${totalNumber.toFixed(2)} €</p>
-                `}
+    <div style="border-left:4px solid #24586f;padding:12px 16px;margin:16px 0;">
+        ${totalHtml}
+    </div>
 
-                ${cartesCadeaux.length
-                ? `<div style="background:#d4edda;padding:15px;border-radius:8px;margin:15px 0;border-left:4px solid #4caf50;">
-                           <p style="margin:0;color:#155724;"><strong>✅ ${cartesCadeaux.length} carte(s) cadeau — PDFs en pièce jointe</strong></p>
-                           <p style="margin:5px 0 0;color:#2e7d32;font-size:13px;">Les PDFs sont joints à cet email pour archivage ou réimpression.</p>
-                       </div>`
+    ${pdfAttachments.length
+                ? `<div style="border-left:4px solid #4caf50;padding:12px 16px;margin:16px 0;">
+               <p style="margin:0;color:#333;font-weight:600;">${pdfAttachments.length} carte(s) cadeau — PDFs en pièce jointe</p>
+               <p style="margin:6px 0 0;color:#555;font-size:13px;">Les PDFs sont joints à cet email pour archivage ou réimpression.</p>
+           </div>`
                 : ""}
-            </div>`,
+</div>`,
+            attachments: [] as any[],
         };
 
-        // Envoyer les PDFs de cartes cadeaux AU VENDEUR uniquement
-        mailVendeur.attachments = [];
-        if (attachments.length) {
-            mailVendeur.attachments = attachments;
-            console.log(`  📎 ${attachments.length} PDF(s) ajouté(s) à l'email vendeur`);
-        }
+        if (pdfAttachments.length) mailVendeur.attachments = pdfAttachments;
 
         await transporter.sendMail(mailVendeur);
-        console.log("  ✅ Email vendeur envoyé");
+        console.log("Email vendeur envoyé");
 
-        // ══ 8. Vider le panier dans la BDD (optionnel) ══
+        // ── 8. Vider le panier ───────────────────────────────────────────────
         if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
             const sessionId = await getSessionId();
             if (sessionId) {
                 try {
-                    console.log("🗑️  Suppression du panier de la BDD…");
-                    const { error: deleteError } = await supabaseAdmin
-                        .from("panier")
-                        .delete()
-                        .eq("session_id", sessionId);
-
-                    if (deleteError) {
-                        console.error("⚠️  Erreur suppression panier:", deleteError.message);
-                    } else {
-                        console.log("✅ Panier vidé de la BDD");
-                    }
+                    await supabaseAdmin.from("panier").delete().eq("session_id", sessionId);
                 } catch (cleanErr) {
-                    console.error("⚠️  Erreur nettoyage panier:", cleanErr);
+                    console.error("Erreur nettoyage panier:", cleanErr);
                 }
             }
         }
 
-        // ══ 9. Vider le cookie panier (ancien système) ══
         try {
             const cookieStore = await cookies();
             cookieStore.delete("panier");
-            console.log("✅ Cookie panier supprimé");
-        } catch (cookieErr) {
-            console.error("⚠️  Erreur suppression cookie:", cookieErr);
-        }
+        } catch {}
 
-        console.log(`✅ Commande #${commandeId} validée avec succès`);
+        console.log(`Commande #${commandeId} validée`);
         return NextResponse.json({ success: true, commandeId: commandeId ?? "inconnu" });
+
     } catch (err) {
-        console.error("❌ ERREUR validation commande :", err);
+        console.error("ERREUR validation commande:", err);
         return NextResponse.json({
             success: false,
             message: "Une erreur est survenue lors de la validation de votre commande. Veuillez réessayer ou nous contacter.",

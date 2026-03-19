@@ -27,17 +27,17 @@ export default function Home() {
         ? (contenu.image_mobile.startsWith("http") ? contenu.image_mobile : `/${contenu.image_mobile}`)
         : srcDesktop;
 
+    const hasBandeau = !!contenu?.texte_bandeau && contenu.texte_bandeau.trim() !== "";
+
     return (
         <div>
-            {/* Bandeau texte */}
-            {contenu?.texte_bandeau && contenu.texte_bandeau.trim() !== "" && (
-                <div className="bg-[#24586f] text-white py-3 px-4 text-center font-medium shadow-md">
-                    {contenu.texte_bandeau}
-                </div>
-            )}
-
             {/* Image desktop */}
             <div className="relative w-full h-[40vh] sm:h-[50vh] md:h-[60vh] lg:h-[70vh] mt-4 sm:mt-8 md:mt-12 hidden sm:block">
+                {hasBandeau && (
+                    <div className="absolute top-0 left-0 right-0 z-10 bg-[#24586f] text-white py-3 px-4 text-center font-medium shadow-md">
+                        {contenu!.texte_bandeau}
+                    </div>
+                )}
                 <Image
                     src={srcDesktop}
                     fill
@@ -50,8 +50,13 @@ export default function Home() {
             </div>
 
             {/* Image mobile */}
-            <div className="relative w-full mt-4 block sm:hidden" style={{ height: 'calc(100dvh - 80px)' }}>
-            <Image
+            <div className="relative w-full mt-4 block sm:hidden" style={{ height: "calc(100dvh - 80px)" }}>
+                {hasBandeau && (
+                    <div className="absolute top-0 left-0 right-0 z-10 bg-[#24586f] text-white py-3 px-4 text-center font-medium shadow-md">
+                        {contenu!.texte_bandeau}
+                    </div>
+                )}
+                <Image
                     src={srcMobile}
                     fill
                     priority

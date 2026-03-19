@@ -1,6 +1,5 @@
 // components/ConfirmationModal.tsx
 "use client";
-import { useEffect } from "react";
 
 type ConfirmationModalProps = {
     isOpen: boolean;
@@ -8,8 +7,10 @@ type ConfirmationModalProps = {
     type?: "success" | "error" | "info";
     title?: string;
     message: string;
-    autoClose?: boolean;
-    autoCloseDelay?: number;
+    // Mode confirmation : affiche Annuler + Confirmer au lieu de Fermer
+    confirm?: boolean;
+    onConfirm?: () => void;
+    confirmLabel?: string;
 };
 
 export default function ConfirmationModal({
@@ -18,10 +19,10 @@ export default function ConfirmationModal({
                                               type = "success",
                                               title,
                                               message,
-
+                                              confirm = false,
+                                              onConfirm,
+                                              confirmLabel = "Confirmer",
                                           }: ConfirmationModalProps) {
-
-
     if (!isOpen) return null;
 
     const styles = {
@@ -66,84 +67,61 @@ export default function ConfirmationModal({
                 >
                     {/* Icône */}
                     <div className="flex justify-center mb-4">
-                        <div
-                            className={`${style.iconBg} w-16 h-16 rounded-full flex items-center justify-center`}
-                        >
-                            <span className="text-white text-3xl font-bold">
-                                {style.icon}
-                            </span>
+                        <div className={`${style.iconBg} w-16 h-16 rounded-full flex items-center justify-center`}>
+                            <span className="text-white text-3xl font-bold">{style.icon}</span>
                         </div>
                     </div>
 
                     {/* Titre */}
                     {title && (
-                        <h2
-                            className={`text-2xl font-bold text-center ${style.text} mb-4`}
-                        >
+                        <h2 className={`text-2xl font-bold text-center ${style.text} mb-4`}>
                             {title}
                         </h2>
                     )}
 
                     {/* Message */}
-                    <p
-                        className={`text-center ${style.text} text-base sm:text-lg leading-relaxed mb-6`}
-                    >
+                    <p className={`text-center ${style.text} text-base sm:text-lg leading-relaxed mb-6`}>
                         {message}
                     </p>
 
-                    {/* Bouton Fermer */}
-                    <button
-                        onClick={onClose}
-                        className={`w-full py-3 px-6 bg-white text-black border-2 ${style.border} rounded-lg font-semibold hover:bg-opacity-80 transition-colors cursor-pointer`}
-                    >
-                        Fermer
-                    </button>
-
-
+                    {/* Boutons */}
+                    {confirm ? (
+                        <div className="flex gap-3">
+                            <button
+                                onClick={onClose}
+                                className={`flex-1 py-3 px-6 bg-white/70 text-black border-2 ${style.border} rounded-lg font-semibold hover:bg-white transition-colors cursor-pointer`}
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                onClick={() => { onConfirm?.(); onClose(); }}
+                                className={`flex-1 py-3 px-6 bg-white text-black border-2 ${style.border} rounded-lg font-semibold hover:bg-opacity-80 transition-colors cursor-pointer`}
+                            >
+                                {confirmLabel}
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={onClose}
+                            className={`w-full py-3 px-6 bg-white text-black border-2 ${style.border} rounded-lg font-semibold hover:bg-opacity-80 transition-colors cursor-pointer`}
+                        >
+                            Fermer
+                        </button>
+                    )}
                 </div>
             </div>
 
             <style jsx>{`
                 @keyframes fadeIn {
-                    from {
-                        opacity: 0;
-                    }
-                    to {
-                        opacity: 1;
-                    }
+                    from { opacity: 0; }
+                    to { opacity: 1; }
                 }
-
                 @keyframes slideUp {
-                    from {
-                        opacity: 0;
-                        transform: translateY(20px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
-
-                @keyframes shrink {
-                    from {
-                        width: 100%;
-                    }
-                    to {
-                        width: 0%;
-                    }
-                }
-
-                .animate-fadeIn {
-                    animation: fadeIn 0.3s ease-out;
-                }
-
-                .animate-slideUp {
-                    animation: slideUp 0.3s ease-out;
-                }
-
-                .animate-shrink {
-                    animation: shrink linear;
-                }
+                .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+                .animate-slideUp { animation: slideUp 0.3s ease-out; }
             `}</style>
         </>
     );

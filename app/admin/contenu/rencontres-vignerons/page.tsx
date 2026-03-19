@@ -58,24 +58,6 @@ function RencontresEditor() {
         setShowModal(true);
     };
 
-    const telechargerPDF = async () => {
-        try {
-            const res = await fetch("/api/admin/rencontres-vignerons/pdf");
-            if (!res.ok) throw new Error("Erreur génération PDF");
-            const blob = await res.blob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "rencontres-vignerons.pdf";
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            URL.revokeObjectURL(url);
-        } catch (err) {
-            afficherMessage("Erreur lors de la génération du PDF", "error");
-        }
-    };
-
     const toggleCollapse = (id: string) => {
         setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
     };
@@ -204,21 +186,13 @@ function RencontresEditor() {
                             </Link>
                             <h1 className="text-2xl font-bold text-[#24586f]">Éditer Rencontres Vignerons</h1>
                         </div>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={telechargerPDF}
-                                className="px-5 py-2.5 bg-white border border-[#24586f] text-[#24586f] rounded-lg hover:bg-gray-50 transition-colors font-medium shadow-sm text-sm"
-                            >
-                                Télécharger PDF
-                            </button>
-                            <button
-                                onClick={sauvegarder}
-                                disabled={saving}
-                                className="px-6 py-2.5 bg-[#24586f] text-white rounded-lg hover:bg-[#1a4557] transition-colors disabled:opacity-50 font-medium shadow-sm"
-                            >
-                                {saving ? "Sauvegarde..." : "Sauvegarder"}
-                            </button>
-                        </div>
+                        <button
+                            onClick={sauvegarder}
+                            disabled={saving}
+                            className="px-6 py-2.5 bg-[#24586f] text-white rounded-lg hover:bg-[#1a4557] transition-colors disabled:opacity-50 font-medium shadow-sm"
+                        >
+                            {saving ? "Sauvegarde..." : "Sauvegarder"}
+                        </button>
                     </div>
                 </div>
             </header>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import AdminGuard from "@/components/AdminGuard";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 type ProduitPanier = {
     id: string;
@@ -23,10 +24,8 @@ type Commande = {
     panier: ProduitPanier[];
 };
 
-// Formate un ID Supabase (UUID) ou numérique pour l'affichage
 function formatId(id: string | number): string {
     const str = String(id);
-    // UUID → 8 derniers caractères en majuscules
     if (str.includes("-")) return str.slice(-8).toUpperCase();
     return str;
 }
@@ -36,7 +35,40 @@ function CommandesContent() {
     const [loading, setLoading] = useState(true);
     const [filtreStatut, setFiltreStatut] = useState<string>("TOUS");
     const [recherche, setRecherche] = useState("");
-    const [error, setError] = useState("");
+    const [deletingId, setDeletingId] = useState<string | number | null>(null);
+
+    const [showModal, setShowModal] = useState(false);
+    const [modalType, setModalType] = useState<"success" | "error" | "info">("error");
+    const [modalTitle, setModalTitle] = useState<string | undefined>(undefined);
+    const [modalMessage, setModalMessage] = useState("");
+    const [modalConfirm, setModalConfirm] = useState(false);
+    const [modalConfirmLabel, setModalConfirmLabel] = useState("Confirmer");
+    const [modalConfirmFn, setModalConfirmFn] = useState<(() => void) | undefined>(undefined);
+
+    const afficherMessage = (msg: string, type: "success" | "error" | "info" = "error", titre?: string) => {
+        setModalType(type);
+        setModalTitle(titre);
+        setModalMessage(msg);
+        setModalConfirm(false);
+        setModalConfirmFn(undefined);
+        setShowModal(true);
+    };
+
+    const afficherConfirmation = (
+        msg: string,
+        onConfirm: () => void,
+        label = "Confirmer",
+        titre?: string,
+        type: "success" | "error" | "info" = "error"
+    ) => {
+        setModalType(type);
+        setModalTitle(titre);
+        setModalMessage(msg);
+        setModalConfirm(true);
+        setModalConfirmLabel(label);
+        setModalConfirmFn(() => onConfirm);
+        setShowModal(true);
+    };
 
     useEffect(() => {
         fetchCommandes();
@@ -47,22 +79,29 @@ function CommandesContent() {
             const res = await fetch("/api/admin/commandes");
             if (!res.ok) {
                 const errorData = await res.json();
-                setError(`Erreur ${res.status}: ${errorData.error || "Impossible de charger les commandes"}`);
+                afficherMessage(
+                    `Erreur ${res.status} : ${errorData.error || "Impossible de charger les commandes"}`,
+                    "error",
+                    "Erreur de chargement"
+                );
                 setLoading(false);
                 return;
             }
             const data = await res.json();
             setCommandes(data);
-            setError("");
         } catch (err) {
-            console.error("❌ Erreur chargement commandes:", err);
-            setError("Erreur de connexion au serveur");
+            console.error("Erreur chargement commandes:", err);
+            afficherMessage("Erreur de connexion au serveur", "error", "Erreur de connexion");
         } finally {
             setLoading(false);
         }
     };
 
     const changerStatut = async (id: string | number, nouveauStatut: string) => {
+        if (nouveauStatut === "supprimer") {
+            supprimerCommande(id);
+            return;
+        }
         try {
             const res = await fetch(`/api/admin/commandes/${id}`, {
                 method: "PATCH",
@@ -73,10 +112,40 @@ function CommandesContent() {
                 setCommandes((prev) =>
                     prev.map((cmd) => cmd.id === id ? { ...cmd, statut: nouveauStatut } : cmd)
                 );
+            } else {
+                const data = await res.json();
+                afficherMessage(data.error || "Erreur lors du changement de statut", "error", "Erreur");
             }
         } catch (err) {
-            console.error("❌ Erreur changement statut:", err);
+            console.error("Erreur changement statut:", err);
+            afficherMessage("Erreur de connexion au serveur", "error", "Erreur");
         }
+    };
+
+    const supprimerCommande = (id: string | number) => {
+        afficherConfirmation(
+            `Supprimer définitivement la commande #${formatId(id)} ? Cette action est irréversible.`,
+            async () => {
+                setDeletingId(id);
+                try {
+                    const res = await fetch(`/api/admin/commandes/${id}`, { method: "DELETE" });
+                    if (res.ok) {
+                        setCommandes((prev) => prev.filter((cmd) => cmd.id !== id));
+                    } else {
+                        const data = await res.json();
+                        afficherMessage(data.error || "Erreur lors de la suppression", "error", "Erreur");
+                    }
+                } catch (err) {
+                    console.error("Erreur suppression:", err);
+                    afficherMessage("Erreur de connexion au serveur", "error", "Erreur");
+                } finally {
+                    setDeletingId(null);
+                }
+            },
+            "Supprimer",
+            "Supprimer la commande",
+            "error"
+        );
     };
 
     const commandesFiltrees = commandes.filter((cmd) => {
@@ -123,13 +192,23 @@ function CommandesContent() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Header */}
+            <ConfirmationModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                type={modalType}
+                title={modalTitle}
+                message={modalMessage}
+                confirm={modalConfirm}
+                onConfirm={modalConfirmFn}
+                confirmLabel={modalConfirmLabel}
+            />
+
             <header className="bg-white shadow-sm border-b">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex justify-between items-center">
                         <div>
                             <Link href="/admin/dashboard" className="text-[#24586f] hover:text-[#1a4557] text-sm mb-2 inline-block">
-                                ← Retour au dashboard
+                                &larr; Retour au dashboard
                             </Link>
                             <h1 className="text-2xl font-bold text-[#24586f]">Gestion des commandes</h1>
                         </div>
@@ -137,7 +216,6 @@ function CommandesContent() {
                 </div>
             </header>
 
-            {/* Filtres */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -171,13 +249,6 @@ function CommandesContent() {
                     </div>
                 </div>
 
-                {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg mb-6">
-                        {error}
-                    </div>
-                )}
-
-                {/* Tableau */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     {loading ? (
                         <div className="p-12 text-center text-gray-500">Chargement des commandes...</div>
@@ -201,10 +272,10 @@ function CommandesContent() {
                                 {commandesFiltrees.map((commande) => {
                                     const destinataires = getDestinataires(commande.panier);
                                     const nbArticles = commande.panier.length;
+                                    const isDeleting = deletingId === commande.id;
                                     return (
-                                        <tr key={commande.id} className="hover:bg-gray-50">
+                                        <tr key={commande.id} className={`hover:bg-gray-50 ${isDeleting ? "opacity-50" : ""}`}>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                {/* Affichage court + titre avec UUID complet au survol */}
                                                 <div
                                                     className="text-sm font-medium text-gray-900 font-mono cursor-default"
                                                     title={String(commande.id)}
@@ -235,8 +306,8 @@ function CommandesContent() {
                                                     <div className="mt-1 flex flex-wrap gap-1">
                                                         {destinataires.map((dest, i) => (
                                                             <span key={i} className="text-[#24586f] text-xs">
-                                                                    Carte cadeau pour {dest}
-                                                                </span>
+                                                                Carte cadeau pour {dest}
+                                                            </span>
                                                         ))}
                                                     </div>
                                                 )}
@@ -248,7 +319,8 @@ function CommandesContent() {
                                                 <select
                                                     value={commande.statut}
                                                     onChange={(e) => changerStatut(commande.id, e.target.value)}
-                                                    className={`text-xs font-semibold rounded-full px-3 py-1 border cursor-pointer ${getStatutColor(commande.statut)}`}
+                                                    disabled={isDeleting}
+                                                    className={`text-xs font-semibold rounded-full px-3 py-1 border cursor-pointer ${getStatutColor(commande.statut)} ${isDeleting ? "opacity-50 cursor-not-allowed" : ""}`}
                                                 >
                                                     <option value="en_attente">En attente</option>
                                                     <option value="payee">Payée</option>
@@ -256,6 +328,8 @@ function CommandesContent() {
                                                     <option value="prete">Prête</option>
                                                     <option value="livree">Livrée</option>
                                                     <option value="annulee">Annulée</option>
+                                                    <option disabled>──────────</option>
+                                                    <option value="supprimer">Supprimer</option>
                                                 </select>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
@@ -263,7 +337,7 @@ function CommandesContent() {
                                                     href={`/admin/commandes/${commande.id}`}
                                                     className="text-[#24586f] hover:text-[#1a4557] font-medium"
                                                 >
-                                                    Détails →
+                                                    Détails &rarr;
                                                 </Link>
                                             </td>
                                         </tr>
