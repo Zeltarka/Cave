@@ -50,7 +50,6 @@ async function getSessionId(): Promise<string | null> {
     return cookieStore.get("session_id")?.value || null;
 }
 
-// Récupère les messages configurés en admin
 async function getMessages(): Promise<any> {
     try {
         const { data } = await supabaseAdmin
@@ -141,7 +140,6 @@ async function generateCarteCadeauPDF(
             yPos -= 20;
         });
 
-        // Conditions éditables
         let condY = 90;
         let currentLine = "";
         conditions.split(" ").forEach(word => {
@@ -164,8 +162,6 @@ async function generateCarteCadeauPDF(
 
 export async function POST(req: Request) {
     try {
-        console.log("Début validation commande");
-
         const body = await req.json();
         const { client, panier, total, fraisPort }: {
             client: ClientCommande;
@@ -177,16 +173,23 @@ export async function POST(req: Request) {
         if (!client?.email) return NextResponse.json({ success: false, message: "Informations client invalides" }, { status: 400 });
         if (!Array.isArray(panier) || panier.length === 0) return NextResponse.json({ success: false, message: "Le panier est vide" }, { status: 400 });
 
-        // Récupérer les messages configurés
-        const msg = await getMessages();
+        // Panier = cartes cadeaux uniquement ?
+        const seulementCartesCadeaux = panier.every(p =>
+            p.id.includes("carte-cadeau") || p.produit.toLowerCase().includes("carte cadeau")
+        );
 
+        const msg        = await getMessages();
         const conditions = m(msg, "email.carte_cadeau_conditions", "Cette carte cadeau est valable en boutique. Non remboursable, non échangeable contre des espèces.");
 
-        const totalNumber      = Number(total);
-        const fraisPortNumber  = Number(fraisPort) || 0;
-        const sousTotal        = totalNumber - fraisPortNumber;
-        const datePassageProp  = client.datePassage?.trim() || null;
+        const totalNumber     = Number(total);
+        const fraisPortNumber = Number(fraisPort) || 0;
+        const sousTotal       = totalNumber - fraisPortNumber;
         const nombreBouteilles = panier.filter(p => !p.id.includes("carte-cadeau")).reduce((s, p) => s + p.quantite, 0);
+
+        // Date non requise si panier = cartes cadeaux + virement
+        const datePassageProp = (seulementCartesCadeaux && client.modePaiement === "virement")
+            ? null
+            : client.datePassage?.trim() || null;
 
         let commandeId: number | null = null;
         let lignes: LigneCommande[]   = [];
@@ -260,8 +263,10 @@ export async function POST(req: Request) {
             ? `<div style="text-align:center;margin-bottom:24px;"><img src="cid:logo@boutique" alt="La Cave La Garenne" style="width:120px;height:auto;"/></div>`
             : "";
 
-        // ── 4. PDFs cartes cadeaux ───────────────────────────────────────────
-        const cartesCadeaux = panier.filter(p => p.id.includes("carte-cadeau") || p.produit.toLowerCase().includes("carte cadeau"));
+        // ── 4. PDFs cartes cadeaux (vendeur uniquement) ──────────────────────
+        const cartesCadeaux = panier.filter(p =>
+            p.id.includes("carte-cadeau") || p.produit.toLowerCase().includes("carte cadeau")
+        );
         const pdfAttachments: { filename: string; content: Buffer; contentType: string }[] = [];
 
         for (const carte of cartesCadeaux) {
@@ -278,8 +283,10 @@ export async function POST(req: Request) {
 
         // ── 5. Helpers HTML ──────────────────────────────────────────────────
         const lignesPanierHtml = panier.map(p => {
-            const destInfo   = p.destinataire ? ` — Pour : ${p.destinataire}` : "";
-            const prixAff    = p.id.includes("carte-cadeau") ? `${Math.round(p.prix * p.quantite)} €` : `${(p.prix * p.quantite).toFixed(2)} €`;
+            const destInfo = p.destinataire ? ` — Pour : ${p.destinataire}` : "";
+            const prixAff  = p.id.includes("carte-cadeau")
+                ? `${Math.round(p.prix * p.quantite)} €`
+                : `${(p.prix * p.quantite).toFixed(2)} €`;
             return `<li style="padding:4px 0;">${p.produit}${destInfo} x ${p.quantite} — ${prixAff}</li>`;
         }).join("");
 
@@ -295,11 +302,10 @@ export async function POST(req: Request) {
                <p style="margin:8px 0 0;color:#333;">${client.adresse}<br/>${client.codepostal} ${client.ville}</p>`
             : `<p style="margin:5px 0;color:#333;">${m(msg, "email.recuperation_retrait", "Retrait en boutique — 3 rue Voltaire, 92250 La Garenne-Colombes")}</p>`;
 
-        // Bloc paiement virement avec RIB
-        const iban       = m(msg, "email.virement_iban", "FR76 XXXX XXXX XXXX XXXX XXXX XXX");
-        const bic        = m(msg, "email.virement_bic", "");
-        const titulaire  = m(msg, "email.virement_titulaire", "La Cave La Garenne");
-        const bicLigne   = bic ? `<p style="margin:5px 0;color:#333;"><strong>BIC :</strong> ${bic}</p>` : "";
+        const iban      = m(msg, "email.virement_iban", "FR76 XXXX XXXX XXXX XXXX XXXX XXX");
+        const bic       = m(msg, "email.virement_bic", "");
+        const titulaire = m(msg, "email.virement_titulaire", "La Cave La Garenne");
+        const bicLigne  = bic ? `<p style="margin:5px 0;color:#333;"><strong>BIC :</strong> ${bic}</p>` : "";
 
         const paiementHtml = client.modePaiement === "boutique"
             ? `<div style="border-left:4px solid #24586f;padding:14px 18px;margin:20px 0;">
@@ -331,11 +337,13 @@ export async function POST(req: Request) {
                </div>`
             : "";
 
+        // Cartes cadeaux : le client est informé qu'elles seront envoyées par mail après paiement
         const cartesHtml = cartesCadeaux.length > 0
             ? `<div style="border-left:4px solid #24586f;padding:14px 18px;margin:20px 0;">
-                   <p style="margin:0;color:#333;font-size:15px;font-weight:600;">${cartesCadeaux.length > 1
-                ? m(msg, "email.cartes_cadeaux_pj", "Vos cartes cadeaux sont en pièce jointe de cet email.")
-                : m(msg, "email.carte_cadeau_pj", "Votre carte cadeau est en pièce jointe de cet email.")
+                   <p style="margin:0;color:#333;font-size:15px;font-weight:600;">${
+                cartesCadeaux.length > 1
+                    ? "Vos cartes cadeaux vous seront envoyées par mail après réception du paiement."
+                    : "Votre carte cadeau vous sera envoyée par mail après réception du paiement."
             }</p>
                </div>`
             : "";
@@ -345,61 +353,48 @@ export async function POST(req: Request) {
             .replace("{nom}", client.nom)
             .replace("{commande_id}", String(commandeId ?? ""));
 
-        // ── 6. Email CLIENT ──────────────────────────────────────────────────
+        // ── 6. Email CLIENT (sans PDF carte cadeau) ──────────────────────────
         const mailClient: any = {
             from:    `"La Cave La Garenne" <${SMTP_USER}>`,
             to:      client.email,
             subject: `Confirmation de votre commande — La Cave La Garenne`,
             html: `
 <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:30px;">
-
     ${logoHtml}
-
     <div style="background:#24586f;padding:24px;border-radius:8px;margin-bottom:24px;text-align:center;">
         <h2 style="color:#fff;margin:0;font-size:20px;">${m(msg, "email.client_titre", "Merci pour votre commande !")}</h2>
         <p style="color:#d4e6ed;margin:8px 0 0;font-size:14px;">${sousLigneClient}</p>
     </div>
-
     <div style="padding:20px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:20px;">
         <h3 style="color:#24586f;margin:0 0 14px;">${m(msg, "email.details_commande", "Détails de votre commande")}</h3>
         <ul style="line-height:1.8;color:#333;padding-left:20px;margin:0 0 16px;">${lignesPanierHtml}</ul>
-        <div style="border-left:4px solid #24586f;padding:12px 16px;">
-            ${totalHtml}
-        </div>
+        <div style="border-left:4px solid #24586f;padding:12px 16px;">${totalHtml}</div>
         ${notePortHtml}
     </div>
-
+    ${!seulementCartesCadeaux ? `
     <div style="padding:20px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:20px;">
         <h3 style="color:#24586f;margin:0 0 12px;">${m(msg, "email.recuperation_titre", "Récupération de votre commande")}</h3>
         ${livraisonHtml}
         ${client.telephone ? `<p style="margin:8px 0 0;color:#333;"><strong>Téléphone :</strong> ${client.telephone}</p>` : ""}
-    </div>
-
+    </div>` : ""}
     ${commentairesHtml}
     ${cartesHtml}
     ${paiementHtml}
-
     <hr style="border:none;border-top:1px solid #e5e7eb;margin:28px 0;">
-
     <div style="text-align:center;">
         <p style="font-weight:600;color:#24586f;margin:0 0 6px;">La Cave La Garenne</p>
         <p style="margin:3px 0;color:#666;font-size:13px;">3 rue Voltaire, 92250 La Garenne-Colombes</p>
         <p style="margin:3px 0;color:#666;font-size:13px;">Tél : 01 47 84 57 63</p>
         <p style="margin:3px 0;color:#666;font-size:13px;">boutique@lacavelagarenne.fr</p>
     </div>
-
 </div>`,
-            attachments: [] as any[],
+            attachments: logoAttachment ? [logoAttachment] : [],
         };
-
-        if (logoAttachment) mailClient.attachments.push(logoAttachment);
-        // Cartes cadeaux en PJ au client
-        if (pdfAttachments.length) mailClient.attachments.push(...pdfAttachments);
 
         await transporter.sendMail(mailClient);
         console.log("Email client envoyé");
 
-        // ── 7. Email VENDEUR ─────────────────────────────────────────────────
+        // ── 7. Email VENDEUR (avec PDFs cartes cadeaux) ──────────────────────
         const livraisonVendeurHtml = client.modeLivraison === "livraison"
             ? `<div style="border-left:4px solid #e6a817;padding:12px 16px;margin:12px 0;">
                    <p style="margin:0;color:#333;font-weight:600;">Commande avec livraison</p>
@@ -422,7 +417,6 @@ export async function POST(req: Request) {
             html: `
 <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;">
     <h2 style="color:#24586f;margin:0 0 16px;">Nouvelle commande #${commandeId}</h2>
-
     <div style="padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px;">
         <p style="margin:5px 0;color:#333;"><strong>Client :</strong> ${client.prenom} ${client.nom}</p>
         <p style="margin:5px 0;color:#333;"><strong>Email :</strong> ${client.email}</p>
@@ -430,27 +424,19 @@ export async function POST(req: Request) {
         ${livraisonVendeurHtml}
         ${paiementVendeurHtml}
     </div>
-
     ${commentairesHtml}
-
     <h3 style="color:#24586f;margin:16px 0 8px;">Détails de la commande</h3>
     <ul style="line-height:1.8;color:#333;padding-left:20px;">${lignesPanierHtml}</ul>
-
-    <div style="border-left:4px solid #24586f;padding:12px 16px;margin:16px 0;">
-        ${totalHtml}
-    </div>
-
+    <div style="border-left:4px solid #24586f;padding:12px 16px;margin:16px 0;">${totalHtml}</div>
     ${pdfAttachments.length
                 ? `<div style="border-left:4px solid #4caf50;padding:12px 16px;margin:16px 0;">
                <p style="margin:0;color:#333;font-weight:600;">${pdfAttachments.length} carte(s) cadeau — PDFs en pièce jointe</p>
-               <p style="margin:6px 0 0;color:#555;font-size:13px;">Les PDFs sont joints à cet email pour archivage ou réimpression.</p>
+               <p style="margin:6px 0 0;color:#555;font-size:13px;">Envoyez les cartes au client depuis l'interface admin une fois le paiement reçu.</p>
            </div>`
                 : ""}
 </div>`,
-            attachments: [] as any[],
+            attachments: pdfAttachments,
         };
-
-        if (pdfAttachments.length) mailVendeur.attachments = pdfAttachments;
 
         await transporter.sendMail(mailVendeur);
         console.log("Email vendeur envoyé");

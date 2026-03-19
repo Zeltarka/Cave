@@ -32,7 +32,7 @@ export default function Home() {
     return (
         <div>
             {/* Image desktop */}
-            <div className="relative w-full h-[40vh] sm:h-[50vh] md:h-[60vh] lg:h-[70vh] mt-4 sm:mt-8 md:mt-12 hidden sm:block">
+            <div className="relative w-full h-[40vh] sm:h-[50vh] md:h-[60vh] lg:h-[70vh] hidden sm:block">
                 {hasBandeau && (
                     <div className="absolute top-0 left-0 right-0 z-10 bg-[#24586f] text-white py-3 px-4 text-center font-medium shadow-md">
                         {contenu!.texte_bandeau}
@@ -50,7 +50,7 @@ export default function Home() {
             </div>
 
             {/* Image mobile */}
-            <div className="relative w-full mt-4 block sm:hidden" style={{ height: "calc(100dvh - 80px)" }}>
+            <div className="relative w-full block sm:hidden" style={{ height: "calc(100dvh - 80px)" }}>
                 {hasBandeau && (
                     <div className="absolute top-0 left-0 right-0 z-10 bg-[#24586f] text-white py-3 px-4 text-center font-medium shadow-md">
                         {contenu!.texte_bandeau}

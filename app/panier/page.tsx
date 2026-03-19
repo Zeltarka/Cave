@@ -29,7 +29,6 @@ type Commande = {
     datePassage: string;
 };
 
-// Date min : aujourd'hui + 2 jours
 function getDateMin(joursAvant = 2): string {
     const d = new Date();
     d.setDate(d.getDate() + joursAvant);
@@ -69,36 +68,34 @@ export default function PanierPage() {
 
     useEffect(() => { fetchPanier(); }, []);
 
-    // Panier uniquement composé de cartes cadeaux
     const seulementCartesCadeaux = panier.length > 0 && panier.every(p => p.id.includes("carte-cadeau"));
 
-    // Indique si le sélecteur de date doit être affiché :
-    // - cartes cadeaux seules + virement → pas de boutique nécessaire
-    // - tous les autres cas avec retrait ou paiement boutique → affiché
     const afficherDate = !(seulementCartesCadeaux && commande.modePaiement === "virement") &&
         (commande.modeLivraison === "retrait" || commande.modePaiement === "boutique");
 
-    // Init / destroy flatpickr — dépend de afficherCommande pour que l'input soit dans le DOM
     useEffect(() => {
         if (!afficherCommande || !afficherDate || !datePickerRef.current) return;
 
         fpInstanceRef.current = flatpickr(datePickerRef.current, {
             locale: French,
-            dateFormat: "Y-m-d",   // format interne stocké
+            dateFormat: "Y-m-d",
             altInput: true,
             altInputClass: "w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f] bg-white text-black placeholder:text-gray-400 cursor-pointer pr-12",
             altFormat: "d/m/Y",
             minDate: getDateMin(2),
-            disable: [(date) => date.getDay() === 0], // bloque les dimanches
+            disable: [(date) => date.getDay() === 0],
             disableMobile: true,
             defaultDate: commande.datePassage || undefined,
             onChange: ([selected]) => {
                 if (!selected) return;
-                // Construire la date ISO en heure locale (évite le décalage UTC)
                 const y = selected.getFullYear();
                 const m = String(selected.getMonth() + 1).padStart(2, "0");
                 const j = String(selected.getDate()).padStart(2, "0");
                 setCommande(prev => ({ ...prev, datePassage: `${y}-${m}-${j}` }));
+            },
+            onReady: (_dates, _str, instance) => {
+                const altInput = instance.altInput;
+                if (altInput) altInput.placeholder = "Sélectionner une date";
             },
         }) as flatpickr.Instance;
 
@@ -111,7 +108,6 @@ export default function PanierPage() {
     const nombreBouteilles = panier.filter(p => !p.id.includes("carte-cadeau")).reduce((sum, p) => sum + p.quantite, 0);
     const totalBouteilles  = panier.filter(p => p.id === "champagne" || p.id === "rose").reduce((sum, p) => sum + p.quantite, 0);
 
-    // Si panier = cartes cadeaux uniquement, forcer retrait et ne jamais afficher livraison
     useEffect(() => {
         if (seulementCartesCadeaux && commande.modeLivraison === "livraison") {
             setCommande(prev => ({ ...prev, modeLivraison: "retrait" }));
@@ -151,9 +147,9 @@ export default function PanierPage() {
         return [6, 12, 18, 24];
     };
 
-    const total          = panier.reduce((sum, p) => sum + p.prix * p.quantite, 0);
-    const totalAvecPort  = total + fraisPort;
-    const panierVide     = panier.length === 0 || panier.every((p) => p.quantite === 0);
+    const total         = panier.reduce((sum, p) => sum + p.prix * p.quantite, 0);
+    const totalAvecPort = total + fraisPort;
+    const panierVide    = panier.length === 0 || panier.every((p) => p.quantite === 0);
 
     const changerQuantite = async (id: string, nouvelleQuantite: number) => {
         const produit = panier.find((p) => p.id === id);
@@ -193,20 +189,20 @@ export default function PanierPage() {
     };
 
     const validerCommande = async () => {
+        // Champs communs obligatoires (incluant téléphone)
+        if (!commande.nom || !commande.prenom || !commande.email || !commande.telephone) {
+            setModalType("error"); setModalTitle("Erreur");
+            setModalMessage("Merci de remplir tous les champs obligatoires (nom, prénom, email, téléphone)");
+            setModalOpen(true); return;
+        }
         if (commande.modeLivraison === "livraison") {
-            if (!commande.nom || !commande.prenom || !commande.email || !commande.adresse || !commande.codepostal || !commande.ville) {
+            if (!commande.adresse || !commande.codepostal || !commande.ville) {
                 setModalType("error"); setModalTitle("Erreur");
                 setModalMessage("Merci de remplir tous les champs obligatoires pour la livraison");
                 setModalOpen(true); return;
             }
-        } else {
-            if (!commande.nom || !commande.prenom || !commande.email) {
-                setModalType("error"); setModalTitle("Erreur");
-                setModalMessage("Merci de remplir le nom, prénom et email");
-                setModalOpen(true); return;
-            }
         }
-        if ((commande.modeLivraison === "retrait" || commande.modePaiement === "boutique") && !commande.datePassage) {
+        if (afficherDate && (commande.modeLivraison === "retrait" || commande.modePaiement === "boutique") && !commande.datePassage) {
             setModalType("error"); setModalTitle("Erreur");
             setModalMessage("Merci de sélectionner une date de passage en boutique");
             setModalOpen(true); return;
@@ -265,7 +261,6 @@ export default function PanierPage() {
                     </div>
                 ) : (
                     <>
-                        {/* Bandeau max 24 bouteilles */}
                         {totalBouteilles >= 24 && (
                             <div className="mb-6 p-4 bg-[#f1f5ff] dark:bg-[#1a1d27] border-2 border-[#24586f] dark:border-[#3a8fa8] rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                 <p className="text-[#24586f] dark:text-[#3a8fa8] font-medium">
@@ -329,10 +324,10 @@ export default function PanierPage() {
                                                     className="w-24 text-right border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-transparent dark:text-[#faf5f1]"
                                                 />
                                             ) : (
-                                                <span>{Math.round(produit.prix)} €</span>
+                                                <span>{produit.prix.toFixed(2)} €</span>
                                             )}
                                         </td>
-                                        <td className="p-3 text-right font-semibold">{Math.round(produit.prix * produit.quantite)} €</td>
+                                        <td className="p-3 text-right font-semibold">{(produit.prix * produit.quantite).toFixed(2)} €</td>
                                         <td className="p-3 text-center">
                                             <button onClick={() => supprimerProduit(produit.id)} className="bg-[#24586f] text-white border-none px-4 py-2 rounded hover:bg-[#1a4557] transition-colors cursor-pointer">
                                                 Supprimer
@@ -385,12 +380,12 @@ export default function PanierPage() {
                                                 className="w-24 text-right border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-transparent dark:text-[#faf5f1]"
                                             />
                                         ) : (
-                                            <span>{Math.round(produit.prix)} €</span>
+                                            <span>{produit.prix.toFixed(2)} €</span>
                                         )}
                                     </div>
                                     <div className="flex justify-between items-center mb-3 dark:text-[#faf5f1]">
                                         <span className="text-gray-600 dark:text-gray-400 font-semibold">Total :</span>
-                                        <span className="font-bold text-lg">{Math.round(produit.prix * produit.quantite)} €</span>
+                                        <span className="font-bold text-lg">{(produit.prix * produit.quantite).toFixed(2)} €</span>
                                     </div>
                                     <button onClick={() => supprimerProduit(produit.id)} className="w-full bg-[#24586f] text-white border-none px-4 py-2 rounded hover:bg-[#1a4557] transition-colors cursor-pointer">
                                         Supprimer
@@ -401,7 +396,6 @@ export default function PanierPage() {
 
                         {!panierVide && (
                             <>
-                                {/* Récapitulatif total */}
                                 <div className="mt-8 bg-[#f1f5ff] dark:bg-[#1a1d27] border-2 border-[#24586f] dark:border-[#3a8fa8] rounded-lg p-6">
                                     <div className="space-y-3">
                                         <div className="flex justify-between items-center">
@@ -442,7 +436,6 @@ export default function PanierPage() {
                             <div id="formulaire-commande" className="mt-8 p-4 sm:p-6 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#1a1d27] shadow-md">
                                 <h2 className="mb-6 text-xl sm:text-2xl font-semibold text-[#24586f] dark:text-[#3a8fa8]">Informations de commande</h2>
 
-                                {/* Mode de récupération — masqué si panier = cartes cadeaux uniquement */}
                                 {!seulementCartesCadeaux && (
                                     <div className="mb-6">
                                         <label className="block text-gray-700 dark:text-[#faf5f1] font-semibold mb-3">Mode de récupération *</label>
@@ -468,7 +461,6 @@ export default function PanierPage() {
                                     </div>
                                 )}
 
-                                {/* Coordonnées */}
                                 <div className="space-y-4">
                                     <p className="block text-gray-700 dark:text-[#faf5f1] font-semibold mb-3">Coordonnées de l'acheteur *</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -476,7 +468,8 @@ export default function PanierPage() {
                                         <input name="prenom" placeholder="Prénom *" value={commande.prenom} onChange={handleChange} className={inputClass} />
                                     </div>
                                     <input name="email" type="email" placeholder="Adresse email *" value={commande.email} onChange={handleChange} className={inputClass} />
-                                    <input name="telephone" type="tel" placeholder="Numéro de téléphone (optionnel)" value={commande.telephone} onChange={handleChange} className={inputClass} />
+                                    {/* Téléphone obligatoire */}
+                                    <input name="telephone" type="tel" placeholder="Numéro de téléphone *" value={commande.telephone} onChange={handleChange} className={inputClass} />
                                     {commande.modeLivraison === "livraison" && (
                                         <>
                                             <input name="adresse" placeholder="Adresse *" value={commande.adresse} onChange={handleChange} className={inputClass} />
@@ -489,7 +482,6 @@ export default function PanierPage() {
                                     <textarea name="commentaires" placeholder="Commentaires (optionnel)" value={commande.commentaires} onChange={handleChange} rows={4} className={inputClass + " resize-vertical"} />
                                 </div>
 
-                                {/* Mode de paiement */}
                                 <div className="mt-6">
                                     <label className="block text-gray-700 dark:text-[#faf5f1] font-semibold mb-3">Mode de paiement *</label>
                                     <div className="space-y-3">
@@ -510,21 +502,17 @@ export default function PanierPage() {
                                     </div>
                                 </div>
 
-                                {/* Date de passage */}
                                 {afficherDate && (
                                     <div className="mt-4">
                                         <label className="block text-gray-700 dark:text-[#faf5f1] font-semibold mb-2">
                                             Date de passage en boutique souhaitée *
                                         </label>
                                         <div className="relative">
-                                            <input
-                                                ref={datePickerRef}
-                                                type="hidden"
-                                            />
+                                            <input ref={datePickerRef} type="hidden" />
                                             <button
                                                 type="button"
                                                 onClick={() => fpInstanceRef.current?.open()}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#24586f] hover:text-[#1a4557] transition-colors"
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#24586f] hover:text-[#1a4557] transition-colors z-10"
                                                 aria-label="Ouvrir le calendrier"
                                             >
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
