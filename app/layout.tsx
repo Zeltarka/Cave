@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
+import { MentionsLegales } from "@/components/MentionsLegales"
 
 const montserrat = Montserrat({
     variable: "--font-montserrat",
@@ -29,9 +30,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         </head>
         <body className={`${montserrat.variable} antialiased flex flex-col min-h-full m-0`}>
         <Navbar />
+
         <main className="flex-1 w-full relative">
             {children}
         </main>
+
+        <MentionsLegales />
+
         </body>
         </html>
     );

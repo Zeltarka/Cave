@@ -44,7 +44,6 @@ export function Navbar() {
         };
     }, []);
 
-    // Icône burger (3 traits)
     const BurgerIcon = () => (
         <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -92,7 +91,7 @@ export function Navbar() {
                             <Link href="/galerie" className="hover:underline transition-all whitespace-nowrap">Galerie Photos</Link>
                             <Link href="/contact" className="hover:underline transition-all whitespace-nowrap">Contact</Link>
                             <Link href="/panier" className="relative hover:scale-110 transition-transform" aria-label="Panier">
-                                <Image src="/market-icon.png" alt="Panier" width={56} height={56}   className={`w-12 h-12 xl:w-14 xl:h-14 ${theme === 'dark' ? 'invert' : ''}`} />
+                                <Image src="/market-icon.png" alt="Panier" width={56} height={56} className={`w-12 h-12 xl:w-14 xl:h-14 ${theme === 'dark' ? 'invert' : ''}`} />
                                 {cartItemCount > 0 && (
                                     <span className="absolute -top-2 -right-2 bg-[#24586f] text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
                                         {cartItemCount}
@@ -105,10 +104,8 @@ export function Navbar() {
                     {/* ===== MOBILE / TABLET ===== */}
                     <div className="lg:hidden">
                         <div className="flex items-center justify-between">
-                            {/* Burger */}
                             <BurgerIcon />
 
-                            {/* Logo centré */}
                             <div className="flex-1 flex justify-center">
                                 <Link href="/" className="block">
                                     <Image
@@ -122,7 +119,6 @@ export function Navbar() {
                                 </Link>
                             </div>
 
-                            {/* Panier */}
                             <Link href="/panier" className="relative z-20 hover:scale-110 transition-transform" aria-label="Panier">
                                 <Image src="/market-icon.png" alt="Panier" width={48} height={48} className={`w-10 h-10 sm:w-12 sm:h-12 ${theme === 'dark' ? 'invert' : ''}`} />
                                 {cartItemCount > 0 && (
@@ -133,7 +129,6 @@ export function Navbar() {
                             </Link>
                         </div>
 
-                        {/* Liens visibles sur page d'accueil sous la navbar */}
                         {isHomePage && (
                             <div className="mt-5 grid grid-cols-3 gap-x-4 gap-y-3 text-center text-base sm:text-lg font-medium px-2">
                                 <Link href="/histoire" className="hover:underline transition-all">Histoire</Link>
@@ -155,9 +150,25 @@ export function Navbar() {
                             />
 
                             {/* Panel */}
-                            <div className="fixed top-0 left-0 w-64 sm:w-80 h-full bg-[#faf5f1] dark:bg-black dark:text-white z-40 lg:hidden shadow-2xl">
-                                <div className="p-6 pt-20">
-                                    <div className="flex flex-col gap-6 text-lg">
+                            <div className="fixed top-0 left-0 w-64 sm:w-80 h-full bg-[#faf5f1] dark:bg-black dark:text-white z-40 lg:hidden shadow-2xl flex flex-col">
+
+                                {/* Bouton fermer */}
+                                <div className="flex items-center justify-between px-6 pt-6 pb-2">
+                                    <span className="text-sm font-medium text-[#24586f] dark:text-white">Menu</span>
+                                    <button
+                                        onClick={() => setIsMenuOpen(false)}
+                                        className="p-2 rounded hover:bg-[rgba(36,88,111,0.1)] dark:hover:bg-white/10 transition-colors"
+                                        aria-label="Fermer le menu"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#24586f] dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                {/* Liens */}
+                                <div className="p-6 pt-4 flex-1">
+                                    <div className="flex flex-col gap-2 text-lg">
                                         {navLinks.map((link) => (
                                             <Link
                                                 key={link.href}
@@ -170,25 +181,34 @@ export function Navbar() {
                                         ))}
                                     </div>
                                 </div>
+
+                                {/* Mentions légales */}
+                                <div className="px-6 pb-8 pt-4 text-right">
+                                    <Link
+                                        href="/mentions-legales"
+                                        className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 underline transition-colors"
+                                        onClick={() => setIsMenuOpen(false)}
+                                    >
+                                        Mentions légales
+                                    </Link>
+                                </div>
                             </div>
                         </>
                     )}
                 </div>
             </nav>
 
-            {/* ✅ Bouton toggle thème — fixe bas gauche */}
+            {/* Bouton toggle thème — fixe bas gauche */}
             <button
                 onClick={toggleTheme}
                 aria-label="Changer le thème"
                 className="fixed bottom-6 left-6 z-50 w-12 h-12 rounded-full bg-black dark:bg-white shadow-lg flex items-center justify-center hover:scale-110 transition-transform border border-white/20"
             >
                 {theme === "light" ? (
-                    // Lune
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
                     </svg>
                 ) : (
-                    // Soleil
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="12" cy="12" r="5" />
                         <line x1="12" y1="1" x2="12" y2="3" />
