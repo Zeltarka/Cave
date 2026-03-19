@@ -11,6 +11,9 @@ type ConfirmationModalProps = {
     confirm?: boolean;
     onConfirm?: () => void;
     confirmLabel?: string;
+    // Props legacy (ignorées, conservées pour compatibilité)
+    autoClose?: boolean;
+    autoCloseDelay?: number;
 };
 
 export default function ConfirmationModal({
