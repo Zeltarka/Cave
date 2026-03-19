@@ -1,5 +1,8 @@
-export function Page(){
-    <div>
-        <p>En écriture</p>
-    </div>
+export default function Page(){
+    return(
+        <div>
+            <p>En écriture</p>
+        </div>
+        )
+
 }
