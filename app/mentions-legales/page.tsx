@@ -1,8 +1,7 @@
-export default function Page(){
-    return(
+export default function Page() {
+    return (
         <div>
             <p>En écriture</p>
         </div>
-        )
-
+    );
 }
