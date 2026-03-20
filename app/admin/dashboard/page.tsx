@@ -27,9 +27,7 @@ function DashboardContent() {
     const [loading, setLoading] = useState(true);
     const [afficherHistorique, setAfficherHistorique] = useState(false);
 
-    useEffect(() => {
-        fetchStats();
-    }, []);
+    useEffect(() => { fetchStats(); }, []);
 
     const fetchStats = async () => {
         try {
@@ -46,11 +44,10 @@ function DashboardContent() {
     const getStatutColor = (statut: string) => {
         const colors: Record<string, string> = {
             en_attente: "bg-yellow-100 text-yellow-800",
-            payee: "bg-green-100 text-green-800",
-            preparee: "bg-blue-100 text-blue-800",
-            prete: "bg-purple-100 text-purple-800",
-            livree: "bg-gray-100 text-gray-800",
-            annulee: "bg-red-100 text-red-800",
+            payee:      "bg-green-100 text-green-800",
+            stockee:    "bg-purple-100 text-purple-800",
+            livree:     "bg-gray-100 text-gray-800",
+            annulee:    "bg-red-100 text-red-800",
         };
         return colors[statut.toLowerCase()] || "bg-gray-100 text-gray-800";
     };
@@ -58,11 +55,10 @@ function DashboardContent() {
     const getStatutLabel = (statut: string) => {
         const labels: Record<string, string> = {
             en_attente: "En attente",
-            payee: "Payée",
-            preparee: "En préparation",
-            prete: "Prête",
-            livree: "Livrée",
-            annulee: "Annulée",
+            payee:      "Payée",
+            stockee:    "Stockée",
+            livree:     "Livrée",
+            annulee:    "Annulée",
         };
         return labels[statut.toLowerCase()] || statut;
     };
@@ -70,8 +66,21 @@ function DashboardContent() {
     const commandesActives   = stats?.dernieresCommandes.filter(c => !STATUTS_ARCHIVES.includes(c.statut.toLowerCase())) ?? [];
     const commandesArchivees = stats?.dernieresCommandes.filter(c =>  STATUTS_ARCHIVES.includes(c.statut.toLowerCase())) ?? [];
 
+    const EnTete = () => (
+        <thead className="bg-gray-50">
+        <tr>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">N° Commande</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+        </tr>
+        </thead>
+    );
+
     const LigneCommande = ({ commande }: { commande: Commande }) => (
-        <tr key={commande.id} className="hover:bg-gray-50">
+        <tr className="hover:bg-gray-50">
             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                 #{commande.id}
             </td>
@@ -155,16 +164,7 @@ function DashboardContent() {
                             <div className="p-12 text-center text-gray-500">Aucune commande en cours</div>
                         ) : (
                             <table className="w-full">
-                                <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">N° Commande</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                                </thead>
+                                <EnTete />
                                 <tbody className="bg-white divide-y divide-gray-200">
                                 {commandesActives.map(c => <LigneCommande key={c.id} commande={c} />)}
                                 </tbody>
@@ -178,12 +178,12 @@ function DashboardContent() {
                     </div>
                 </div>
 
-                {/* Historique (livrées / annulées) */}
+                {/* Historique */}
                 {commandesArchivees.length > 0 && (
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100">
                         <button
                             onClick={() => setAfficherHistorique(prev => !prev)}
-                            className="w-full px-6 py-4 flex items-center justify-between text-left"
+                            className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
                         >
                             <span className="text-sm font-medium text-gray-500">
                                 Historique — {commandesArchivees.length} commande{commandesArchivees.length > 1 ? "s" : ""} livrée{commandesArchivees.length > 1 ? "s" : ""} ou annulée{commandesArchivees.length > 1 ? "s" : ""}
@@ -196,20 +196,10 @@ function DashboardContent() {
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                             </svg>
                         </button>
-
                         {afficherHistorique && (
                             <div className="border-t border-gray-100 overflow-x-auto">
                                 <table className="w-full">
-                                    <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">N° Commande</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                    </tr>
-                                    </thead>
+                                    <EnTete />
                                     <tbody className="bg-white divide-y divide-gray-200 opacity-70">
                                     {commandesArchivees.map(c => <LigneCommande key={c.id} commande={c} />)}
                                     </tbody>

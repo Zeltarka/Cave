@@ -157,12 +157,7 @@ function CommandeDetailContent() {
 
     const changerStatut = async (nouveauStatut: string) => {
         if (!commande || changingStatus) return;
-
-        if (nouveauStatut === "supprimer") {
-            supprimerCommande();
-            return;
-        }
-
+        if (nouveauStatut === "supprimer") { supprimerCommande(); return; }
         setChangingStatus(true);
         try {
             const res = await fetch(`/api/admin/commandes/${commande.id}`, {
@@ -204,9 +199,7 @@ function CommandeDetailContent() {
                     setDeleting(false);
                 }
             },
-            "Supprimer",
-            "Supprimer la commande",
-            "error"
+            "Supprimer", "Supprimer la commande", "error"
         );
     };
 
@@ -254,9 +247,7 @@ function CommandeDetailContent() {
                     setSendingEmail(null);
                 }
             },
-            "Envoyer",
-            "Envoyer la carte cadeau",
-            "success"
+            "Envoyer", "Envoyer la carte cadeau", "success"
         );
     };
 
@@ -267,6 +258,16 @@ function CommandeDetailContent() {
         try {
             const destinataire = produit.destinataire || `${commande.prenom} ${commande.nom}`;
             const idUnique = produit.carteCadeauId || generateCarteCadeauId(destinataire, produit.prix);
+
+            let conditions = "Cette carte cadeau est valable en boutique. Non remboursable, non échangeable contre des espèces.";
+            try {
+                const msgRes = await fetch("/api/admin/contenu/messages");
+                if (msgRes.ok) {
+                    const msgData = await msgRes.json();
+                    conditions = msgData.contenu?.email?.carte_cadeau_conditions || conditions;
+                }
+            } catch {}
+
             const pdfBytes = await generateCarteCadeauPDF(destinataire, produit.prix, produit.quantite, idUnique);
             const pdfBlob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
             const url = URL.createObjectURL(pdfBlob);
@@ -285,14 +286,14 @@ function CommandeDetailContent() {
         setPdfModalOpen(false);
     };
 
+    // ── Statuts cohérents ──────────────────────────────────
     const getStatutColor = (statut: string) => {
         const colors: Record<string, string> = {
             en_attente: "bg-yellow-100 text-yellow-800 border-yellow-300",
-            payee: "bg-green-100 text-green-800 border-green-300",
-            preparee: "bg-blue-100 text-blue-800 border-blue-300",
-            prete: "bg-purple-100 text-purple-800 border-purple-300",
-            livree: "bg-gray-100 text-gray-800 border-gray-300",
-            annulee: "bg-red-100 text-red-800 border-red-300",
+            payee:      "bg-green-100 text-green-800 border-green-300",
+            stockee:    "bg-purple-100 text-purple-800 border-purple-300",
+            livree:     "bg-gray-100 text-gray-800 border-gray-300",
+            annulee:    "bg-red-100 text-red-800 border-red-300",
         };
         return colors[statut.toLowerCase()] || "bg-gray-100 text-gray-800 border-gray-300";
     };
@@ -300,10 +301,10 @@ function CommandeDetailContent() {
     const getStatutLabel = (statut: string) => {
         const labels: Record<string, string> = {
             en_attente: "En attente",
-            payee: "Payée",
-            stockee: "Stockée",
-            livree: "Livrée",
-            annulee: "Annulée",
+            payee:      "Payée",
+            stockee:    "Stockée",
+            livree:     "Livrée",
+            annulee:    "Annulée",
         };
         return labels[statut.toLowerCase()] || statut;
     };
@@ -371,7 +372,6 @@ function CommandeDetailContent() {
                 confirmLabel={modalConfirmLabel}
             />
 
-            {/* Header */}
             <header className="bg-white shadow-sm border-b">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex justify-between items-center">
@@ -412,7 +412,6 @@ function CommandeDetailContent() {
                 </div>
             </header>
 
-            {/* Contenu */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 space-y-6">
@@ -425,7 +424,7 @@ function CommandeDetailContent() {
                                 </h2>
                                 <div className="space-y-3">
                                     {cartesCadeaux.map((carte, index) => {
-                                        const carteId   = `${carte.id}-${carte.destinataire || 'default'}`;
+                                        const carteId      = `${carte.id}-${carte.destinataire || 'default'}`;
                                         const isGenerating = generatingPDF === carteId;
                                         const isSending    = sendingEmail === carte.ligneId;
                                         const destinataire = carte.destinataire || `${commande.prenom} ${commande.nom}`;
@@ -433,10 +432,7 @@ function CommandeDetailContent() {
                                         const carteEnvoyee = carte.carteEnvoyee || false;
 
                                         return (
-                                            <div
-                                                key={index}
-                                                className="p-4 rounded-lg border border-gray-200 border-l-4 border-l-[#24586f]"
-                                            >
+                                            <div key={index} className="p-4 rounded-lg border border-gray-200 border-l-4 border-l-[#24586f]">
                                                 <div className="flex justify-between items-start gap-4">
                                                     <div className="flex-1">
                                                         <p className="font-medium text-gray-900 text-lg">

@@ -72,26 +72,20 @@ function CommandesContent() {
         setShowModal(true);
     };
 
-    useEffect(() => {
-        fetchCommandes();
-    }, []);
+    useEffect(() => { fetchCommandes(); }, []);
 
     const fetchCommandes = async () => {
         try {
             const res = await fetch("/api/admin/commandes");
             if (!res.ok) {
                 const errorData = await res.json();
-                afficherMessage(
-                    `Erreur ${res.status} : ${errorData.error || "Impossible de charger les commandes"}`,
-                    "error", "Erreur de chargement"
-                );
+                afficherMessage(`Erreur ${res.status} : ${errorData.error || "Impossible de charger les commandes"}`, "error", "Erreur de chargement");
                 setLoading(false);
                 return;
             }
             const data = await res.json();
             setCommandes(data);
         } catch (err) {
-            console.error("Erreur chargement commandes:", err);
             afficherMessage("Erreur de connexion au serveur", "error", "Erreur de connexion");
         } finally {
             setLoading(false);
@@ -143,10 +137,10 @@ function CommandesContent() {
     const getStatutColor = (statut: string) => {
         const colors: Record<string, string> = {
             en_attente: "bg-yellow-100 text-yellow-800 border-yellow-300",
-            payee: "bg-green-100 text-green-800 border-green-300",
-            stockee: "bg-purple-100 text-purple-800 border-purple-300",
-            livree: "bg-gray-100 text-gray-800 border-gray-300",
-            annulee: "bg-red-100 text-red-800 border-red-300",
+            payee:      "bg-green-100 text-green-800 border-green-300",
+            stockee:    "bg-purple-100 text-purple-800 border-purple-300",
+            livree:     "bg-gray-100 text-gray-800 border-gray-300",
+            annulee:    "bg-red-100 text-red-800 border-red-300",
         };
         return colors[statut.toLowerCase()] || "bg-gray-100 text-gray-800 border-gray-300";
     };
@@ -154,10 +148,10 @@ function CommandesContent() {
     const getStatutLabel = (statut: string) => {
         const labels: Record<string, string> = {
             en_attente: "En attente",
-            payee: "Payée",
-            stockee: "Stockée",
-            livree: "Livrée",
-            annulee: "Annulée",
+            payee:      "Payée",
+            stockee:    "Stockée",
+            livree:     "Livrée",
+            annulee:    "Annulée",
         };
         return labels[statut.toLowerCase()] || statut;
     };
@@ -167,7 +161,6 @@ function CommandesContent() {
 
     const statuts = ["TOUS", "en_attente", "payee", "stockee", "livree", "annulee"];
 
-    // Filtrage de base (recherche + filtre statut)
     const appliquerFiltres = (liste: Commande[]) => liste.filter(cmd => {
         const matchStatut = filtreStatut === "TOUS" || cmd.statut.toLowerCase() === filtreStatut.toLowerCase();
         const termeLower = recherche.toLowerCase();
@@ -224,7 +217,7 @@ function CommandesContent() {
                     >
                         <option value="en_attente">En attente</option>
                         <option value="payee">Payée</option>
-                        <option value="prete">Stockée</option>
+                        <option value="stockee">Stockée</option>
                         <option value="livree">Livrée</option>
                         <option value="annulee">Annulée</option>
                         <option disabled>──────────</option>
@@ -281,7 +274,6 @@ function CommandesContent() {
             </header>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                {/* Filtres */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -333,7 +325,7 @@ function CommandesContent() {
                     )}
                 </div>
 
-                {/* Historique (livrées / annulées) */}
+                {/* Historique */}
                 {commandesArchivees.length > 0 && (
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                         <button
