@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
-import { MentionsLegales } from "@/components/MentionsLegales"
+import { InformationsLegales } from "@/components/InformationsLegales"
 
 const montserrat = Montserrat({
     variable: "--font-montserrat",
@@ -35,7 +35,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             {children}
         </main>
 
-        <MentionsLegales />
+        <InformationsLegales />
 
         </body>
         </html>

@@ -185,11 +185,11 @@ export function Navbar() {
                                 {/* Mentions légales */}
                                 <div className="px-6 pb-8 pt-4 text-right">
                                     <Link
-                                        href="/mentions-legales"
+                                        href="/informations-legales"
                                         className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 underline transition-colors"
                                         onClick={() => setIsMenuOpen(false)}
                                     >
-                                        Mentions légales
+                                        Informations légales
                                     </Link>
                                 </div>
                             </div>
