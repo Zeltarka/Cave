@@ -54,6 +54,7 @@ export default function PanierPage() {
     const [modalTitle, setModalTitle] = useState("");
     const [modalMessage, setModalMessage] = useState("");
     const [commandeValidee, setCommandeValidee] = useState(false);
+    const [certifieMajeur, setCertifieMajeur] = useState(false);
     const { messages } = useMessages();
 
     const fetchPanier = async () => {
@@ -189,7 +190,11 @@ export default function PanierPage() {
     };
 
     const validerCommande = async () => {
-        // Champs communs obligatoires (incluant téléphone)
+        if (!certifieMajeur) {
+            setModalType("error"); setModalTitle("Erreur");
+            setModalMessage("Vous devez certifier être majeur pour passer commande.");
+            setModalOpen(true); return;
+        }
         if (!commande.nom || !commande.prenom || !commande.email || !commande.telephone) {
             setModalType("error"); setModalTitle("Erreur");
             setModalMessage("Merci de remplir tous les champs obligatoires (nom, prénom, email, téléphone)");
@@ -221,6 +226,7 @@ export default function PanierPage() {
                 await viderPanierBDD();
                 setPanier([]);
                 setAfficherCommande(false);
+                setCertifieMajeur(false);
                 setCommande({ nom: "", prenom: "", email: "", telephone: "", adresse: "", ville: "", codepostal: "", commentaires: "", modeLivraison: "retrait", modePaiement: "virement", datePassage: "" });
                 setCommandeValidee(true);
                 setModalType("success"); setModalTitle("Commande validée !");
@@ -468,7 +474,6 @@ export default function PanierPage() {
                                         <input name="prenom" placeholder="Prénom *" value={commande.prenom} onChange={handleChange} className={inputClass} />
                                     </div>
                                     <input name="email" type="email" placeholder="Adresse email *" value={commande.email} onChange={handleChange} className={inputClass} />
-                                    {/* Téléphone obligatoire */}
                                     <input name="telephone" type="tel" placeholder="Numéro de téléphone *" value={commande.telephone} onChange={handleChange} className={inputClass} />
                                     {commande.modeLivraison === "livraison" && (
                                         <>
@@ -535,10 +540,32 @@ export default function PanierPage() {
                                     </div>
                                 )}
 
+                                {/* Certification majorité */}
+                                <label className={`mt-6 flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                                    certifieMajeur
+                                        ? "border-[#24586f] bg-[#f1f5ff] dark:bg-[#1a2a35] dark:border-[#3a8fa8]"
+                                        : "border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-[#1a1d27]"
+                                }`}>
+                                    <input
+                                        type="checkbox"
+                                        checked={certifieMajeur}
+                                        onChange={(e) => setCertifieMajeur(e.target.checked)}
+                                        className="mt-0.5 w-4 h-4 text-[#24586f] focus:ring-[#24586f] rounded flex-shrink-0"
+                                    />
+                                    <span className="text-sm text-gray-700 dark:text-[#faf5f1]">
+                                        Je certifie être âgé(e) de 18 ans ou plus. La vente d'alcool est strictement réservée aux majeurs.
+                                        <span className="text-[#24586f] dark:text-[#3a8fa8] font-medium"> *</span>
+                                    </span>
+                                </label>
+
                                 <button
                                     onClick={() => { if (disabled) return; validerCommande(); }}
-                                    disabled={disabled}
-                                    className={`mt-6 w-full px-6 py-3 rounded-lg text-base sm:text-lg font-medium transition-colors ${disabled ? "bg-gray-400 cursor-not-allowed" : "bg-[#24586f] hover:bg-[#1a4457] cursor-pointer"} text-white border-none`}
+                                    disabled={disabled || !certifieMajeur}
+                                    className={`mt-4 w-full px-6 py-3 rounded-lg text-base sm:text-lg font-medium transition-colors border-none ${
+                                        disabled || !certifieMajeur
+                                            ? "bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                                            : "bg-[#24586f] hover:bg-[#1a4457] text-white cursor-pointer"
+                                    }`}
                                 >
                                     {disabled ? "Traitement en cours..." : "Valider la commande"}
                                 </button>

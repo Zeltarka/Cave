@@ -144,8 +144,7 @@ function CommandesContent() {
         const colors: Record<string, string> = {
             en_attente: "bg-yellow-100 text-yellow-800 border-yellow-300",
             payee: "bg-green-100 text-green-800 border-green-300",
-            preparee: "bg-blue-100 text-blue-800 border-blue-300",
-            prete: "bg-purple-100 text-purple-800 border-purple-300",
+            stockee: "bg-purple-100 text-purple-800 border-purple-300",
             livree: "bg-gray-100 text-gray-800 border-gray-300",
             annulee: "bg-red-100 text-red-800 border-red-300",
         };
@@ -156,8 +155,7 @@ function CommandesContent() {
         const labels: Record<string, string> = {
             en_attente: "En attente",
             payee: "Payée",
-            preparee: "En préparation",
-            prete: "Prête",
+            stockee: "Stockée",
             livree: "Livrée",
             annulee: "Annulée",
         };
@@ -167,7 +165,7 @@ function CommandesContent() {
     const getDestinataires = (panier: ProduitPanier[]): string[] =>
         panier.filter(p => p.destinataire).map(p => p.destinataire!);
 
-    const statuts = ["TOUS", "en_attente", "payee", "preparee", "prete", "livree", "annulee"];
+    const statuts = ["TOUS", "en_attente", "payee", "stockee", "livree", "annulee"];
 
     // Filtrage de base (recherche + filtre statut)
     const appliquerFiltres = (liste: Commande[]) => liste.filter(cmd => {
@@ -226,8 +224,7 @@ function CommandesContent() {
                     >
                         <option value="en_attente">En attente</option>
                         <option value="payee">Payée</option>
-                        <option value="preparee">En préparation</option>
-                        <option value="prete">Prête</option>
+                        <option value="prete">Stockée</option>
                         <option value="livree">Livrée</option>
                         <option value="annulee">Annulée</option>
                         <option disabled>──────────</option>

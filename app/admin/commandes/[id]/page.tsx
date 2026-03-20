@@ -301,15 +301,14 @@ function CommandeDetailContent() {
         const labels: Record<string, string> = {
             en_attente: "En attente",
             payee: "Payée",
-            preparee: "En préparation",
-            prete: "Prête",
+            stockee: "Stockée",
             livree: "Livrée",
             annulee: "Annulée",
         };
         return labels[statut.toLowerCase()] || statut;
     };
 
-    const statuts = ["en_attente", "payee", "preparee", "prete", "livree", "annulee"];
+    const statuts = ["en_attente", "payee", "stockee", "livree", "annulee"];
 
     if (loading) {
         return (
