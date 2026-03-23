@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import AdminGuard from "@/components/AdminGuard";
+import AdminNav from "@/components/AdminNav";
 import ConfirmationModal from "@/components/ConfirmationModal";
 
 type CarteCadeauContenu = {
@@ -134,10 +135,7 @@ function CarteCadeauAdminForm() {
             }
 
             afficherModal(message, "success");
-
-            setTimeout(() => {
-                resetFormulaire();
-            }, 2000);
+            setTimeout(() => { resetFormulaire(); }, 2000);
 
         } catch (err) {
             console.error("Erreur:", err);
@@ -162,20 +160,23 @@ function CarteCadeauAdminForm() {
         <div className="min-h-screen bg-gray-50">
             <header className="bg-white shadow-sm border-b sticky top-0 z-10">
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center gap-4">
                         <div>
                             <Link href="/admin/commandes" className="text-[#24586f] hover:text-[#1a4557] text-sm mb-2 inline-block font-medium">
-                                &larr; Retour aux commandes
+                                ← Retour aux commandes
                             </Link>
                             <h1 className="text-2xl font-bold text-[#24586f]">Créer une carte cadeau</h1>
                         </div>
-                        <button
-                            onClick={creerCartes}
-                            disabled={disabled || !formValide || !!commandeCreee}
-                            className="px-6 py-2.5 bg-[#24586f] text-white rounded-lg hover:bg-[#1a4557] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm"
-                        >
-                            {disabled ? "Création..." : `Créer ${cartes.length > 1 ? `${cartes.length} cartes` : "la carte"}`}
-                        </button>
+                        <div className="flex items-center gap-3 flex-wrap justify-end">
+                            <AdminNav />
+                            <button
+                                onClick={creerCartes}
+                                disabled={disabled || !formValide || !!commandeCreee}
+                                className="px-6 py-2.5 bg-[#24586f] text-white rounded-lg hover:bg-[#1a4557] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm"
+                            >
+                                {disabled ? "Création..." : `Créer ${cartes.length > 1 ? `${cartes.length} cartes` : "la carte"}`}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -205,18 +206,10 @@ function CarteCadeauAdminForm() {
                 )}
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
                     <div className="space-y-6">
                         {contenu?.image && (
                             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                                <Image
-                                    src={contenu.image}
-                                    alt="Carte cadeau"
-                                    width={500}
-                                    height={300}
-                                    className="w-full h-auto rounded-lg"
-                                    unoptimized
-                                />
+                                <Image src={contenu.image} alt="Carte cadeau" width={500} height={300} className="w-full h-auto rounded-lg" unoptimized />
                             </div>
                         )}
 
@@ -269,7 +262,6 @@ function CarteCadeauAdminForm() {
                     </div>
 
                     <div className="lg:col-span-2 space-y-4">
-
                         {cartes.map((carte, index) => {
                             const montantNum  = parseFloat(carte.montant) || 0;
                             const carteValide = carte.destinataire.trim() && montantNum >= montantMin;
@@ -279,9 +271,7 @@ function CarteCadeauAdminForm() {
                                     <div className="flex justify-between items-center mb-4">
                                         <h3 className="font-semibold text-[#24586f]">
                                             Carte {index + 1}
-                                            {carte.destinataire && (
-                                                <span className="font-normal text-gray-500 ml-2">- {carte.destinataire}</span>
-                                            )}
+                                            {carte.destinataire && <span className="font-normal text-gray-500 ml-2">- {carte.destinataire}</span>}
                                         </h3>
                                         {cartes.length > 1 && !commandeCreee && (
                                             <button onClick={() => supprimerCarte(carte.id)} className="text-red-400 hover:text-red-600 text-sm px-2 py-1 hover:bg-red-50 rounded transition-colors">
@@ -296,7 +286,6 @@ function CarteCadeauAdminForm() {
                                             <input type="text" value={carte.destinataire} onChange={e => updateCarte(carte.id, "destinataire", e.target.value)} maxLength={50} disabled={!!commandeCreee} className="w-full px-4 py-2.5 border-2 border-[#8ba9b7] rounded-lg focus:outline-none focus:border-[#24586f] focus:ring-2 focus:ring-[#24586f] disabled:bg-gray-50" />
                                             <p className="text-xs text-gray-400 mt-1">Apparaît sur la carte cadeau</p>
                                         </div>
-
                                         <div>
                                             <label className="block text-sm font-semibold text-gray-700 mb-2">Montant <span className="text-red-500">*</span></label>
                                             <div className="relative">

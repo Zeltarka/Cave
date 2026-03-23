@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import AdminGuard from "@/components/AdminGuard";
+import AdminNav from "@/components/AdminNav";
 import ConfirmationModal from "@/components/ConfirmationModal";
 
 type ProduitPanier = {
@@ -56,13 +57,7 @@ function CommandesContent() {
         setShowModal(true);
     };
 
-    const afficherConfirmation = (
-        msg: string,
-        onConfirm: () => void,
-        label = "Confirmer",
-        titre?: string,
-        type: "success" | "error" | "info" = "error"
-    ) => {
+    const afficherConfirmation = (msg: string, onConfirm: () => void, label = "Confirmer", titre?: string, type: "success" | "error" | "info" = "error") => {
         setModalType(type);
         setModalTitle(titre);
         setModalMessage(msg);
@@ -226,7 +221,7 @@ function CommandesContent() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                     <Link href={`/admin/commandes/${commande.id}`} className="text-[#24586f] hover:text-[#1a4557] font-medium">
-                        Détails &rarr;
+                        Détails →
                     </Link>
                 </td>
             </tr>
@@ -265,10 +260,11 @@ function CommandesContent() {
                     <div className="flex justify-between items-center">
                         <div>
                             <Link href="/admin/dashboard" className="text-[#24586f] hover:text-[#1a4557] text-sm mb-2 inline-block">
-                                &larr; Retour au dashboard
+                                ← Retour au dashboard
                             </Link>
                             <h1 className="text-2xl font-bold text-[#24586f]">Gestion des commandes</h1>
                         </div>
+                        <AdminNav />
                     </div>
                 </div>
             </header>
@@ -307,7 +303,6 @@ function CommandesContent() {
                     </div>
                 </div>
 
-                {/* Commandes actives */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-4">
                     {loading ? (
                         <div className="p-12 text-center text-gray-500">Chargement des commandes...</div>
@@ -325,7 +320,6 @@ function CommandesContent() {
                     )}
                 </div>
 
-                {/* Historique */}
                 {commandesArchivees.length > 0 && (
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                         <button
@@ -335,11 +329,7 @@ function CommandesContent() {
                             <span className="text-sm font-medium text-gray-500">
                                 Historique — {commandesArchivees.length} commande{commandesArchivees.length > 1 ? "s" : ""} livrée{commandesArchivees.length > 1 ? "s" : ""} ou annulée{commandesArchivees.length > 1 ? "s" : ""}
                             </span>
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className={`w-4 h-4 text-gray-400 transition-transform ${afficherHistorique ? "rotate-180" : ""}`}
-                                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                            >
+                            <svg xmlns="http://www.w3.org/2000/svg" className={`w-4 h-4 text-gray-400 transition-transform ${afficherHistorique ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                             </svg>
                         </button>

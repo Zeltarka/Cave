@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import AdminGuard from "@/components/AdminGuard";
+import AdminNav from "@/components/AdminNav";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { generateCarteCadeauId } from "@/lib/carte-cadeau-utils";
@@ -259,15 +260,6 @@ function CommandeDetailContent() {
             const destinataire = produit.destinataire || `${commande.prenom} ${commande.nom}`;
             const idUnique = produit.carteCadeauId || generateCarteCadeauId(destinataire, produit.prix);
 
-            let conditions = "Cette carte cadeau est valable en boutique. Non remboursable, non échangeable contre des espèces.";
-            try {
-                const msgRes = await fetch("/api/admin/contenu/messages");
-                if (msgRes.ok) {
-                    const msgData = await msgRes.json();
-                    conditions = msgData.contenu?.email?.carte_cadeau_conditions || conditions;
-                }
-            } catch {}
-
             const pdfBytes = await generateCarteCadeauPDF(destinataire, produit.prix, produit.quantite, idUnique);
             const pdfBlob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
             const url = URL.createObjectURL(pdfBlob);
@@ -286,7 +278,6 @@ function CommandeDetailContent() {
         setPdfModalOpen(false);
     };
 
-    // ── Statuts cohérents ──────────────────────────────────
     const getStatutColor = (statut: string) => {
         const colors: Record<string, string> = {
             en_attente: "bg-yellow-100 text-yellow-800 border-yellow-300",
@@ -325,7 +316,7 @@ function CommandeDetailContent() {
                 <div className="text-center">
                     <div className="text-red-600 mb-4">{error || "Commande non trouvée"}</div>
                     <Link href="/admin/commandes" className="text-[#24586f] hover:text-[#1a4557]">
-                        &larr; Retour aux commandes
+                        ← Retour aux commandes
                     </Link>
                 </div>
             </div>
@@ -374,10 +365,10 @@ function CommandeDetailContent() {
 
             <header className="bg-white shadow-sm border-b">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center gap-4">
                         <div>
                             <Link href="/admin/commandes" className="text-[#24586f] hover:text-[#1a4557] text-sm mb-2 inline-block">
-                                &larr; Retour aux commandes
+                                ← Retour aux commandes
                             </Link>
                             <h1 className="text-2xl font-bold text-[#24586f]">Commande #{commande.id}</h1>
                             <p className="text-sm text-gray-500 mt-1">
@@ -389,7 +380,8 @@ function CommandeDetailContent() {
                             </p>
                         </div>
 
-                        <div className="flex items-end gap-4">
+                        <div className="flex items-start gap-4 flex-wrap justify-end">
+                            <AdminNav />
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Statut</label>
                                 <select

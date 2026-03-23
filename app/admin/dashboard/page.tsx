@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import AdminGuard from "@/components/AdminGuard";
+import AdminNav from "@/components/AdminNav";
 
 type Stats = {
     commandesTotal: number;
@@ -122,23 +123,12 @@ function DashboardContent() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex justify-between items-center">
                         <h1 className="text-2xl font-bold text-[#24586f]">Dashboard Admin</h1>
-                        <div className="flex gap-4">
-                            <Link href="/admin/commandes" className="px-4 py-2 bg-[#24586f] text-white rounded-lg hover:bg-[#1a4557] transition-colors">
-                                Voir les commandes
-                            </Link>
-                            <Link href="/admin/contenu" className="px-4 py-2 bg-[#8ba9b7] text-white rounded-lg hover:bg-[#24586f] transition-colors">
-                                Modifier le contenu
-                            </Link>
-                            <Link href="/admin/carte-cadeau" className="px-4 py-2 bg-[#8ba9b7] text-white rounded-lg hover:bg-[#24586f] transition-colors">
-                                Carte Cadeau
-                            </Link>
-                        </div>
+                        <AdminNav />
                     </div>
                 </div>
             </header>
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                         <p className="text-sm text-gray-600 mb-1">Commandes totales</p>
@@ -154,7 +144,6 @@ function DashboardContent() {
                     </div>
                 </div>
 
-                {/* Commandes actives */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
                     <div className="px-6 py-4 border-b border-gray-100">
                         <h2 className="text-xl font-semibold text-[#24586f]">Dernières commandes</h2>
@@ -178,7 +167,6 @@ function DashboardContent() {
                     </div>
                 </div>
 
-                {/* Historique */}
                 {commandesArchivees.length > 0 && (
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100">
                         <button
@@ -188,11 +176,7 @@ function DashboardContent() {
                             <span className="text-sm font-medium text-gray-500">
                                 Historique — {commandesArchivees.length} commande{commandesArchivees.length > 1 ? "s" : ""} livrée{commandesArchivees.length > 1 ? "s" : ""} ou annulée{commandesArchivees.length > 1 ? "s" : ""}
                             </span>
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className={`w-4 h-4 text-gray-400 transition-transform ${afficherHistorique ? "rotate-180" : ""}`}
-                                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                            >
+                            <svg xmlns="http://www.w3.org/2000/svg" className={`w-4 h-4 text-gray-400 transition-transform ${afficherHistorique ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                             </svg>
                         </button>
