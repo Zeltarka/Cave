@@ -50,7 +50,7 @@ export default function MentionsLegalesPage() {
                                 <InfoTable rows={[
                                     ["Dénomination", "LA CAVE DE LA GARENNE"],
                                     ["Forme juridique", "Société à Responsabilité Limitée (SARL)"],
-                                    ["Capital social", "[MONTANT] € — à compléter (voir Kbis)"],
+                                    ["Capital social", "5000€"],
                                     ["SIRET", "830 461 612 00012"],
                                     ["N° TVA", "FR85 830 461 612"],
                                     ["RCS", "Nanterre 830 461 612"],
@@ -66,7 +66,7 @@ export default function MentionsLegalesPage() {
                                 <p>La vente de boissons alcoolisées est une activité réglementée soumise à autorisation.</p>
                                 <InfoTable rows={[
                                     ["Licence", "Licence de débit de boissons à emporter"],
-                                    ["Autorité", "[Mairie de La Garenne-Colombes ou Préfecture des Hauts-de-Seine — à confirmer]"],
+                                    ["Autorité", "Mairie de La Garenne-Colombes"],
                                 ]} />
                             </Section>
 
@@ -128,11 +128,11 @@ export default function MentionsLegalesPage() {
                             <Section titre="Article 6 — Livraison">
                                 <InfoTable rows={[
                                     ["Zone", "France métropolitaine uniquement"],
-                                    ["Délai", "Maximum 1 mois à compter de la confirmation de commande"],
+                                    ["Délai", "Entre 3 et 10 jours ouvrés à compter de la confirmation de commande"],
                                     ["Retrait boutique", "Gratuit — 3 rue Voltaire, 92250 La Garenne-Colombes"],
                                     ["Frais de port", "Calculés selon le nombre de bouteilles, affichés lors de la commande"],
                                 ]} />
-                                <p className="mt-4">En cas de colis endommagé, l'Acheteur doit émettre des réserves auprès du transporteur et contacter le Vendeur dans les 48 heures à <a href="mailto:boutique@lacavelagarenne.fr" className="text-[#24586f] dark:text-[#3a8fa8] underline">boutique@lacavelagarenne.fr</a>.</p>
+                                <p className="mt-4">En fonction de la valeur de la commande, le Vendeur contracte une assurance de transport dédiée à chaque envoi.</p>
                             </Section>
 
                             <Section titre="Article 7 — Droit de rétractation">
@@ -142,7 +142,7 @@ export default function MentionsLegalesPage() {
 
                             <Section titre="Article 8 — Garanties légales">
                                 <p>En cas de produit défectueux ou d'erreur de livraison, l'Acheteur bénéficie de la garantie légale de conformité (articles L. 217-4 et suivants du Code de la consommation) et de la garantie contre les vices cachés (articles 1641 et suivants du Code civil).</p>
-                                <p className="mt-3">Pour faire valoir ces garanties, contacter le Vendeur à <a href="mailto:boutique@lacavelagarenne.fr" className="text-[#24586f] dark:text-[#3a8fa8] underline">boutique@lacavelagarenne.fr</a> dans les 48 heures suivant la réception, avec photos à l'appui.</p>
+                                <p className="mt-3">Pour faire valoir ces garanties, contacter le Vendeur à <a href="mailto:boutique@lacavelagarenne.fr" className="text-[#24586f] dark:text-[#3a8fa8] underline">boutique@lacavelagarenne.fr</a> dans les 48 heures suivant la réception, avec photos à l'appui. L'Acheteur devra également effectuer le retour du produit défaillant ou bouché, accompagné impérativement du bouchon d'origine.</p>
                             </Section>
 
                             <Section titre="Article 9 — Responsabilité">
