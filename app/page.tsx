@@ -21,7 +21,7 @@ export default function Home() {
 
     const srcDesktop = contenu?.image_principale
         ? (contenu.image_principale.startsWith("http") ? contenu.image_principale : `/${contenu.image_principale}`)
-        : "/main.jpg";
+        : null;
 
     const srcMobile = contenu?.image_mobile
         ? (contenu.image_mobile.startsWith("http") ? contenu.image_mobile : `/${contenu.image_mobile}`)
@@ -38,15 +38,17 @@ export default function Home() {
                         {contenu!.texte_bandeau}
                     </div>
                 )}
-                <Image
-                    src={srcDesktop}
-                    fill
-                    priority
-                    alt={contenu?.alt || "La Cave - Caviste à La Garenne-Colombes"}
-                    className="object-cover object-[center_top]"
-                    sizes="100vw"
-                    unoptimized={!!contenu?.image_principale}
-                />
+                {srcDesktop && (
+                    <Image
+                        src={srcDesktop}
+                        fill
+                        priority
+                        alt={contenu?.alt || "La Cave - Caviste à La Garenne-Colombes"}
+                        className="object-cover object-[center_top]"
+                        sizes="100vw"
+                        unoptimized={!!contenu?.image_principale}
+                    />
+                )}
             </div>
 
             {/* Image mobile */}
@@ -56,15 +58,17 @@ export default function Home() {
                         {contenu!.texte_bandeau}
                     </div>
                 )}
-                <Image
-                    src={srcMobile}
-                    fill
-                    priority
-                    alt={contenu?.alt || "La Cave - Caviste à La Garenne-Colombes"}
-                    className="object-cover object-[center_top]"
-                    sizes="100vw"
-                    unoptimized={!!contenu?.image_mobile}
-                />
+                {srcMobile && (
+                    <Image
+                        src={srcMobile}
+                        fill
+                        priority
+                        alt={contenu?.alt || "La Cave - Caviste à La Garenne-Colombes"}
+                        className="object-cover object-[center_top]"
+                        sizes="100vw"
+                        unoptimized={!!contenu?.image_mobile}
+                    />
+                )}
             </div>
         </div>
     );
