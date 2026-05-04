@@ -172,7 +172,7 @@ function NouveauProduitForm() {
 
                     <div className="pt-4 rounded-lg p-4">
                         <p className="text-sm text-[#24586f] font-medium">Après création</p>
-                        <p className="text-sm text-gray-600 mt-1">Vous serez redirigé(e) vers l'éditeur pour ajouter l'image et la description. Le produit sera visible dans la boutique dès la première sauvegarde.</p>
+                        <p className="text-sm text-gray-600 mt-1">Vous serez redirigé vers l'éditeur pour ajouter l'image et la description. Le produit sera visible dans la boutique dès la première sauvegarde.</p>
                     </div>
                 </div>
             </main>
