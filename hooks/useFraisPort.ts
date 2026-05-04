@@ -1,39 +1,45 @@
 // hooks/useFraisPort.ts
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
-type FraisPort = {
+export type FraisPortTranche = {
     id: string;
     bouteilles_min: number;
-    bouteilles_max: number;
     frais: number;
 };
 
-export function useFraisPort() {
-    const [fraisPort, setFraisPort] = useState<FraisPort[]>([]);
-    const [loading, setLoading] = useState(true);
+type UseFraisPortResult = {
+    tranches: FraisPortTranche[];
+    maxBouteilles: number;
+    paliers: number[];
+    loading: boolean;
+};
+
+/**
+ * Charge les tranches de frais de port et en déduit :
+ *   - maxBouteilles  : la valeur bouteilles_min la plus haute
+ *   - paliers        : [6, 12, ..., maxBouteilles]
+ */
+export function useFraisPort(): UseFraisPortResult {
+    const [tranches, setTranches]   = useState<FraisPortTranche[]>([]);
+    const [loading, setLoading]     = useState(true);
 
     useEffect(() => {
-        fetch("/api/admin/frais-port")
-            .then(res => res.json())
+        fetch("/api/frais-port")
+            .then(r => r.json())
             .then(data => {
-                setFraisPort(data);
-                setLoading(false);
+                const arr: FraisPortTranche[] = Array.isArray(data) ? data : data.frais ?? [];
+                setTranches(arr);
             })
-            .catch(err => {
-                console.error("Erreur chargement frais de port:", err);
-                setLoading(false);
-            });
+            .catch(() => {})
+            .finally(() => setLoading(false));
     }, []);
 
-    const calculerFrais = (nombreBouteilles: number): number => {
-        if (nombreBouteilles === 0) return 0;
+    const maxBouteilles = tranches.length > 0
+        ? Math.max(...tranches.map(t => t.bouteilles_min))
+        : 24; // valeur par défaut si l'API n'a pas encore répondu
 
-        const tranche = fraisPort.find(
-            f => nombreBouteilles >= f.bouteilles_min && nombreBouteilles <= f.bouteilles_max
-        );
+    const paliers: number[] = [];
+    for (let i = 6; i <= maxBouteilles; i += 6) paliers.push(i);
 
-        return tranche ? tranche.frais : 0;
-    };
-
-    return { fraisPort, calculerFrais, loading };
+    return { tranches, maxBouteilles, paliers, loading };
 }

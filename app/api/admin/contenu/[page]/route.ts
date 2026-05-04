@@ -7,7 +7,38 @@ const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+export async function DELETE(
+    req: NextRequest,
+    { params }: { params: Promise<{ page: string }> }
+) {
+    const auth = await checkAdminAuth();
+    if (!auth.authorized) return auth.response;
 
+    try {
+        const { page: pageName } = await params;
+        console.log(`🗑️  Suppression page: ${pageName}`);
+
+        const { error } = await supabaseAdmin
+            .from("contenu")
+            .delete()
+            .eq("page", pageName);
+
+        if (error) {
+            console.error("❌ Erreur suppression:", error);
+            throw error;
+        }
+
+        console.log(`✅ Page ${pageName} supprimée`);
+        return NextResponse.json({ success: true });
+
+    } catch (error) {
+        console.error("❌ Erreur suppression contenu:", error);
+        return NextResponse.json(
+            { error: "Erreur serveur" },
+            { status: 500 }
+        );
+    }
+}
 export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ page: string }> }

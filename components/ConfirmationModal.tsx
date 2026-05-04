@@ -7,11 +7,9 @@ type ConfirmationModalProps = {
     type?: "success" | "error" | "info";
     title?: string;
     message: string;
-    // Mode confirmation : affiche Annuler + Confirmer au lieu de Fermer
     confirm?: boolean;
     onConfirm?: () => void;
     confirmLabel?: string;
-    // Props legacy (ignorées, conservées pour compatibilité)
     autoClose?: boolean;
     autoCloseDelay?: number;
 };
@@ -56,38 +54,30 @@ export default function ConfirmationModal({
 
     return (
         <>
-            {/* Overlay */}
-            <div
-                className="fixed inset-0 bg-black/50 z-50 animate-fadeIn"
-                onClick={onClose}
-            />
+            <div className="fixed inset-0 bg-black/50 z-50 animate-fadeIn" onClick={onClose} />
 
-            {/* Modal */}
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
                 <div
                     className={`${style.bg} ${style.border} border-2 rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 pointer-events-auto animate-slideUp`}
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {/* Icône */}
                     <div className="flex justify-center mb-4">
                         <div className={`${style.iconBg} w-16 h-16 rounded-full flex items-center justify-center`}>
                             <span className="text-white text-3xl font-bold">{style.icon}</span>
                         </div>
                     </div>
 
-                    {/* Titre */}
                     {title && (
                         <h2 className={`text-2xl font-bold text-center ${style.text} mb-4`}>
                             {title}
                         </h2>
                     )}
 
-                    {/* Message */}
-                    <p className={`text-center ${style.text} text-base sm:text-lg leading-relaxed mb-6`}>
+                    {/* whitespace-pre-line permet d'afficher les \n comme des sauts de ligne */}
+                    <p className={`text-center ${style.text} text-base sm:text-lg leading-relaxed mb-6 whitespace-pre-line`}>
                         {message}
                     </p>
 
-                    {/* Boutons */}
                     {confirm ? (
                         <div className="flex gap-3">
                             <button
@@ -115,14 +105,8 @@ export default function ConfirmationModal({
             </div>
 
             <style jsx>{`
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-                @keyframes slideUp {
-                    from { opacity: 0; transform: translateY(20px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
                 .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
                 .animate-slideUp { animation: slideUp 0.3s ease-out; }
             `}</style>

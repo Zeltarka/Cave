@@ -27,16 +27,31 @@ async function getMessages(): Promise<Messages | null> {
             .select("contenu")
             .eq("page", "messages-systeme")
             .single();
-
-        if (error) {
-            console.error("⚠️  Erreur récupération messages:", error);
-            return null;
-        }
-
+        if (error) return null;
         return data.contenu as Messages;
-    } catch (err) {
-        console.error("⚠️  Erreur récupération messages:", err);
+    } catch {
         return null;
+    }
+}
+
+/**
+ * Récupère le maximum de bouteilles autorisé en prenant
+ * le bouteilles_min le plus élevé dans la table frais_port.
+ * Fallback à 24 si la table est vide ou inaccessible.
+ */
+async function getMaxBouteilles(): Promise<number> {
+    try {
+        const { data, error } = await supabase
+            .from("frais_port")
+            .select("bouteilles_min")
+            .order("bouteilles_min", { ascending: false })
+            .limit(1)
+            .single();
+
+        if (error || !data) return 24;
+        return data.bouteilles_min as number;
+    } catch {
+        return 24;
     }
 }
 
@@ -53,9 +68,6 @@ async function getSessionId(): Promise<string> {
             sameSite: "lax",
             secure: process.env.NODE_ENV === "production",
         });
-        console.log("🆕 Nouvelle session créée:", sessionId);
-    } else {
-        console.log("♻️ Session existante:", sessionId);
     }
 
     return sessionId;
@@ -63,7 +75,6 @@ async function getSessionId(): Promise<string> {
 
 export async function GET() {
     try {
-        console.log("📥 GET /api/commandes");
         const sessionId = await getSessionId();
 
         const { data, error } = await supabase
@@ -72,46 +83,38 @@ export async function GET() {
             .eq("session_id", sessionId);
 
         if (error) {
-            console.error("❌ Erreur Supabase GET:", error);
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
-        console.log(`✅ GET réussi: ${data.length} produits`);
-
-        const panier = data.map((item) => ({
-            id: item.produit_id,
-            produit: item.produit,
-            quantite: item.quantite,
-            prix: item.prix,
+        const panier = data.map(item => ({
+            id:           item.produit_id,
+            produit:      item.produit,
+            quantite:     item.quantite,
+            prix:         item.prix,
             destinataire: item.destinataire,
+            type:         item.type,
         }));
 
         return NextResponse.json(panier);
     } catch (error) {
-        console.error("💥 Erreur GET:", error);
         return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
     }
 }
 
 export async function POST(req: Request) {
     try {
-        console.log("📤 POST /api/commandes");
-
         const produit: ProduitPanier = await req.json();
-        console.log("📦 Produit reçu:", produit);
-
         const sessionId = await getSessionId();
-        console.log("🔑 Session:", sessionId);
 
         if (!produit.id || !produit.produit || produit.quantite === undefined || produit.prix === undefined) {
-            console.error("❌ Données invalides:", produit);
             const messages = await getMessages();
-            const errorMessage = messages?.panier.ajout_erreur || "Données invalides";
-            return NextResponse.json({ error: errorMessage }, { status: 400 });
+            return NextResponse.json(
+                { error: messages?.panier.ajout_erreur || "Données invalides" },
+                { status: 400 }
+            );
         }
 
         if (produit.quantite <= 0) {
-            console.log("🗑️ Suppression (quantité = 0)");
             const { error } = await supabase
                 .from("panier")
                 .delete()
@@ -119,97 +122,94 @@ export async function POST(req: Request) {
                 .eq("produit_id", produit.id);
 
             if (error) {
-                console.error("❌ Erreur suppression:", error);
                 const messages = await getMessages();
-                const errorMessage = messages?.panier.ajout_erreur || error.message;
-                return NextResponse.json({ error: errorMessage }, { status: 500 });
+                return NextResponse.json({ error: messages?.panier.ajout_erreur || error.message }, { status: 500 });
             }
-
-            console.log("✅ Suppression réussie");
             return NextResponse.json({ ok: true });
         }
 
-        // ✅ Vérification du total combiné champagne + rosé (max 24)
+        // Vérification du quota bouteilles uniquement pour les produits de type bouteille
+        const estBouteille = produit.id === "champagne" || produit.id === "rose" ||
+            (produit as any).type === "bouteille";
+
         let nouvelleQuantite = produit.quantite;
 
-        if (produit.id === "champagne" || produit.id === "rose") {
-            const autreId = produit.id === "champagne" ? "rose" : "champagne";
+        if (estBouteille) {
+            // Récupère le max dynamiquement depuis la table frais_port
+            const maxBouteilles = await getMaxBouteilles();
 
-            const { data: autreData } = await supabase
+            // Récupère la somme de toutes les autres bouteilles dans le panier
+            const { data: autresData } = await supabase
                 .from("panier")
-                .select("quantite")
+                .select("quantite, produit_id")
                 .eq("session_id", sessionId)
-                .eq("produit_id", autreId)
-                .single();
+                .neq("produit_id", produit.id);
 
-            const quantiteAutre = autreData?.quantite || 0;
-            const totalCombine = quantiteAutre + nouvelleQuantite;
+            // On filtre côté JS les lignes qui sont des bouteilles
+            // (type "bouteille", "champagne" ou "rose")
+            const quantiteAutres = (autresData ?? [])
+                .filter((row: any) =>
+                    row.type === "bouteille" ||
+                    row.produit_id === "champagne" ||
+                    row.produit_id === "rose"
+                )
+                .reduce((sum: number, row: any) => sum + row.quantite, 0);
 
-            if (totalCombine > 24) {
-                nouvelleQuantite = Math.max(0, 24 - quantiteAutre);
-                console.log(`⚠️ Cap 24 bouteilles: ${quantiteAutre} (${autreId}) + ${produit.quantite} > 24, ajusté à ${nouvelleQuantite}`);
+            const totalCombine = quantiteAutres + nouvelleQuantite;
+
+            if (totalCombine > maxBouteilles) {
+                nouvelleQuantite = Math.max(0, maxBouteilles - quantiteAutres);
             }
 
             if (nouvelleQuantite <= 0) {
-                return NextResponse.json({
-                    error: "Maximum 24 bouteilles combinées (champagne + rosé)",
-                    maxAtteint: true
-                }, { status: 400 });
+                return NextResponse.json(
+                    {
+                        error: `Maximum ${maxBouteilles} bouteilles combinées`,
+                        maxAtteint: true,
+                    },
+                    { status: 400 }
+                );
             }
         }
 
         const dataToInsert = {
-            session_id: sessionId,
-            produit_id: produit.id,
-            produit: produit.produit,
-            quantite: nouvelleQuantite,
-            prix: parseFloat(produit.prix.toString()),
+            session_id:   sessionId,
+            produit_id:   produit.id,
+            produit:      produit.produit,
+            quantite:     nouvelleQuantite,
+            prix:         parseFloat(produit.prix.toString()),
             destinataire: produit.destinataire || null,
+            type:         (produit as any).type || null,
         };
-
-        console.log("💾 Données à insérer:", dataToInsert);
 
         const { data, error } = await supabase
             .from("panier")
-            .upsert(dataToInsert, {
-                onConflict: "session_id,produit_id",
-            })
+            .upsert(dataToInsert, { onConflict: "session_id,produit_id" })
             .select();
 
         if (error) {
-            console.error("❌ Erreur Supabase UPSERT:", JSON.stringify(error, null, 2));
             const messages = await getMessages();
-            const errorMessage = messages?.panier.ajout_erreur || error.message;
-            return NextResponse.json({
-                error: errorMessage,
-                details: error.details,
-                hint: error.hint,
-                code: error.code,
-            }, { status: 500 });
+            return NextResponse.json(
+                { error: messages?.panier.ajout_erreur || error.message, details: error.details },
+                { status: 500 }
+            );
         }
 
-        console.log("✅ UPSERT réussi:", data);
         return NextResponse.json({ ok: true, data, quantiteFinale: nouvelleQuantite });
 
     } catch (error: any) {
-        console.error("💥 Erreur POST:", error);
         const messages = await getMessages();
-        const errorMessage = messages?.panier.ajout_erreur || "Erreur serveur";
-        return NextResponse.json({
-            error: errorMessage,
-            message: error.message,
-        }, { status: 500 });
+        return NextResponse.json(
+            { error: messages?.panier.ajout_erreur || "Erreur serveur", message: error.message },
+            { status: 500 }
+        );
     }
 }
 
 export async function DELETE(req: Request) {
     try {
-        console.log("🗑️ DELETE /api/commandes");
-
         const { id }: { id: string } = await req.json();
         const sessionId = await getSessionId();
-
-        console.log(`Suppression produit ${id} pour session ${sessionId}`);
 
         const { error } = await supabase
             .from("panier")
@@ -218,19 +218,14 @@ export async function DELETE(req: Request) {
             .eq("produit_id", id);
 
         if (error) {
-            console.error("❌ Erreur Supabase DELETE:", error);
             const messages = await getMessages();
-            const errorMessage = messages?.panier.ajout_erreur || error.message;
-            return NextResponse.json({ error: errorMessage }, { status: 500 });
+            return NextResponse.json({ error: messages?.panier.ajout_erreur || error.message }, { status: 500 });
         }
 
-        console.log("✅ DELETE réussi");
         return NextResponse.json({ ok: true });
 
     } catch (error) {
-        console.error("💥 Erreur DELETE:", error);
         const messages = await getMessages();
-        const errorMessage = messages?.panier.ajout_erreur || "Erreur serveur";
-        return NextResponse.json({ error: errorMessage }, { status: 500 });
+        return NextResponse.json({ error: messages?.panier.ajout_erreur || "Erreur serveur" }, { status: 500 });
     }
 }

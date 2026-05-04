@@ -19,8 +19,8 @@ type BoutiqueContenu = {
 
 export default function Boutique() {
     const [hoverIndex, setHoverIndex] = useState<number | null>(null);
-    const [contenu, setContenu] = useState<BoutiqueContenu | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [contenu, setContenu]       = useState<BoutiqueContenu | null>(null);
+    const [loading, setLoading]       = useState(true);
 
     useEffect(() => {
         fetch("/api/admin/contenu/boutique")
@@ -66,11 +66,11 @@ export default function Boutique() {
                     {contenu.description}
                 </p>
 
-                <div className="flex flex-col sm:flex-row justify-center items-center gap-8 sm:gap-12 lg:gap-20 xl:gap-32 w-full max-w-7xl mx-auto">
+                <div className="flex flex-wrap justify-center gap-8 w-full max-w-6xl mx-auto">
                     {contenu.produits.map((produit, index) => (
-                        <Link key={index} href={produit.lien} className="w-full sm:w-auto flex justify-center">
+                        <Link key={index} href={produit.lien} className="flex justify-center">
                             <div
-                                className="relative w-full max-w-[280px] sm:max-w-[320px] lg:w-[350px] xl:w-[400px] h-[380px] sm:h-[420px] lg:h-[480px] xl:h-[550px] border border-[#24586f] rounded-[20px] overflow-hidden cursor-pointer transition-all duration-400 hover:shadow-[0_10px_20px_rgba(36,88,111,0.3)]"
+                                className="relative w-[320px] h-[480px] border border-[#24586f] rounded-[20px] overflow-hidden cursor-pointer transition-all duration-400 hover:shadow-[0_10px_20px_rgba(36,88,111,0.3)]"
                                 onMouseEnter={() => setHoverIndex(index)}
                                 onMouseLeave={() => setHoverIndex(null)}
                             >
@@ -79,18 +79,17 @@ export default function Boutique() {
                                     alt={produit.nom}
                                     fill
                                     className="object-cover"
-                                    sizes="(max-width: 640px) 280px, (max-width: 1024px) 320px, (max-width: 1280px) 350px, 400px"
+                                    sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 320px"
                                 />
 
-                                {/* Overlay hover */}
                                 <div className={`absolute inset-0 flex flex-col justify-center items-center bg-white/90 dark:bg-[#0f1117]/90 transition-opacity duration-700 ${hoverIndex === index ? "opacity-90" : "opacity-0"}`}>
                                     {produit.disponible === false && (
-                                        <div className="absolute top-4 right-4 bg-red-600 text-white font-bold text-base sm:text-lg px-4 py-2 rounded-lg mb-4">
+                                        <div className="absolute top-4 right-4 bg-red-600 text-white font-bold text-base px-4 py-2 rounded-lg">
                                             INDISPONIBLE
                                         </div>
                                     )}
-                                    <span className="font-bold text-lg sm:text-xl text-black dark:text-[#faf5f1] text-center px-4">
-                                        {produit.nom} <br /> {produit.prix.toFixed(2)}€
+                                    <span className="font-bold text-xl text-black dark:text-[#faf5f1] text-center px-4">
+                                        {produit.nom} <br /> {produit.prix.toFixed(2)} €
                                     </span>
                                 </div>
                             </div>
