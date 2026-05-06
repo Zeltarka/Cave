@@ -50,11 +50,13 @@ export default function PanierPage() {
     const [commandeValidee, setCommandeValidee]   = useState(false);
     const [certifieMajeur, setCertifieMajeur]     = useState(false);
 
-    const { messages }               = useMessages();
-    const { maxBouteilles, paliers } = useFraisPort();
+    const { messages } = useMessages();
+    const { maxBouteilles, paliersBouteilles, maxBagInBox, paliersBagInBox } = useFraisPort();
 
     const isBouteilleItem = (p: Produit) =>
         p.type === "bouteille" || p.id === "champagne" || p.id === "rose";
+
+    const isBagInBoxItem = (p: Produit) => p.type === "bag-in-box";
 
     const fetchPanier = async () => {
         try {
@@ -101,37 +103,61 @@ export default function PanierPage() {
     }, [afficherCommande, afficherDate]);
 
     const nombreBouteilles = panier.filter(p => isBouteilleItem(p)).reduce((sum, p) => sum + p.quantite, 0);
+    const nombreBagInBox   = panier.filter(p => isBagInBoxItem(p)).reduce((sum, p) => sum + p.quantite, 0);
 
     useEffect(() => {
         const fetchFraisPort = async () => {
-            if (commande.modeLivraison === "livraison" && nombreBouteilles > 0) {
+            if (commande.modeLivraison !== "livraison") { setFraisPort(0); return; }
+
+            let total = 0;
+
+            if (nombreBouteilles > 0) {
                 try {
-                    const res  = await fetch(`/api/frais-port?nombre=${nombreBouteilles}`);
+                    const res  = await fetch(`/api/admin/frais-port?nombre=${nombreBouteilles}&type=bouteille`);
                     const data = await res.json();
-                    setFraisPort(data.frais || 0);
-                } catch { setFraisPort(0); }
-            } else {
-                setFraisPort(0);
+                    total += data.frais || 0;
+                } catch {}
             }
+
+            if (nombreBagInBox > 0) {
+                try {
+                    const res  = await fetch(`/api/admin/frais-port?nombre=${nombreBagInBox}&type=bag_in_box`);
+                    const data = await res.json();
+                    total += data.frais || 0;
+                } catch {}
+            }
+
+            setFraisPort(total);
         };
         fetchFraisPort();
-    }, [commande.modeLivraison, nombreBouteilles]);
+    }, [commande.modeLivraison, nombreBouteilles, nombreBagInBox]);
 
     const maxQuantite = (produit: Produit) => {
         if (produit.id.includes("carte-cadeau")) return 10;
-        if (isBouteilleItem(produit)) return maxBouteilles;
-        return 999;
+        if (isBouteilleItem(produit))            return maxBouteilles;
+        if (isBagInBoxItem(produit))             return maxBagInBox;
+        return 99;
     };
 
-    const getQuantitesDisponibles = (produit: Produit) => {
+    const getQuantitesDisponibles = (produit: Produit): number[] => {
         if (produit.id.includes("carte-cadeau"))
             return Array.from({ length: 10 }, (_, i) => i + 1);
+
         if (isBouteilleItem(produit)) {
             const autresBouteilles = panier
                 .filter(p => isBouteilleItem(p) && p.id !== produit.id)
                 .reduce((sum, p) => sum + p.quantite, 0);
-            return paliers.filter(qty => qty <= maxBouteilles - autresBouteilles);
+            return paliersBouteilles.filter(qty => qty <= maxBouteilles - autresBouteilles);
         }
+
+        if (isBagInBoxItem(produit)) {
+            const autresBagInBox = panier
+                .filter(p => isBagInBoxItem(p) && p.id !== produit.id)
+                .reduce((sum, p) => sum + p.quantite, 0);
+            return paliersBagInBox.filter(qty => qty <= maxBagInBox - autresBagInBox);
+        }
+
+        // libre
         return Array.from({ length: 99 }, (_, i) => i + 1);
     };
 
@@ -142,11 +168,23 @@ export default function PanierPage() {
     const changerQuantite = async (id: string, nouvelleQuantite: number) => {
         const produit = panier.find(p => p.id === id);
         if (!produit) return;
+
         if (isBouteilleItem(produit)) {
-            const autresBouteilles = panier.filter(p => isBouteilleItem(p) && p.id !== id).reduce((sum, p) => sum + p.quantite, 0);
+            const autresBouteilles = panier
+                .filter(p => isBouteilleItem(p) && p.id !== id)
+                .reduce((sum, p) => sum + p.quantite, 0);
             if (autresBouteilles + nouvelleQuantite > maxBouteilles)
                 nouvelleQuantite = Math.max(0, maxBouteilles - autresBouteilles);
         }
+
+        if (isBagInBoxItem(produit)) {
+            const autresBagInBox = panier
+                .filter(p => isBagInBoxItem(p) && p.id !== id)
+                .reduce((sum, p) => sum + p.quantite, 0);
+            if (autresBagInBox + nouvelleQuantite > maxBagInBox)
+                nouvelleQuantite = Math.max(0, maxBagInBox - autresBagInBox);
+        }
+
         const quantite = Math.max(0, Math.min(nouvelleQuantite, maxQuantite(produit)));
         setPanier(prev => prev.map(p => p.id === id ? { ...p, quantite } : p));
         try {
@@ -246,6 +284,17 @@ export default function PanierPage() {
                             </div>
                         )}
 
+                        {nombreBagInBox >= maxBagInBox && (
+                            <div className="mb-6 p-4 bg-[#f1f5ff] dark:bg-[#1a1d27] border-2 border-[#24586f] dark:border-[#3a8fa8] rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                <p className="text-[#24586f] dark:text-[#3a8fa8] font-medium">
+                                    Vous avez atteint le maximum de {maxBagInBox} L en bag in box. Pour une commande plus importante, contactez-nous.
+                                </p>
+                                <Link href="/contact" className="flex-shrink-0 px-4 py-2 bg-[#24586f] text-white rounded-lg hover:bg-[#1a4557] transition-colors font-medium text-sm">
+                                    Nous contacter
+                                </Link>
+                            </div>
+                        )}
+
                         {/* ── Tableau desktop ── */}
                         <div className="hidden md:block overflow-x-auto">
                             <table className="w-full border-collapse">
@@ -273,7 +322,7 @@ export default function PanierPage() {
                                             <div className="flex items-center justify-center gap-2">
                                                 {produit.id.includes("carte-cadeau") ? (
                                                     <span className="text-base font-semibold">{produit.quantite}</span>
-                                                ) : isBouteilleItem(produit) ? (
+                                                ) : isBouteilleItem(produit) || isBagInBoxItem(produit) ? (
                                                     <select
                                                         value={produit.quantite}
                                                         onChange={e => changerQuantite(produit.id, parseInt(e.target.value))}
@@ -334,7 +383,7 @@ export default function PanierPage() {
                                         <span className="text-gray-600 dark:text-gray-400">Quantité :</span>
                                         {produit.id.includes("carte-cadeau") ? (
                                             <span className="text-base font-semibold">{produit.quantite}</span>
-                                        ) : isBouteilleItem(produit) ? (
+                                        ) : isBouteilleItem(produit) || isBagInBoxItem(produit) ? (
                                             <select value={produit.quantite} onChange={e => changerQuantite(produit.id, parseInt(e.target.value))} className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f] bg-transparent dark:text-[#faf5f1]">
                                                 {getQuantitesDisponibles(produit).map(qty => <option key={qty} value={qty}>{qty}</option>)}
                                             </select>
@@ -382,6 +431,14 @@ export default function PanierPage() {
                                             <div className="flex justify-between items-center border-t dark:border-gray-600 pt-3">
                                                 <span className="text-lg text-gray-700 dark:text-[#faf5f1]">
                                                     Frais de port ({nombreBouteilles} bouteille{nombreBouteilles > 1 ? "s" : ""})
+                                                </span>
+                                                <span className="text-xl font-semibold text-[#24586f] dark:text-[#3a8fa8]">{fraisPort.toFixed(2)} €</span>
+                                            </div>
+                                        )}
+                                        {commande.modeLivraison === "livraison" && nombreBagInBox > 0 && (
+                                            <div className="flex justify-between items-center border-t dark:border-gray-600 pt-3">
+                                                <span className="text-lg text-gray-700 dark:text-[#faf5f1]">
+                                                    Frais de port ({nombreBagInBox} L bag in box)
                                                 </span>
                                                 <span className="text-xl font-semibold text-[#24586f] dark:text-[#3a8fa8]">{fraisPort.toFixed(2)} €</span>
                                             </div>
@@ -490,7 +547,8 @@ export default function PanierPage() {
                                             </button>
                                         </div>
                                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                                            {seulementCartesCadeaux ? "Indiquez la date à laquelle vous prévoyez de passer en boutique récupérer votre carte cadeau (à partir d'après-demain, fermé le dimanche)."
+                                            {seulementCartesCadeaux
+                                                ? "Indiquez la date à laquelle vous prévoyez de passer en boutique récupérer votre carte cadeau (à partir d'après-demain, fermé le dimanche)."
                                                 : `Indiquez la date à laquelle vous prévoyez de passer en boutique${commande.modeLivraison === "retrait" && commande.modePaiement === "boutique" ? " pour récupérer et payer votre commande" : commande.modeLivraison === "retrait" ? " pour récupérer votre commande" : " pour payer votre commande"} (à partir d'après-demain, fermé le dimanche).`}
                                         </p>
                                     </div>
