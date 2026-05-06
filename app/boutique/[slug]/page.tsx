@@ -37,7 +37,7 @@ export default function Page() {
     const [panierItems, setPanierItems] = useState<PanierItem[]>([]);
 
     const { messages }               = useMessages();
-    const { maxBouteilles, paliers } = useFraisPort();
+    const { maxBouteilles, paliersBouteilles } = useFraisPort();
 
     const fetchPanier = () => {
         fetch("/api/commandes")
@@ -66,16 +66,16 @@ export default function Page() {
     const estBouteille  = isBouteille(contenu);
     const maxDispo      = estBouteille ? maxBouteilles - totalAutresBouteilles : 99;
     const maxAtteint    = estBouteille && maxDispo <= 0;
-    const paliersDispos = paliers.filter(q => q <= maxDispo);
+    const paliersDispos = paliersBouteilles.filter(q => q <= maxDispo);
 
     useEffect(() => {
         if (!contenu) return;
         if (isBouteille(contenu)) {
-            setQuantite(paliersDispos.length > 0 ? paliersDispos[0] : paliers[0] ?? 6);
+            setQuantite(paliersDispos.length > 0 ? paliersDispos[0] : paliersBouteilles[0] ?? 6);
         } else {
             setQuantite(1);
         }
-    }, [contenu, maxDispo, paliers.length]);
+    }, [contenu, maxDispo, paliersBouteilles.length]);
 
     const ajouterAuPanier = async () => {
         if (disabled || !contenu || !messages || maxAtteint) return;
@@ -190,7 +190,7 @@ export default function Page() {
                                                 disabled={maxAtteint}
                                                 className="h-12 sm:h-14 px-4 text-lg font-semibold text-[#24586f] dark:text-[#3a8fa8] border border-[#24586f] rounded-xl bg-transparent focus:outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
-                                                {paliers.map(qty => {
+                                                {paliersBouteilles.map(qty => {
                                                     const grise = qty > maxDispo;
                                                     return (
                                                         <option key={qty} value={qty} disabled={grise}>
