@@ -1,45 +1,54 @@
-// hooks/useFraisPort.ts
 import { useState, useEffect } from "react";
 
 export type FraisPortTranche = {
     id: string;
-    bouteilles_min: number;
+    quantite_min: number;
     frais: number;
 };
 
 type UseFraisPortResult = {
-    tranches: FraisPortTranche[];
-    maxBouteilles: number;
-    paliers: number[];
-    loading: boolean;
+    tranchesBouteilles: FraisPortTranche[];
+    maxBouteilles:      number;
+    paliersBouteilles:  number[];
+    tranchesBagInBox:   FraisPortTranche[];
+    maxBagInBox:        number;
+    paliersBagInBox:    number[];
+    loading:            boolean;
 };
 
-/**
- * Charge les tranches de frais de port et en déduit :
- *   - maxBouteilles  : la valeur bouteilles_min la plus haute
- *   - paliers        : [6, 12, ..., maxBouteilles]
- */
 export function useFraisPort(): UseFraisPortResult {
-    const [tranches, setTranches]   = useState<FraisPortTranche[]>([]);
-    const [loading, setLoading]     = useState(true);
+    const [tranchesBouteilles, setTranchesB]  = useState<FraisPortTranche[]>([]);
+    const [tranchesBagInBox,   setTranchesB2] = useState<FraisPortTranche[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch("/api/frais-port")
+        fetch("/api/admin/frais-port")
             .then(r => r.json())
             .then(data => {
-                const arr: FraisPortTranche[] = Array.isArray(data) ? data : data.frais ?? [];
-                setTranches(arr);
+                setTranchesB(Array.isArray(data?.bouteilles) ? data.bouteilles : []);
+                setTranchesB2(Array.isArray(data?.bagInBox)  ? data.bagInBox  : []);
             })
             .catch(() => {})
             .finally(() => setLoading(false));
     }, []);
 
-    const maxBouteilles = tranches.length > 0
-        ? Math.max(...tranches.map(t => t.bouteilles_min))
-        : 24; // valeur par défaut si l'API n'a pas encore répondu
+    const maxBouteilles = tranchesBouteilles.length > 0
+        ? Math.max(...tranchesBouteilles.map(t => t.quantite_min))
+        : 24;
 
-    const paliers: number[] = [];
-    for (let i = 6; i <= maxBouteilles; i += 6) paliers.push(i);
+    const maxBagInBox = tranchesBagInBox.length > 0
+        ? Math.max(...tranchesBagInBox.map(t => t.quantite_min))
+        : 12;
 
-    return { tranches, maxBouteilles, paliers, loading };
+    const paliersBouteilles: number[] = [];
+    for (let i = 6; i <= maxBouteilles; i += 6) paliersBouteilles.push(i);
+
+    const paliersBagInBox: number[] = [];
+    for (let i = 3; i <= maxBagInBox; i += 3) paliersBagInBox.push(i);
+
+    return {
+        tranchesBouteilles, maxBouteilles, paliersBouteilles,
+        tranchesBagInBox,   maxBagInBox,   paliersBagInBox,
+        loading,
+    };
 }

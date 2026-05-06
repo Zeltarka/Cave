@@ -9,30 +9,32 @@ import ConfirmationModal from "@/components/ConfirmationModal";
 import { useFraisPort } from "@/hooks/useFraisPort";
 
 type BlocDescription = { type: "paragraphe"; contenu: string };
+type TypeProduit = "bouteille" | "bag-in-box" | "libre";
 
 type ProduitContenu = {
     titre: string;
     prix: number;
     image: string;
     disponible: boolean;
-    type: "bouteille" | "libre";
+    type: TypeProduit;
+    fraisPortUnitaire?: number;
     blocs_description: BlocDescription[];
 };
 
 function ProduitEditor() {
-    const { slug }   = useParams() as { slug: string };
-    const router     = useRouter();
-    const { maxBouteilles, paliers } = useFraisPort();
+    const { slug } = useParams() as { slug: string };
+    const router   = useRouter();
+    const { maxBouteilles, paliersBouteilles, maxBagInBox, paliersBagInBox } = useFraisPort();
 
-    const [contenu, setContenu]                   = useState<ProduitContenu | null>(null);
-    const [loading, setLoading]                   = useState(true);
-    const [saving, setSaving]                     = useState(false);
-    const [deleting, setDeleting]                 = useState(false);
-    const [modalOpen, setModalOpen]               = useState(false);
-    const [modalType, setModalType]               = useState<"success" | "error">("success");
-    const [modalTitle, setModalTitle]             = useState("");
-    const [modalMessage, setModalMessage]         = useState("");
-    const [deleteModalOpen, setDeleteModalOpen]   = useState(false);
+    const [contenu, setContenu]                       = useState<ProduitContenu | null>(null);
+    const [loading, setLoading]                       = useState(true);
+    const [saving, setSaving]                         = useState(false);
+    const [deleting, setDeleting]                     = useState(false);
+    const [modalOpen, setModalOpen]                   = useState(false);
+    const [modalType, setModalType]                   = useState<"success" | "error">("success");
+    const [modalTitle, setModalTitle]                 = useState("");
+    const [modalMessage, setModalMessage]             = useState("");
+    const [deleteModalOpen, setDeleteModalOpen]       = useState(false);
     const [deleteConfirmInput, setDeleteConfirmInput] = useState("");
 
     useEffect(() => { fetchContenu(); }, [slug]);
@@ -100,7 +102,7 @@ function ProduitEditor() {
                 const updatedProduits = boutiqueData.contenu.produits.map((p: any) => {
                     const produitSlug = p.lien?.split("/").pop();
                     if (produitSlug === slug) {
-                        return { ...p, nom: contenu.titre, prix: contenu.prix, image: contenu.image, disponible: contenu.disponible };
+                        return { ...p, nom: contenu.titre, prix: contenu.prix, image: contenu.image, disponible: contenu.disponible, type: contenu.type };
                     }
                     return p;
                 });
@@ -129,10 +131,7 @@ function ProduitEditor() {
             const boutiqueRes = await fetch("/api/admin/contenu/boutique");
             if (boutiqueRes.ok) {
                 const boutiqueData = await boutiqueRes.json();
-                const updatedProduits = boutiqueData.contenu.produits.filter((p: any) => {
-                    const produitSlug = p.lien?.split("/").pop();
-                    return produitSlug !== slug;
-                });
+                const updatedProduits = boutiqueData.contenu.produits.filter((p: any) => p.lien?.split("/").pop() !== slug);
                 await fetch("/api/admin/contenu/boutique", {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
@@ -150,15 +149,18 @@ function ProduitEditor() {
         }
     };
 
-    // Texte descriptif du type "bouteille" basé sur le vrai max
-    const labelBouteille = paliers.length > 0
-        ? `Bouteille — paliers ${paliers.join(" / ")}, quota partagé de ${maxBouteilles}`
-        : `Bouteille — paliers par 6, quota partagé de ${maxBouteilles}`;
+    const labelBouteille = paliersBouteilles.length > 0
+        ? `Bouteille — paliers ${paliersBouteilles.join(" / ")}, max ${maxBouteilles}`
+        : `Bouteille — paliers par 6, max ${maxBouteilles}`;
+
+    const labelBagInBox = paliersBagInBox.length > 0
+        ? `Bag in box — paliers ${paliersBagInBox.join(" / ")} L, max ${maxBagInBox} L`
+        : `Bag in box — paliers par 3 L, max ${maxBagInBox} L`;
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
             <div className="text-center">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#24586f] mb-4"></div>
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#24586f] mb-4" />
                 <div className="text-[#24586f] text-xl font-medium">Chargement...</div>
             </div>
         </div>
@@ -176,13 +178,12 @@ function ProduitEditor() {
                         <h1 className="text-2xl font-bold text-[#24586f] capitalize">Éditer — {contenu.titre || slug}</h1>
                     </div>
                     <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => { setDeleteConfirmInput(""); setDeleteModalOpen(true); }}
-                            className="px-4 py-2.5 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors font-medium text-sm"
-                        >
+                        <button onClick={() => { setDeleteConfirmInput(""); setDeleteModalOpen(true); }}
+                                className="px-4 py-2.5 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors font-medium text-sm">
                             Supprimer
                         </button>
-                        <button onClick={sauvegarder} disabled={saving} className="px-6 py-2.5 bg-[#24586f] text-white rounded-lg hover:bg-[#1a4557] transition-colors disabled:opacity-50 font-medium shadow-sm">
+                        <button onClick={sauvegarder} disabled={saving}
+                                className="px-6 py-2.5 bg-[#24586f] text-white rounded-lg hover:bg-[#1a4557] transition-colors disabled:opacity-50 font-medium shadow-sm">
                             {saving ? "Sauvegarde..." : "Sauvegarder"}
                         </button>
                     </div>
@@ -190,27 +191,61 @@ function ProduitEditor() {
             </header>
 
             <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+                {/* ── Infos de base ── */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h3 className="text-lg font-semibold text-[#24586f] mb-4">Informations de base</h3>
                     <div className="space-y-4">
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-2">Titre du produit</label>
-                            <input type="text" value={contenu.titre} onChange={e => set("titre", e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f]" />
+                            <input type="text" value={contenu.titre} onChange={e => set("titre", e.target.value)}
+                                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f]" />
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-2">Prix (€)</label>
-                            <input type="number" step="0.01" value={contenu.prix} onChange={e => set("prix", parseFloat(e.target.value) || 0)} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f]" />
+                            <input type="number" step="0.01" value={contenu.prix} onChange={e => set("prix", parseFloat(e.target.value) || 0)}
+                                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f]" />
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-2">Type de produit</label>
-                            <select value={contenu.type} onChange={e => set("type", e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f] bg-white">
+                            <select value={contenu.type} onChange={e => set("type", e.target.value as TypeProduit)}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f] bg-white">
                                 <option value="bouteille">{labelBouteille}</option>
+                                <option value="bag-in-box">{labelBagInBox}</option>
                                 <option value="libre">Libre — quantité de 1 à 99</option>
                             </select>
                         </div>
+
+                        {/* Frais de port unitaire — uniquement pour "libre" */}
+                        {contenu.type === "libre" && (
+                            <div className="bg-[#f1f5ff] border border-[#24586f]/20 rounded-xl p-4">
+                                <label className="block text-sm font-semibold text-[#24586f] mb-1">
+                                    Frais de port pour 1 unité (€)
+                                </label>
+                                <p className="text-xs text-gray-500 mb-3">
+                                    Multiplié par la quantité commandée lors du calcul du panier.
+                                </p>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={contenu.fraisPortUnitaire ?? ""}
+                                    onChange={e => set("fraisPortUnitaire", parseFloat(e.target.value) || 0)}
+                                    placeholder="0.00"
+                                    className="w-full px-4 py-2 border border-[#24586f]/30 rounded-lg focus:ring-2 focus:ring-[#24586f] bg-white"
+                                />
+                                {(contenu.fraisPortUnitaire ?? 0) > 0 && (
+                                    <p className="text-xs text-gray-400 mt-2">
+                                        2 commandés → {((contenu.fraisPortUnitaire ?? 0) * 2).toFixed(2)} € · 5 commandés → {((contenu.fraisPortUnitaire ?? 0) * 5).toFixed(2)} €
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
                         <div className="pt-4 border-t border-gray-200">
                             <label className="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" checked={contenu.disponible ?? true} onChange={e => set("disponible", e.target.checked)} className="w-5 h-5 text-[#24586f] border-gray-300 rounded focus:ring-[#24586f] cursor-pointer" />
+                                <input type="checkbox" checked={contenu.disponible ?? true} onChange={e => set("disponible", e.target.checked)}
+                                       className="w-5 h-5 text-[#24586f] border-gray-300 rounded focus:ring-[#24586f] cursor-pointer" />
                                 <span className="text-sm font-semibold text-gray-700">Produit disponible à la vente</span>
                             </label>
                             {!contenu.disponible && <p className="text-sm text-red-600 mt-2 ml-8">Ce produit apparaîtra comme indisponible.</p>}
@@ -218,10 +253,12 @@ function ProduitEditor() {
                     </div>
                 </div>
 
+                {/* ── Image ── */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <ImageUploader currentImage={contenu.image} onImageChange={img => set("image", img)} label="Image du produit" />
                 </div>
 
+                {/* ── Description ── */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h3 className="text-lg font-semibold text-[#24586f] mb-4">Description du produit</h3>
                     <div className="space-y-6">
@@ -251,6 +288,7 @@ function ProduitEditor() {
                 </div>
             </main>
 
+            {/* ── Modale suppression ── */}
             {deleteModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
                     <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-6 max-w-md w-full mx-4">
@@ -263,25 +301,15 @@ function ProduitEditor() {
                         <p className="text-sm text-gray-600 mb-2">
                             Cette action est <strong>irréversible</strong>. La page <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono">{slug}</code> et son entrée dans la boutique seront définitivement supprimées.
                         </p>
-                        <p className="text-sm text-gray-600 mb-4">
-                            Pour confirmer, saisissez <strong>{slug}</strong> ci-dessous :
-                        </p>
-                        <input
-                            type="text"
-                            value={deleteConfirmInput}
-                            onChange={e => setDeleteConfirmInput(e.target.value)}
-                            placeholder={slug}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-400 mb-4 font-mono text-sm"
-                        />
+                        <p className="text-sm text-gray-600 mb-4">Pour confirmer, saisissez <strong>{slug}</strong> ci-dessous :</p>
+                        <input type="text" value={deleteConfirmInput} onChange={e => setDeleteConfirmInput(e.target.value)}
+                               placeholder={slug} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-400 mb-4 font-mono text-sm" />
                         <div className="flex gap-3">
                             <button onClick={() => setDeleteModalOpen(false)} className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm">
                                 Annuler
                             </button>
-                            <button
-                                onClick={supprimerPage}
-                                disabled={deleteConfirmInput !== slug || deleting}
-                                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-medium text-sm"
-                            >
+                            <button onClick={supprimerPage} disabled={deleteConfirmInput !== slug || deleting}
+                                    className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-medium text-sm">
                                 {deleting ? "Suppression..." : "Supprimer définitivement"}
                             </button>
                         </div>
