@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 
 type Messages = {
     panier: {
-        ajout_succes: string;
+        ajout_succes_bouteille: string;
+        ajout_succes_bag_in_box: string;
+        ajout_succes_libre: string;
         ajout_erreur: string;
         panier_vide: string;
         bouton_remplir: string;
@@ -31,10 +33,12 @@ type Messages = {
 
 const defaultMessages: Messages = {
     panier: {
-        ajout_succes: "Ajouté au panier avec succès !",
-        ajout_erreur: "Erreur lors de l'ajout au panier",
+        ajout_succes_bouteille: "{quantite} bouteille(s) de {produit} ajoutée(s) au panier !",
+        ajout_succes_bag_in_box: "{quantite} L de {produit} ajouté(s) au panier !",
+        ajout_succes_libre: "{quantite} × {produit} ajouté(s) au panier !",
+        ajout_erreur: "Erreur : impossible d'ajouter le produit.",
         panier_vide: "Votre panier est vide",
-        bouton_remplir: "Le remplir"
+        bouton_remplir: "Le remplir",
     },
     commande: {
         validation_succes: "Commande validée avec succès !",

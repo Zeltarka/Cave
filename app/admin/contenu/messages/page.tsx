@@ -7,7 +7,9 @@ import ConfirmationModal from "@/components/ConfirmationModal";
 
 type Messages = {
     panier: {
-        ajout_succes: string;
+        ajout_succes_bouteille: string;
+        ajout_succes_bag_in_box: string;
+        ajout_succes_libre: string;
         ajout_erreur: string;
         panier_vide: string;
         bouton_remplir: string;
@@ -55,10 +57,10 @@ type Messages = {
 function MessagesEditor() {
     const [contenu, setContenu] = useState<Messages | null>(null);
     const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
+    const [saving, setSaving]   = useState(false);
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState<"success" | "error">("success");
-    const [showModal, setShowModal] = useState(false);
+    const [showModal, setShowModal]     = useState(false);
 
     useEffect(() => { fetchContenu(); }, []);
 
@@ -66,21 +68,18 @@ function MessagesEditor() {
         try {
             const res = await fetch("/api/admin/contenu/messages");
             if (!res.ok) {
-                if (res.status === 404) {
-                    setContenu(getDefaultMessages());
-                    setLoading(false);
-                    return;
-                }
+                if (res.status === 404) { setContenu(getDefaultMessages()); setLoading(false); return; }
                 throw new Error("Erreur chargement");
             }
-            const data = await res.json();
+            const data  = await res.json();
             const loaded = data.contenu;
             if (!loaded.email) loaded.email = getDefaultMessages().email;
-            // Assurer les nouveaux champs
-            const defaults = getDefaultMessages().email;
-            loaded.email = { ...defaults, ...loaded.email };
+            // Fusionner avec les defaults pour garantir les nouveaux champs
+            const defaults = getDefaultMessages();
+            loaded.email  = { ...defaults.email,  ...loaded.email };
+            loaded.panier = { ...defaults.panier,  ...loaded.panier };
             setContenu(loaded);
-        } catch (err) {
+        } catch {
             afficherMessage("Erreur lors du chargement", "error");
         } finally {
             setLoading(false);
@@ -89,7 +88,9 @@ function MessagesEditor() {
 
     const getDefaultMessages = (): Messages => ({
         panier: {
-            ajout_succes: "{quantite} bouteille(s) ajoutée(s) au panier !",
+            ajout_succes_bouteille: "{quantite} bouteille(s) de {produit} ajoutée(s) au panier !",
+            ajout_succes_bag_in_box: "{quantite} L de {produit} ajouté(s) au panier !",
+            ajout_succes_libre: "{quantite} × {produit} ajouté(s) au panier !",
             ajout_erreur: "Erreur : impossible d'ajouter le produit.",
             panier_vide: "Votre panier est vide",
             bouton_remplir: "Le remplir",
@@ -135,9 +136,7 @@ function MessagesEditor() {
     });
 
     const afficherMessage = (msg: string, type: "success" | "error" = "success") => {
-        setMessage(msg);
-        setMessageType(type);
-        setShowModal(true);
+        setMessage(msg); setMessageType(type); setShowModal(true);
     };
 
     const update = (categorie: keyof Messages, cle: string, valeur: string) => {
@@ -169,16 +168,16 @@ function MessagesEditor() {
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
             <div className="text-center">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#24586f] mb-4"></div>
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#24586f] mb-4" />
                 <div className="text-[#24586f] text-xl font-medium">Chargement...</div>
             </div>
         </div>
     );
-
     if (!contenu) return null;
 
-    const inputCls = "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f]";
-    const labelCls = "block text-sm font-semibold text-gray-700 mb-2";
+    const inputCls    = "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#24586f]";
+    const labelCls    = "block text-sm font-semibold text-gray-700 mb-2";
+    const placeholders = <span className="text-xs font-normal text-gray-500 ml-1">({"{quantite}"} et {"{produit}"})</span>;
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -200,50 +199,65 @@ function MessagesEditor() {
 
             <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
-                {/* Panier */}
+                {/* ── Panier ── */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h3 className="text-lg font-semibold text-[#24586f] mb-4">Messages Panier</h3>
                     <div className="space-y-4">
                         <div>
-                            <label className={labelCls}>Ajout réussi <span className="text-xs text-gray-500">(utilisez {"{quantite}"})</span></label>
-                            <input type="text" value={contenu.panier.ajout_succes} onChange={e => update("panier", "ajout_succes", e.target.value)} className={inputCls} />
+                            <label className={labelCls}>Ajout réussi — Bouteille {placeholders}</label>
+                            <input type="text" value={contenu.panier.ajout_succes_bouteille}
+                                   onChange={e => update("panier", "ajout_succes_bouteille", e.target.value)} className={inputCls} />
+                        </div>
+                        <div>
+                            <label className={labelCls}>Ajout réussi — Bag in box {placeholders}</label>
+                            <input type="text" value={contenu.panier.ajout_succes_bag_in_box}
+                                   onChange={e => update("panier", "ajout_succes_bag_in_box", e.target.value)} className={inputCls} />
+                        </div>
+                        <div>
+                            <label className={labelCls}>Ajout réussi — Libre {placeholders}</label>
+                            <input type="text" value={contenu.panier.ajout_succes_libre}
+                                   onChange={e => update("panier", "ajout_succes_libre", e.target.value)} className={inputCls} />
                         </div>
                         <div>
                             <label className={labelCls}>Ajout échoué</label>
-                            <input type="text" value={contenu.panier.ajout_erreur} onChange={e => update("panier", "ajout_erreur", e.target.value)} className={inputCls} />
+                            <input type="text" value={contenu.panier.ajout_erreur}
+                                   onChange={e => update("panier", "ajout_erreur", e.target.value)} className={inputCls} />
                         </div>
                         <div>
                             <label className={labelCls}>Panier vide</label>
-                            <input type="text" value={contenu.panier.panier_vide} onChange={e => update("panier", "panier_vide", e.target.value)} className={inputCls} />
+                            <input type="text" value={contenu.panier.panier_vide}
+                                   onChange={e => update("panier", "panier_vide", e.target.value)} className={inputCls} />
                         </div>
                         <div>
                             <label className={labelCls}>Bouton remplir le panier</label>
-                            <input type="text" value={contenu.panier.bouton_remplir} onChange={e => update("panier", "bouton_remplir", e.target.value)} className={inputCls} />
+                            <input type="text" value={contenu.panier.bouton_remplir}
+                                   onChange={e => update("panier", "bouton_remplir", e.target.value)} className={inputCls} />
                         </div>
                     </div>
                 </div>
 
-                {/* Commande */}
+                {/* ── Commande ── */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h3 className="text-lg font-semibold text-[#24586f] mb-4">Messages Commande</h3>
                     <div className="space-y-4">
-                        {[
-                            ["validation_succes", "Validation réussie"],
-                            ["validation_email", "Message email envoyé"],
-                            ["champs_obligatoires", "Champs obligatoires manquants"],
-                            ["email_invalide", "Email invalide"],
+                        {([
+                            ["validation_succes",    "Validation réussie"],
+                            ["validation_email",     "Message email envoyé"],
+                            ["champs_obligatoires",  "Champs obligatoires manquants"],
+                            ["email_invalide",       "Email invalide"],
                             ["date_passage_requise", "Date de passage requise"],
-                            ["erreur_serveur", "Erreur serveur"],
-                        ].map(([key, label]) => (
+                            ["erreur_serveur",       "Erreur serveur"],
+                        ] as [string, string][]).map(([key, label]) => (
                             <div key={key}>
                                 <label className={labelCls}>{label}</label>
-                                <input type="text" value={(contenu.commande as any)[key]} onChange={e => update("commande", key, e.target.value)} className={inputCls} />
+                                <input type="text" value={(contenu.commande as any)[key]}
+                                       onChange={e => update("commande", key, e.target.value)} className={inputCls} />
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* Carte cadeau */}
+                {/* ── Carte cadeau ── */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h3 className="text-lg font-semibold text-[#24586f] mb-4">Messages Carte Cadeau</h3>
                     <div className="space-y-4">
@@ -256,7 +270,7 @@ function MessagesEditor() {
                             <input type="text" value={contenu.carte_cadeau.montant_minimum} onChange={e => update("carte_cadeau", "montant_minimum", e.target.value)} className={inputCls} />
                         </div>
                         <div>
-                            <label className={labelCls}>Ajout réussi <span className="text-xs text-gray-500">(utilisez {"{montant}"} et {"{destinataire}"})</span></label>
+                            <label className={labelCls}>Ajout réussi <span className="text-xs font-normal text-gray-500 ml-1">({"{montant}"} et {"{destinataire}"})</span></label>
                             <input type="text" value={contenu.carte_cadeau.ajout_succes} onChange={e => update("carte_cadeau", "ajout_succes", e.target.value)} className={inputCls} />
                         </div>
                         <div>
@@ -266,70 +280,58 @@ function MessagesEditor() {
                     </div>
                 </div>
 
-                {/* Email */}
+                {/* ── Email ── */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h3 className="text-lg font-semibold text-[#24586f] mb-4">Messages Email</h3>
                     <div className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className={labelCls}>Titre email client</label>
-                                <input type="text" value={contenu.email?.client_titre || ""} onChange={e => update("email", "client_titre", e.target.value)} className={inputCls} />
-                            </div>
-                            <div>
-                                <label className={labelCls}>Sous-titre client <span className="text-xs text-gray-500">({"{prenom} {nom} {commande_id}"})</span></label>
-                                <input type="text" value={contenu.email?.client_sous_titre || ""} onChange={e => update("email", "client_sous_titre", e.target.value)} className={inputCls} />
-                            </div>
-                            <div>
-                                <label className={labelCls}>Titre "Détails de la commande"</label>
-                                <input type="text" value={contenu.email?.details_commande || ""} onChange={e => update("email", "details_commande", e.target.value)} className={inputCls} />
-                            </div>
-                            <div>
-                                <label className={labelCls}>Label "Total"</label>
-                                <input type="text" value={contenu.email?.total_label || ""} onChange={e => update("email", "total_label", e.target.value)} className={inputCls} />
-                            </div>
-                            <div>
-                                <label className={labelCls}>Label "Total (livraison)"</label>
-                                <input type="text" value={contenu.email?.total_label_livraison || ""} onChange={e => update("email", "total_label_livraison", e.target.value)} className={inputCls} />
-                            </div>
-                            <div>
-                                <label className={labelCls}>Titre "Récupération"</label>
-                                <input type="text" value={contenu.email?.recuperation_titre || ""} onChange={e => update("email", "recuperation_titre", e.target.value)} className={inputCls} />
-                            </div>
+                            {([
+                                ["client_titre",          "Titre email client"],
+                                ["client_sous_titre",     "Sous-titre client ({prenom} {nom} {commande_id})"],
+                                ["details_commande",      "Titre \"Détails de la commande\""],
+                                ["total_label",           "Label \"Total\""],
+                                ["total_label_livraison", "Label \"Total (livraison)\""],
+                                ["recuperation_titre",    "Titre \"Récupération\""],
+                            ] as [string, string][]).map(([key, label]) => (
+                                <div key={key}>
+                                    <label className={labelCls}>{label}</label>
+                                    <input type="text" value={(contenu.email as any)[key] || ""}
+                                           onChange={e => update("email", key, e.target.value)} className={inputCls} />
+                                </div>
+                            ))}
                         </div>
-
-                        <div>
-                            <label className={labelCls}>Texte "Retrait en boutique"</label>
-                            <input type="text" value={contenu.email?.recuperation_retrait || ""} onChange={e => update("email", "recuperation_retrait", e.target.value)} className={inputCls} />
-                        </div>
-                        <div>
-                            <label className={labelCls}>Texte "Livraison à domicile"</label>
-                            <input type="text" value={contenu.email?.recuperation_livraison || ""} onChange={e => update("email", "recuperation_livraison", e.target.value)} className={inputCls} />
-                        </div>
+                        {([
+                            ["recuperation_retrait",   "Texte \"Retrait en boutique\""],
+                            ["recuperation_livraison", "Texte \"Livraison à domicile\""],
+                        ] as [string, string][]).map(([key, label]) => (
+                            <div key={key}>
+                                <label className={labelCls}>{label}</label>
+                                <input type="text" value={(contenu.email as any)[key] || ""}
+                                       onChange={e => update("email", key, e.target.value)} className={inputCls} />
+                            </div>
+                        ))}
                         <div>
                             <label className={labelCls}>Note frais de port</label>
                             <textarea value={contenu.email?.note_frais_port || ""} onChange={e => update("email", "note_frais_port", e.target.value)} rows={2} className={inputCls} />
                         </div>
-
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className={labelCls}>Titre "Commentaires"</label>
-                                <input type="text" value={contenu.email?.commentaires_titre || ""} onChange={e => update("email", "commentaires_titre", e.target.value)} className={inputCls} />
-                            </div>
-                            <div>
-                                <label className={labelCls}>Message "1 carte cadeau PJ"</label>
-                                <input type="text" value={contenu.email?.carte_cadeau_pj || ""} onChange={e => update("email", "carte_cadeau_pj", e.target.value)} className={inputCls} />
-                            </div>
-                            <div>
-                                <label className={labelCls}>Message "Plusieurs cartes PJ"</label>
-                                <input type="text" value={contenu.email?.cartes_cadeaux_pj || ""} onChange={e => update("email", "cartes_cadeaux_pj", e.target.value)} className={inputCls} />
-                            </div>
+                            {([
+                                ["commentaires_titre",   "Titre \"Commentaires\""],
+                                ["carte_cadeau_pj",      "Message \"1 carte cadeau PJ\""],
+                                ["cartes_cadeaux_pj",    "Message \"Plusieurs cartes PJ\""],
+                            ] as [string, string][]).map(([key, label]) => (
+                                <div key={key}>
+                                    <label className={labelCls}>{label}</label>
+                                    <input type="text" value={(contenu.email as any)[key] || ""}
+                                           onChange={e => update("email", key, e.target.value)} className={inputCls} />
+                                </div>
+                            ))}
                         </div>
                         <div>
-                            <label className={labelCls}>Conditions carte cadeau (texte bas de PDF)</label>
+                            <label className={labelCls}>Conditions carte cadeau (bas de PDF)</label>
                             <textarea value={contenu.email?.carte_cadeau_conditions || ""} onChange={e => update("email", "carte_cadeau_conditions", e.target.value)} rows={2} className={inputCls} />
                         </div>
 
-                        {/* RIB virement */}
                         <hr className="my-2" />
                         <h4 className="font-semibold text-gray-800 mb-3">Coordonnées bancaires (virement)</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -338,7 +340,7 @@ function MessagesEditor() {
                                 <input type="text" value={contenu.email?.virement_iban || ""} onChange={e => update("email", "virement_iban", e.target.value)} className={inputCls} placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX" />
                             </div>
                             <div>
-                                <label className={labelCls}>BIC <span className="text-xs text-gray-500">(optionnel)</span></label>
+                                <label className={labelCls}>BIC <span className="text-xs font-normal text-gray-500">(optionnel)</span></label>
                                 <input type="text" value={contenu.email?.virement_bic || ""} onChange={e => update("email", "virement_bic", e.target.value)} className={inputCls} placeholder="XXXXFRXX" />
                             </div>
                             <div>
@@ -372,7 +374,7 @@ function MessagesEditor() {
                                 <textarea value={contenu.email?.paiement_boutique_texte || ""} onChange={e => update("email", "paiement_boutique_texte", e.target.value)} rows={2} className={inputCls} />
                             </div>
                             <div>
-                                <label className={labelCls}>Date de passage <span className="text-xs text-gray-500">(utilisez {"{date_passage}"})</span></label>
+                                <label className={labelCls}>Date de passage <span className="text-xs font-normal text-gray-500 ml-1">({"{date_passage}"})</span></label>
                                 <input type="text" value={contenu.email?.paiement_boutique_date || ""} onChange={e => update("email", "paiement_boutique_date", e.target.value)} className={inputCls} />
                             </div>
                             <div>
@@ -390,13 +392,8 @@ function MessagesEditor() {
                 </div>
             </main>
 
-            <ConfirmationModal
-                isOpen={showModal}
-                onClose={() => setShowModal(false)}
-                type={messageType}
-                title={messageType === "success" ? "Succès" : "Erreur"}
-                message={message}
-            />
+            <ConfirmationModal isOpen={showModal} onClose={() => setShowModal(false)} type={messageType}
+                               title={messageType === "success" ? "Succès" : "Erreur"} message={message} />
         </div>
     );
 }
