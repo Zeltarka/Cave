@@ -15,6 +15,7 @@ type Produit = {
     prix: number;
     destinataire?: string;
     type?: string;
+    volumeBib?: number;
 };
 
 type Commande = {
@@ -49,6 +50,7 @@ export default function PanierPage() {
     const [modalMessage, setModalMessage]         = useState("");
     const [commandeValidee, setCommandeValidee]   = useState(false);
     const [certifieMajeur, setCertifieMajeur]     = useState(false);
+    const [montantMinCarteC, setMontantMinCarteC] = useState(30);
 
     const { messages } = useMessages();
     const { maxBouteilles, paliersBouteilles, maxBagInBox, paliersBagInBox } = useFraisPort();
@@ -69,6 +71,18 @@ export default function PanierPage() {
     };
 
     useEffect(() => { fetchPanier(); }, []);
+
+    // Chargement du montant minimum carte cadeau
+    useEffect(() => {
+        fetch("/api/admin/contenu/carte-cadeau")
+            .then(r => r.json())
+            .then(data => {
+                if (data?.contenu?.montant_minimum) {
+                    setMontantMinCarteC(data.contenu.montant_minimum);
+                }
+            })
+            .catch(() => {});
+    }, []);
 
     const seulementCartesCadeaux = panier.length > 0 && panier.every(p => p.id.includes("carte-cadeau"));
 
@@ -287,7 +301,7 @@ export default function PanierPage() {
                         {nombreBagInBox >= maxBagInBox && (
                             <div className="mb-6 p-4 bg-[#f1f5ff] dark:bg-[#1a1d27] border-2 border-[#24586f] dark:border-[#3a8fa8] rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                 <p className="text-[#24586f] dark:text-[#3a8fa8] font-medium">
-                                    Vous avez atteint le maximum de {maxBagInBox} L en bag in box. Pour une commande plus importante, contactez-nous.
+                                    Vous avez atteint le maximum de {maxBagInBox} bag in box. Pour une commande plus importante, contactez-nous.
                                 </p>
                                 <Link href="/contact" className="flex-shrink-0 px-4 py-2 bg-[#24586f] text-white rounded-lg hover:bg-[#1a4557] transition-colors font-medium text-sm">
                                     Nous contacter
@@ -329,7 +343,11 @@ export default function PanierPage() {
                                                         className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f] bg-transparent dark:text-[#faf5f1]"
                                                     >
                                                         {getQuantitesDisponibles(produit).map(qty => (
-                                                            <option key={qty} value={qty}>{qty}</option>
+                                                            <option key={qty} value={qty}>
+                                                                {isBagInBoxItem(produit) && produit.volumeBib
+                                                                    ? `${qty} bag in box de ${produit.volumeBib}L`
+                                                                    : qty}
+                                                            </option>
                                                         ))}
                                                     </select>
                                                 ) : (
@@ -343,13 +361,17 @@ export default function PanierPage() {
                                         </td>
                                         <td className="p-3 text-right">
                                             {produit.id.includes("carte-cadeau") ? (
-                                                <input type="number" min={10} step={10} value={produit.prix}
-                                                       onChange={async e => {
-                                                           const prix = parseFloat(e.target.value) || 0;
-                                                           setPanier(prev => prev.map(p => p.id === produit.id ? { ...p, prix, quantite: 1 } : p));
-                                                           await fetch("/api/commandes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...produit, prix, quantite: 1 }) });
-                                                       }}
-                                                       className="w-24 text-right border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-transparent dark:text-[#faf5f1]"
+                                                <input
+                                                    type="number"
+                                                    min={montantMinCarteC}
+                                                    step={5}
+                                                    value={produit.prix}
+                                                    onChange={async e => {
+                                                        const prix = parseFloat(e.target.value) || 0;
+                                                        setPanier(prev => prev.map(p => p.id === produit.id ? { ...p, prix, quantite: 1 } : p));
+                                                        await fetch("/api/commandes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...produit, prix, quantite: 1 }) });
+                                                    }}
+                                                    className="w-24 text-right border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-transparent dark:text-[#faf5f1]"
                                                 />
                                             ) : (
                                                 <span>{produit.prix.toFixed(2)} €</span>
@@ -384,8 +406,18 @@ export default function PanierPage() {
                                         {produit.id.includes("carte-cadeau") ? (
                                             <span className="text-base font-semibold">{produit.quantite}</span>
                                         ) : isBouteilleItem(produit) || isBagInBoxItem(produit) ? (
-                                            <select value={produit.quantite} onChange={e => changerQuantite(produit.id, parseInt(e.target.value))} className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f] bg-transparent dark:text-[#faf5f1]">
-                                                {getQuantitesDisponibles(produit).map(qty => <option key={qty} value={qty}>{qty}</option>)}
+                                            <select
+                                                value={produit.quantite}
+                                                onChange={e => changerQuantite(produit.id, parseInt(e.target.value))}
+                                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-[#24586f] bg-transparent dark:text-[#faf5f1]"
+                                            >
+                                                {getQuantitesDisponibles(produit).map(qty => (
+                                                    <option key={qty} value={qty}>
+                                                        {isBagInBoxItem(produit) && produit.volumeBib
+                                                            ? `${qty} bag in box de ${produit.volumeBib}L`
+                                                            : qty}
+                                                    </option>
+                                                ))}
                                             </select>
                                         ) : (
                                             <div className="flex items-center gap-2">
@@ -398,13 +430,17 @@ export default function PanierPage() {
                                     <div className="flex justify-between items-center mb-3 dark:text-[#faf5f1]">
                                         <span className="text-gray-600 dark:text-gray-400">Prix unitaire :</span>
                                         {produit.id.includes("carte-cadeau") ? (
-                                            <input type="number" min={10} step={10} value={produit.prix}
-                                                   onChange={async e => {
-                                                       const prix = parseFloat(e.target.value) || 0;
-                                                       setPanier(prev => prev.map(p => p.id === produit.id ? { ...p, prix, quantite: 1 } : p));
-                                                       await fetch("/api/commandes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...produit, prix, quantite: 1 }) });
-                                                   }}
-                                                   className="w-24 text-right border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-transparent dark:text-[#faf5f1]"
+                                            <input
+                                                type="number"
+                                                min={montantMinCarteC}
+                                                step={5}
+                                                value={produit.prix}
+                                                onChange={async e => {
+                                                    const prix = parseFloat(e.target.value) || 0;
+                                                    setPanier(prev => prev.map(p => p.id === produit.id ? { ...p, prix, quantite: 1 } : p));
+                                                    await fetch("/api/commandes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...produit, prix, quantite: 1 }) });
+                                                }}
+                                                className="w-24 text-right border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-transparent dark:text-[#faf5f1]"
                                             />
                                         ) : <span>{produit.prix.toFixed(2)} €</span>}
                                     </div>
@@ -427,19 +463,9 @@ export default function PanierPage() {
                                             <span className="text-lg text-gray-700 dark:text-[#faf5f1]">Sous-total produits</span>
                                             <span className="text-xl font-semibold text-[#24586f] dark:text-[#3a8fa8]">{total.toFixed(2)} €</span>
                                         </div>
-                                        {commande.modeLivraison === "livraison" && nombreBouteilles > 0 && (
+                                        {commande.modeLivraison === "livraison" && fraisPort > 0 && (
                                             <div className="flex justify-between items-center border-t dark:border-gray-600 pt-3">
-                                                <span className="text-lg text-gray-700 dark:text-[#faf5f1]">
-                                                    Frais de port ({nombreBouteilles} bouteille{nombreBouteilles > 1 ? "s" : ""})
-                                                </span>
-                                                <span className="text-xl font-semibold text-[#24586f] dark:text-[#3a8fa8]">{fraisPort.toFixed(2)} €</span>
-                                            </div>
-                                        )}
-                                        {commande.modeLivraison === "livraison" && nombreBagInBox > 0 && (
-                                            <div className="flex justify-between items-center border-t dark:border-gray-600 pt-3">
-                                                <span className="text-lg text-gray-700 dark:text-[#faf5f1]">
-                                                    Frais de port ({nombreBagInBox} L bag in box)
-                                                </span>
+                                                <span className="text-lg text-gray-700 dark:text-[#faf5f1]">Frais de port</span>
                                                 <span className="text-xl font-semibold text-[#24586f] dark:text-[#3a8fa8]">{fraisPort.toFixed(2)} €</span>
                                             </div>
                                         )}
@@ -483,12 +509,7 @@ export default function PanierPage() {
                                                 <input type="radio" name="modeLivraison" value="livraison" checked={commande.modeLivraison === "livraison"} onChange={handleChange} className="w-4 h-4 mt-1 text-[#24586f] focus:ring-[#24586f]" />
                                                 <span className="ml-3">
                                                     <span className="font-semibold dark:text-[#faf5f1]">Livraison à domicile</span>
-                                                    <span className="text-sm text-gray-600 dark:text-gray-400 block">Les frais de port sont ajustés automatiquement</span>
-                                                    {nombreBouteilles > 0 && fraisPort > 0 && (
-                                                        <span className="text-sm text-gray-600 dark:text-gray-400 block">
-                                                            Frais de port : {fraisPort.toFixed(2)} € pour {nombreBouteilles} bouteille{nombreBouteilles > 1 ? "s" : ""}
-                                                        </span>
-                                                    )}
+                                                    <span className="text-sm text-gray-600 dark:text-gray-400 block">Les frais de port sont calculés automatiquement</span>
                                                 </span>
                                             </label>
                                         </div>

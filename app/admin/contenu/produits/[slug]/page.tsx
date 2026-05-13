@@ -18,6 +18,7 @@ type ProduitContenu = {
     disponible: boolean;
     type: TypeProduit;
     fraisPortUnitaire?: number;
+    volumeBib?:         number;
     blocs_description: BlocDescription[];
 };
 
@@ -215,6 +216,32 @@ function ProduitEditor() {
                                 <option value="libre">Libre — quantité de 1 à 99</option>
                             </select>
                         </div>
+
+                        {/* Volume BIB — uniquement pour "bag-in-box" */}
+                        {contenu.type === "bag-in-box" && (
+                            <div >
+                                <label className="block text-sm font-semibold text-[#24586f] mb-1">
+                                    Volume du bag in box (L)
+                                </label>
+                                <p className="text-xs text-gray-500 mb-3">
+                                    Affiché dans le sélecteur de quantité — ex : 4 bag in box de 5L
+                                </p>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    step="1"
+                                    value={contenu.volumeBib ?? ""}
+                                    onChange={e => set("volumeBib", parseInt(e.target.value) || undefined)}
+                                    placeholder="ex : 5"
+                                    className="w-full px-4 py-2 border border-[#24586f]/30 rounded-lg focus:ring-2 focus:ring-[#24586f] bg-white"
+                                />
+                                {(contenu.volumeBib ?? 0) > 0 && (
+                                    <p className="text-xs text-gray-400 mt-2">
+                                        Affichage : "3 bag in box de {contenu.volumeBib}L", "4 bag in box de {contenu.volumeBib}L"…
+                                    </p>
+                                )}
+                            </div>
+                        )}
 
                         {/* Frais de port unitaire — uniquement pour "libre" */}
                         {contenu.type === "libre" && (

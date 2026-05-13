@@ -18,6 +18,7 @@ type ProduitContenu = {
     image:              string;
     disponible?:        boolean;
     type?:              TypeProduit;
+    volumeBib?:         number;
     fraisPortUnitaire?: number;
     blocs_description:  BlocDescription[];
 };
@@ -127,7 +128,7 @@ export default function Page() {
             const res  = await fetch("/api/commandes", {
                 method:  "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id: slug, produit: contenu.titre, quantite, prix: contenu.prix, type }),
+                body: JSON.stringify({ id: slug, produit: contenu.titre, quantite, prix: contenu.prix, type, volumeBib: contenu.volumeBib }),
             });
             const data = await res.json();
 
@@ -287,16 +288,19 @@ export default function Page() {
                                             >
                                                 {paliersBagInBox.map(qty => (
                                                     <option key={qty} value={qty} disabled={qty > maxDispoBagInBox}>
-                                                        {qty} L{qty > maxDispoBagInBox ? ` — max ${maxBagInBox} L au total` : ""}
+                                                        {contenu.volumeBib
+                                                            ? `${qty} bag in box de ${contenu.volumeBib}L`
+                                                            : `${qty} bag in box`}
+                                                        {qty > maxDispoBagInBox ? ` — max ${maxBagInBox} au total` : ""}
                                                     </option>
                                                 ))}
                                                 <option disabled value="">──────────────────</option>
-                                                <option disabled value="">+ de {maxBagInBox} L ? Contactez-nous</option>
+                                                <option disabled value="">+ de {maxBagInBox} ? Contactez-nous</option>
                                             </select>
                                             {!maxAtteint && totalBagInBox > 0 && (
                                                 <p className={`text-xs text-gray-500 dark:text-gray-400 text-center ${W}`}>
-                                                    {totalBagInBox} L déjà dans le panier
-                                                    — il reste {maxDispoBagInBox} L
+                                                    {totalBagInBox}  déjà dans le panier
+                                                    — il reste {maxDispoBagInBox} 
                                                 </p>
                                             )}
                                         </>

@@ -24,6 +24,7 @@ function NouveauProduitForm() {
     const [prix, setPrix]             = useState<number>(0);
     const [type, setType]             = useState<TypeProduit>("bouteille");
     const [fraisPortUnitaire, setFraisPortUnitaire] = useState<number | "">(0);
+    const [volumeBib, setVolumeBib]   = useState<number | "">("");
     const [saving, setSaving]         = useState(false);
     const [modalOpen, setModalOpen]   = useState(false);
     const [modalMsg, setModalMsg]     = useState("");
@@ -61,7 +62,8 @@ function NouveauProduitForm() {
                 image: "",
                 disponible: true,
                 type,
-                ...(type === "libre" && { fraisPortUnitaire: Number(fraisPortUnitaire) || 0 }),
+                ...(type === "libre"      && { fraisPortUnitaire: Number(fraisPortUnitaire) || 0 }),
+                ...(type === "bag-in-box" && Number(volumeBib) > 0 && { volumeBib: Number(volumeBib) }),
                 blocs_description: [],
             };
 
@@ -156,6 +158,32 @@ function NouveauProduitForm() {
                             <option value="libre">Libre — quantité de 1 à 99</option>
                         </select>
                     </div>
+
+                    {/* Volume BIB — uniquement pour "bag-in-box" */}
+                    {type === "bag-in-box" && (
+                        <div >
+                            <label className="block text-sm font-semibold text-[#24586f] mb-1">
+                                Volume du bag in box (L)
+                            </label>
+                            <p className="text-xs text-gray-500 mb-3">
+                                Affiché dans le sélecteur de quantité — ex : 4 bag in box de 5L
+                            </p>
+                            <input
+                                type="number"
+                                min="1"
+                                step="1"
+                                value={volumeBib}
+                                onChange={e => setVolumeBib(parseInt(e.target.value) || "")}
+                                placeholder="ex : 5"
+                                className="w-full px-4 py-2 border border-[#24586f]/30 rounded-lg focus:ring-2 focus:ring-[#24586f] bg-white"
+                            />
+                            {Number(volumeBib) > 0 && (
+                                <p className="text-xs text-gray-400 mt-2">
+                                    Affichage : "3 bag in box de {volumeBib}L", "4 bag in box de {volumeBib}L"…
+                                </p>
+                            )}
+                        </div>
+                    )}
 
                     {/* Frais de port unitaire — uniquement pour "libre" */}
                     {type === "libre" && (
